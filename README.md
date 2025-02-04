@@ -74,6 +74,7 @@ When contributing, please adhere to the existing code style and follow the estab
 
 **advanced contributions**
 - Adding a "DO NOT ENTER!" sign that can be displayed or errased from the screen by pressing the WARNING_BUTTON button;
+- Remove the ubiquitous updating of time and date from the NTP server. Instead, the time and date can be obtained from any Intra server message, similar to how the exam date and time are retrieved. Implement the process of obtaining the time and date from the Intra server messages.
 - Core temperature monitoring as a mechanism for detecting the battery charging process being finished: when the battery is being charged, the core temperature of the microcontroller rises approximatelly 10°C above its common operational temperature and then drops back down when finished charging — notify the Telegram chat when charging is finished. This functionality may not block the Sign from fulfilling its main goal of notifying students about exams;
 - Logging error messages into a log file in the microcontroller's memory and the log file extraction mechanism;
 - The direct OTA implementation - the Sign itself creates a Wi-Fi access point that you can connect to and to update the firmware without the need of a Wi-Fi modem in the middle;
