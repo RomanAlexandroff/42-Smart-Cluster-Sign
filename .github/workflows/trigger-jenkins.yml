@@ -16,6 +16,7 @@ jobs:
       - name: Trigger Jenkins Job
         uses: appleboy/jenkins-action@master
         with:
-          url: 'https://9231-2a00-11b7-110e-cf00-2d48-1117-871e-dbb5.ngrok-free.app/job/Arduino_ESP32-C3_CI-CD/build'
+          url: 'https://9231-2a00-11b7-110e-cf00-2d48-1117-871e-dbb5.ngrok-free.app'
           user: 'github_actions'
           token: ${{ secrets.JENKINS_API_TOKEN }}
+          job: 'Arduino_ESP32-C3_CI-CD'
