@@ -1,4 +1,4 @@
-![Repository Banner](docs/graphic_materials/github_repo_img.png)
+![Repository Banner](docs/graphic_materials/github_repo_animation.gif)
 # 42 Smart Cluster Sign
 ## Table of Contents
 
