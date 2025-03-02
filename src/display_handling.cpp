@@ -21,10 +21,10 @@
 */
 static void  ft_draw_text(String output, uint16_t x, uint16_t y)
 {
-    const int16_t   text_box_x PROGMEM = 224;
-    const int16_t   text_box_y PROGMEM = 732;
-    const uint16_t  text_width PROGMEM = 140;
-    const uint16_t  text_height PROGMEM = 40;
+    const int16_t   text_box_x PROGMEM = 0;
+    const int16_t   text_box_y PROGMEM = 633;
+    const uint16_t  text_width PROGMEM = 480;
+    const uint16_t  text_height PROGMEM = 170;
 
     ft_watchdog_stop();
     display.setRotation(3);
@@ -207,31 +207,31 @@ void  ft_display_cluster_number(IMAGE_t mode)
     else if (mode == OTA_WAITING && displaying_now != OTA_WAITING)
     {
         DEBUG_PRINTF("[THE DISPLAY] ...the OTA notification\n");
-        ft_draw_text("WAITING FOR OTA UPDATE", 50, 710);
+        ft_draw_text("   WAITING FOR\n   OTA UPDATE", 0, 710);
         displaying_now = OTA_WAITING;
     }
     else if (mode == OTA_SUCCESS && displaying_now != OTA_SUCCESS)
     {
         DEBUG_PRINTF("[THE DISPLAY] ...the OTA notification\n");
-        ft_draw_text("OTA UPDATE SUCCESS", 50, 710);
+        ft_draw_text("   OTA UPDATE\n   SUCCESS", 0, 710);
         displaying_now = OTA_SUCCESS;
     }
     else if (mode == OTA_FAIL && displaying_now != OTA_FAIL)
     {
         DEBUG_PRINTF("[THE DISPLAY] ...the OTA notification\n");
-        ft_draw_text("OTA UPDATE FAIL", 50, 710);
+        ft_draw_text("   OTA UPDATE\n   FAIL", 0, 710);
         displaying_now = OTA_FAIL;
     }
     else if (mode == OTA_CANCELED && displaying_now != OTA_CANCELED)
     {
         DEBUG_PRINTF("[THE DISPLAY] ...the OTA notification\n");
-        ft_draw_text("OTA UPDATE CANCELED", 50, 710);
+        ft_draw_text("   OTA UPDATE\n   WAS CANCELED", 0, 710);
         displaying_now = OTA_CANCELED;
     }
     else if (mode == TELEGRAM_ERROR && displaying_now != TELEGRAM_ERROR)
     {
         DEBUG_PRINTF("[THE DISPLAY] ...the Telegram error warning\n");
-        ft_draw_text("TELEGRAM BOT ERROR", 50, 710);
+        ft_draw_text("   TELEGRAM BOT\n   ERROR", 0, 710);
         displaying_now = TELEGRAM_ERROR;
     } 
     DEBUG_PRINTF("[THE DISPLAY] The drawing process is complete\n");

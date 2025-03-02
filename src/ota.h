@@ -95,6 +95,7 @@ void ft_ota_waiting_loop(void)
         ft_display_cluster_number(OTA_CANCELED);
         bot.sendMessage(String(rtc_g.chat_id), "OTA Update port closed");
         DEBUG_PRINTF("\n[OTA] OTA Update port closed\n");
+        delay(3000);
     }
 }
 
