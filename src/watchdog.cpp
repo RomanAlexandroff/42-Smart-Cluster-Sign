@@ -12,7 +12,7 @@
 
 #include "42-Smart-Cluster-Sign.h"
 
-void  ft_watchdog_start(void)
+void  watchdog_start(void)
 {
     if (esp_task_wdt_status(NULL) != ESP_OK)
         esp_task_wdt_add(NULL);
@@ -21,12 +21,13 @@ void  ft_watchdog_start(void)
     esp_task_wdt_reset();
 }
 
-void  ft_watchdog_reset(void)
+void  watchdog_reset(void)
 {
-    esp_task_wdt_reset();
+    if (esp_task_wdt_reset() != ESP_OK)
+        DEBUG_PRINTF("[WATCHDOG] Watchdog was not reset\n\n");
 }
 
-void  ft_watchdog_stop(void)
+void  watchdog_stop(void)
 {
     if (esp_task_wdt_status(NULL) == ESP_OK)
         esp_task_wdt_delete(NULL);
@@ -34,7 +35,7 @@ void  ft_watchdog_stop(void)
         DEBUG_PRINTF("[WATCHDOG] Watchdog was not stopped because it has not been running\n\n");
 }
 
-void  ft_watchdog_init(void)
+void  watchdog_init(void)
 {
     esp_task_wdt_config_t twdt_config = {
         .timeout_ms = WD_TIMEOUT_MS,
