@@ -100,9 +100,9 @@ void  serial_init(void)
         else
             day = String(com_g.day);
         virtual_exam = "[{\"begin_at\":\"";
-        virtual_exam += String(com_g.year) + "-" + month + "-" + day + "T10:00:00.000Z\",";           // Change begin time here. Mind the TIME_ZONE correction
+        virtual_exam += String(com_g.year) + "-" + month + "-" + day + "T14:00:00.000Z\",";           // Change begin time here. Mind the TIME_ZONE correction
         virtual_exam += "\"end_at\":\"";
-        virtual_exam += String(com_g.year) + "-" + month + "-" + day + "T11:00:00.000Z\",";           // Change end time here. Mind the TIME_ZONE correction
+        virtual_exam += String(com_g.year) + "-" + month + "-" + day + "T17:00:00.000Z\",";           // Change end time here. Mind the TIME_ZONE correction
         virtual_exam += "\"nbr_subscribers\":4,}]";
         DEBUG_PRINTF("\n\n[EXAM SIMULATION] ATTENTION! EXAM SIMULATION IS ACTIVE!\n");
         DEBUG_PRINTF("[EXAM SIMULATION] The following exam is just a simulation!\n");

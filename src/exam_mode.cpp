@@ -22,7 +22,6 @@ static unsigned int exam(void)
     draw_colour_bitmap(exam_warning_black, exam_warning_red);                          // execution takes 25 sec
     DEBUG_PRINTF("[THE DISPLAY] The drawing process is complete\n");
     rtc_g.exam_status = false;
-    rtc_g.ota = false;
     return (exam_remaining_time);
 }
 

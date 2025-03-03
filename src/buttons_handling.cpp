@@ -40,7 +40,7 @@ void  isr_ota(void)
     if (interrupt_time - com_g.last_ota > DEBOUNCE_DELAY_MS)
     {
         com_g.last_ota = interrupt_time;
-        rtc_g.ota = !rtc_g.ota;
+        com_g.ota = !com_g.ota;
     }
 }
 

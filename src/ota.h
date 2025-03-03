@@ -19,14 +19,14 @@
 
 void ota_init(void)
 {
-    if (!rtc_g.ota)
+    if (!com_g.ota)
         return;
     if (WiFi.status() != WL_CONNECTED)
         wifi_connect();
     if (WiFi.status() != WL_CONNECTED)
     {
         DEBUG_PRINTF("[OTA] Failed to initialise OTA due to Wi-Fi connection issues\n");
-        rtc_g.ota = false;
+        com_g.ota = false;
         return;
     }
     watchdog_reset();
@@ -45,7 +45,7 @@ void ota_init(void)
         .onEnd([]() {
             display_cluster_number(OTA_SUCCESS);
             DEBUG_PRINTF("\n[OTA] End");
-            rtc_g.ota = false;
+            com_g.ota = false;
             bot.sendMessage(String(rtc_g.chat_id), "Successfully updated!");
             delay(3000);
             ESP.restart();
@@ -77,10 +77,10 @@ void ota_waiting_loop(void)
 {
     uint16_t ota_limit;
 
-    if (!rtc_g.ota)
+    if (!com_g.ota)
         return;
     ota_limit = 0;
-    while (rtc_g.ota && ota_limit < OTA_WAIT_LIMIT_S)
+    while (com_g.ota && ota_limit < OTA_WAIT_LIMIT_S)
     {
         ArduinoOTA.handle();
         watchdog_reset();
@@ -88,7 +88,7 @@ void ota_waiting_loop(void)
         ota_limit++;
         delay(1000);
     }
-    rtc_g.ota = false;
+    com_g.ota = false;
     display_cluster_number(OTA_CANCELED);
     bot.sendMessage(String(rtc_g.chat_id), "OTA Update port closed");
     DEBUG_PRINTF("\n[OTA] OTA Update port closed\n");

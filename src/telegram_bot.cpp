@@ -11,10 +11,10 @@
 /*                                                                            */
 /*   These functions are for checking new Telegram messages, reading them     */
 /*   and reacting to them.                                                    */
-/*   WARNING! DO NOT CALL go_to_sleep(), ft_delay() or ESP.restart()       */
+/*   WARNING! DO NOT CALL go_to_sleep(), ft_delay() or ESP.restart()          */
 /*   FROM THESE FUNCTIONS! THE DEVICE WILL BECOME UNRESPONSIVE TO ANY         */
 /*   MESSAGES FROM THE TELEGRAM CHAT! YOU MAY DO IT ONLY WHEN YOU ARE ABOUT   */
-/*   TO EXIT FROM telegram_check().                                        */
+/*   TO EXIT FROM telegram_check().                                           */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ static void reply_machine(String text)
     }
     else if (text == "/ota")
     {
-        rtc_g.ota = true;
+        com_g.ota = true;
         return;
     }
     else

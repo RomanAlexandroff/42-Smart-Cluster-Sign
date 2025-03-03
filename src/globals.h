@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: raleksan <r.aleksandroff@gmail.com>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/04/09 13:01:26 by raleksan          #+#    #+#             */
-/*   Updated: 2024/04/09 13:01:26 by raleksan         ###   ########.fr       */
+/*   Created: 2024/04/09 13:00:00 by raleksan          #+#    #+#             */
+/*   Updated: 2025/03/03 16:00:00 by raleksan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,6 @@ struct rtc_global_variables {
     uint16_t      exam_start_minutes;
     bool          exam_status;
     volatile bool warning_active;
-    volatile bool ota;
     char          Secret[74];
     char          chat_id[15];
     char          from_name[33];
@@ -49,6 +48,7 @@ struct common_global_variables {
     volatile unsigned long last_diagnostics;              // for a button debounce
     volatile unsigned long last_ota;                      // for a button debounce
     volatile unsigned long last_warning;                  // for a button debounce
+    volatile bool          ota;
     uint8_t  exam_end_hour;
     uint8_t  exam_end_minutes;
     bool     daylight_flag;
