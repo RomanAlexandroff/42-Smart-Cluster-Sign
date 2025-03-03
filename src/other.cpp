@@ -12,11 +12,11 @@
 
 #include "42-Smart-Cluster-Sign.h"
 
-void  ft_go_to_sleep(uint64_t time_in_millis)
+void  go_to_sleep(uint64_t time_in_millis)
 {
     esp_err_t result;
 
-    ft_watchdog_stop();
+    watchdog_stop();
     if (time_in_millis < MIN_SLEEP_LIMIT_MS)
         time_in_millis = MIN_SLEEP_LIMIT_MS;
     if (time_in_millis > MAX_SLEEP_LIMIT_MS)
@@ -39,40 +39,40 @@ void  ft_go_to_sleep(uint64_t time_in_millis)
 */
 void  ft_delay(uint64_t time_in_millis)
 {
-    ft_watchdog_stop();
+    watchdog_stop();
     if (time_in_millis < MIN_SLEEP_LIMIT_MS)
         time_in_millis = MIN_SLEEP_LIMIT_MS;
     if (time_in_millis > MAX_SLEEP_LIMIT_MS)
         time_in_millis = MAX_SLEEP_LIMIT_MS;
     esp_sleep_enable_timer_wakeup(time_in_millis * mS_TO_uS_FACTOR);
     esp_light_sleep_start();
-    ft_watchdog_start();
+    watchdog_start();
 }
 
-void  ft_wifi_connect(void)
+void  wifi_connect(void)
 {
     short i;
 
     i = 0;
-    ft_watchdog_reset();
+    watchdog_reset();
     WiFi.mode(WIFI_STA);
     WiFi.persistent(true);
     Telegram_client.setCACert(TELEGRAM_CERTIFICATE_ROOT);
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     while ((WiFi.status() != WL_CONNECTED) && i < CONNECT_TIMEOUT_S)
     {
-        ft_watchdog_reset();
+        watchdog_reset();
         delay(1000);
         i++;
     }
 }
 
-void  ft_serial_init(void)
+void  serial_init(void)
 {
     uint8_t i;
     
     i = 15;
-    ft_watchdog_reset();
+    watchdog_reset();
     Serial.begin(BAUD_RATE);
     while (i > 0)
     {
@@ -84,13 +84,13 @@ void  ft_serial_init(void)
 }
 
 #ifdef EXAM_SIMULATION
-    String  ft_exam_simulation(void)
+    String  exam_simulation(void)
     {
         String  day;
         String  month;
         String  virtual_exam;
 
-        ft_watchdog_reset();
+        watchdog_reset();
         if (com_g.month < 10)
             month = "0" + String(com_g.month);
         else
@@ -100,9 +100,9 @@ void  ft_serial_init(void)
         else
             day = String(com_g.day);
         virtual_exam = "[{\"begin_at\":\"";
-        virtual_exam += String(com_g.year) + "-" + month + "-" + day + "T17:00:00.000Z\",";
+        virtual_exam += String(com_g.year) + "-" + month + "-" + day + "T10:00:00.000Z\",";           // Change begin time here. Mind the TIME_ZONE correction
         virtual_exam += "\"end_at\":\"";
-        virtual_exam += String(com_g.year) + "-" + month + "-" + day + "T20:00:00.000Z\",";
+        virtual_exam += String(com_g.year) + "-" + month + "-" + day + "T11:00:00.000Z\",";           // Change end time here. Mind the TIME_ZONE correction
         virtual_exam += "\"nbr_subscribers\":4,}]";
         DEBUG_PRINTF("\n\n[EXAM SIMULATION] ATTENTION! EXAM SIMULATION IS ACTIVE!\n");
         DEBUG_PRINTF("[EXAM SIMULATION] The following exam is just a simulation!\n");

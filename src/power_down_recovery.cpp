@@ -12,9 +12,9 @@
 
 #include "42-Smart-Cluster-Sign.h"
 
-static void ft_report_reboot_reason(esp_reset_reason_t reset_reason)
+static void report_reboot_reason(esp_reset_reason_t reset_reason)
 {
-    ft_watchdog_reset();
+    watchdog_reset();
     if (reset_reason == ESP_RST_UNKNOWN)
         DEBUG_PRINTF("[BOOTING INFO] Unknown reset reason\n");
     else if (reset_reason == ESP_RST_POWERON)
@@ -41,22 +41,22 @@ static void ft_report_reboot_reason(esp_reset_reason_t reset_reason)
         DEBUG_PRINTF("[BOOTING INFO] Reset info is missing\n");
 }
 
-void  ft_power_down_recovery(void)
+void  power_down_recovery(void)
 {
     esp_reset_reason_t  reset_reason;
 
-    ft_watchdog_reset();
+    watchdog_reset();
     reset_reason = esp_reset_reason();
     if (reset_reason == ESP_RST_BROWNOUT)
     {
         DEBUG_PRINTF("\n[BOOTING INFO] Brown-out reset! Going into extensive sleep\n");
-        ft_go_to_sleep(DEAD_BATTERY_SLEEP_MS);
+        go_to_sleep(DEAD_BATTERY_SLEEP_MS);
     }
-    ft_report_reboot_reason(reset_reason);
+    report_reboot_reason(reset_reason);
     if (reset_reason != ESP_RST_DEEPSLEEP)
     {
         DEBUG_PRINTF("\n[BOOTING INFO] Hard reset detected. Restoring RTC memory data...\n");
-        ft_data_integrity_check();
+        data_integrity_check();
     }
     DEBUG_PRINTF("\n[BOOTING INFO] Power-down Recovery was performed.\n\n");
 }

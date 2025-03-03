@@ -19,14 +19,14 @@
 *   (480x170 window) of the cluster number.
 *   Partial display update, text only, no images
 */
-static void  ft_draw_text(String output, uint16_t x, uint16_t y)
+static void  draw_text(String output, uint16_t x, uint16_t y)
 {
     const int16_t   text_box_x PROGMEM = 0;
     const int16_t   text_box_y PROGMEM = 633;
     const uint16_t  text_width PROGMEM = 480;
     const uint16_t  text_height PROGMEM = 170;
 
-    ft_watchdog_stop();
+    watchdog_stop();
     display.setRotation(3);
     display.setFont(&FreeSansBold24pt7b);
     display.setTextColor(GxEPD_BLACK);
@@ -39,7 +39,7 @@ static void  ft_draw_text(String output, uint16_t x, uint16_t y)
         display.print(output);
     }
     while (display.nextPage());
-    ft_watchdog_start();
+    watchdog_start();
 }
 
 
@@ -49,7 +49,7 @@ static void  ft_draw_text(String output, uint16_t x, uint16_t y)
 *   the cluster number.
 *   Partial display update, text only, no images
 */
-static void  ft_draw_exam_start_time(void)
+static void  draw_exam_start_time(void)
 {
     String         text;
     const int16_t  text_x PROGMEM = 27;
@@ -59,7 +59,7 @@ static void  ft_draw_exam_start_time(void)
     const int16_t  window_width PROGMEM = 480;
     const int16_t  window_height PROGMEM = 40;
 
-    ft_watchdog_stop();
+    watchdog_stop();
     text = "TODAY AT ";
     text += String(rtc_g.exam_start_hour);
     if (rtc_g.exam_start_minutes < 10)
@@ -79,7 +79,7 @@ static void  ft_draw_exam_start_time(void)
         display.print(text);
     }
     while (display.nextPage());
-    ft_watchdog_start();
+    watchdog_start();
 }
 
 
@@ -87,9 +87,9 @@ static void  ft_draw_exam_start_time(void)
 *   Only for the right-side (480x170) images
 *   Partial display update, Black and white only
 */
-static void ft_draw_bitmap_partial_update(const unsigned char* image, uint16_t width, uint16_t height)
+static void draw_bitmap_partial_update(const unsigned char* image, uint16_t width, uint16_t height)
 {
-    ft_watchdog_stop();
+    watchdog_stop();
     display.setRotation(0);
     display.setPartialWindow(630, 0, width, height);
     display.firstPage();
@@ -99,7 +99,7 @@ static void ft_draw_bitmap_partial_update(const unsigned char* image, uint16_t w
         display.drawBitmap(630, 0, image, width, height, GxEPD_BLACK);
     }
     while (display.nextPage());
-    ft_watchdog_start();
+    watchdog_start();
 }
 
 
@@ -107,9 +107,9 @@ static void ft_draw_bitmap_partial_update(const unsigned char* image, uint16_t w
 *   For full-screen b/r/w images.
 *   Full display update, Black-Red-White only
 */
-void  ft_draw_colour_bitmap(const unsigned char* black_image, const unsigned char* red_image)
+void  draw_colour_bitmap(const unsigned char* black_image, const unsigned char* red_image)
 {
-    ft_watchdog_stop();
+    watchdog_stop();
     display.setRotation(0);
     display.setFullWindow();
     display.firstPage();
@@ -120,7 +120,7 @@ void  ft_draw_colour_bitmap(const unsigned char* black_image, const unsigned cha
         display.drawBitmap(0, 0, red_image, 800, 480, GxEPD_RED);
     }
     while (display.nextPage());
-    ft_watchdog_start();
+    watchdog_start();
 }
 
 
@@ -128,9 +128,9 @@ void  ft_draw_colour_bitmap(const unsigned char* black_image, const unsigned cha
 *   For any size b/w images.
 *   Full display update, Black-White only
 */
-static void ft_draw_bitmap_full_update(const unsigned char* image, uint16_t width, uint16_t height)
+static void draw_bitmap_full_update(const unsigned char* image, uint16_t width, uint16_t height)
 {
-    ft_watchdog_stop();
+    watchdog_stop();
     display.setRotation(0);
     display.setFullWindow();
     display.firstPage();
@@ -140,7 +140,7 @@ static void ft_draw_bitmap_full_update(const unsigned char* image, uint16_t widt
         display.drawBitmap(0, 0, image, width, height, GxEPD_BLACK);
     }
     while (display.nextPage());
-    ft_watchdog_start();
+    watchdog_start();
 }
 
 
@@ -153,12 +153,12 @@ static void ft_draw_bitmap_full_update(const unsigned char* image, uint16_t widt
 *   "displaying_now = CLUSTER" is there to unblock drawing
 *   of ALL the additional images/messages. Useful after exams.
 */
-void  ft_display_cluster_number(IMAGE_t mode)
+void  display_cluster_number(IMAGE_t mode)
 {
     RTC_DATA_ATTR static bool    display_cluster;
     RTC_DATA_ATTR static IMAGE_t displaying_now;
 
-    ft_watchdog_reset();
+    watchdog_reset();
     if (display_cluster && mode == displaying_now)
     {
         DEBUG_PRINTF("\n[THE DISPLAY] Nothing new to draw. Drawing aborted\n\n");
@@ -167,86 +167,86 @@ void  ft_display_cluster_number(IMAGE_t mode)
     if (!display_cluster)
     {
         DEBUG_PRINTF("\n[THE DISPLAY] Drawing the cluster number with...\n");
-        ft_draw_bitmap_full_update(cluster_number_img, 630, 480);
+        draw_bitmap_full_update(cluster_number_img, 630, 480);
         display_cluster = true;
         displaying_now = CLUSTER;
     }
     if (mode == DEFAULT_IMG && (displaying_now != DEFAULT_IMG && displaying_now != LOW_BATTERY))
     {
         DEBUG_PRINTF("[THE DISPLAY] ...the default cluster icons\n");
-        ft_draw_bitmap_partial_update(default_cluster_icons, 170, 480);
+        draw_bitmap_partial_update(default_cluster_icons, 170, 480);
         displaying_now = DEFAULT_IMG;
     }
     else if (mode == INTRA_ERROR && displaying_now != INTRA_ERROR)
     {
         DEBUG_PRINTF("[THE DISPLAY] ...the Intra error warning\n");
-        ft_draw_bitmap_partial_update(intra_error_img, 170, 480);
+        draw_bitmap_partial_update(intra_error_img, 170, 480);
         displaying_now = INTRA_ERROR;
     }
     else if (mode == SECRET_EXPIRED && displaying_now != SECRET_EXPIRED)
     {
         DEBUG_PRINTF("[THE DISPLAY] ...the Secret expiration warning\n");
-        ft_draw_bitmap_partial_update(secret_expire_img, 170, 480);
+        draw_bitmap_partial_update(secret_expire_img, 170, 480);
         displaying_now = SECRET_EXPIRED;
     }
     else if (mode == EXAM_DAY && displaying_now != EXAM_DAY)
     {
         DEBUG_PRINTF("[THE DISPLAY] ...the exam time note\n");
-        ft_draw_bitmap_partial_update(reserve_note_img, 170, 480);
+        draw_bitmap_partial_update(reserve_note_img, 170, 480);
         delay (7000);                                                 // experimentally derived
-        ft_draw_exam_start_time();
+        draw_exam_start_time();
         display_cluster = false;
         displaying_now = EXAM_DAY;
     }
     else if (mode == LOW_BATTERY && displaying_now != LOW_BATTERY)
     {
         DEBUG_PRINTF("[THE DISPLAY] ...the low battery warning\n");
-        ft_draw_bitmap_partial_update(low_battery_img, 170, 480);
+        draw_bitmap_partial_update(low_battery_img, 170, 480);
         displaying_now = LOW_BATTERY;
     }
     else if (mode == OTA_WAITING && displaying_now != OTA_WAITING)
     {
         DEBUG_PRINTF("[THE DISPLAY] ...the OTA notification\n");
-        ft_draw_text("   WAITING FOR\n   OTA UPDATE", 0, 710);
+        draw_text("   WAITING FOR\n   OTA UPDATE", 0, 710);
         displaying_now = OTA_WAITING;
     }
     else if (mode == OTA_SUCCESS && displaying_now != OTA_SUCCESS)
     {
         DEBUG_PRINTF("[THE DISPLAY] ...the OTA notification\n");
-        ft_draw_text("   OTA UPDATE\n   SUCCESS", 0, 710);
+        draw_text("   OTA UPDATE\n   SUCCESS", 0, 710);
         displaying_now = OTA_SUCCESS;
     }
     else if (mode == OTA_FAIL && displaying_now != OTA_FAIL)
     {
         DEBUG_PRINTF("[THE DISPLAY] ...the OTA notification\n");
-        ft_draw_text("   OTA UPDATE\n   FAIL", 0, 710);
+        draw_text("   OTA UPDATE\n   FAIL", 0, 710);
         displaying_now = OTA_FAIL;
     }
     else if (mode == OTA_CANCELED && displaying_now != OTA_CANCELED)
     {
         DEBUG_PRINTF("[THE DISPLAY] ...the OTA notification\n");
-        ft_draw_text("   OTA UPDATE\n   WAS CANCELED", 0, 710);
+        draw_text("   OTA UPDATE\n   WAS CANCELED", 0, 710);
         displaying_now = OTA_CANCELED;
     }
     else if (mode == TELEGRAM_ERROR && displaying_now != TELEGRAM_ERROR)
     {
         DEBUG_PRINTF("[THE DISPLAY] ...the Telegram error warning\n");
-        ft_draw_text("   TELEGRAM BOT\n   ERROR", 0, 710);
+        draw_text("   TELEGRAM BOT\n   ERROR", 0, 710);
         displaying_now = TELEGRAM_ERROR;
     } 
     DEBUG_PRINTF("[THE DISPLAY] The drawing process is complete\n");
 }
 
-void  ft_clear_display(void)
+void  clear_display(void)
 {
-    ft_watchdog_reset();
+    watchdog_reset();
     display.clearScreen();
     display.writeScreenBuffer();
 }
 
-void  ft_display_init(void)
+void  display_init(void)
 {
-    ft_watchdog_reset();
+    watchdog_reset();
     SPI.end();
     SPI.begin(SPI_SCK_PIN, SPI_MISO_PIN, SPI_MOSI_PIN, SPI_SS_PIN);
     display.init(115200);

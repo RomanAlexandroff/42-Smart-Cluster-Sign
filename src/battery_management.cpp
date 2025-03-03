@@ -12,14 +12,14 @@
 
 #include "42-Smart-Cluster-Sign.h"
 
-void  ft_battery_check(void)
+void  battery_check(void)
 {
     int8_t  samples_count;
     int16_t battery;
 
     samples_count = 0;
     battery = 0;
-    ft_watchdog_reset();
+    watchdog_reset();
     while (samples_count < BATTERY_SAMPLES_LIMIT)
     {
         battery += adc1_get_raw(ADC1_CHANNEL_0);
@@ -31,25 +31,25 @@ void  ft_battery_check(void)
     if (battery >= BATTERY_GOOD)
         return;
     if (WiFi.status() != WL_CONNECTED)
-        ft_wifi_connect();    
+        wifi_connect();    
     if (battery < BATTERY_CRITICAL)
     {
-        ft_display_cluster_number(LOW_BATTERY);
+        display_cluster_number(LOW_BATTERY);
         DEBUG_PRINTF("[BATTERY] Battery is too low. Going into extensive sleep\n\n");
-        bot.sendMessage(String(rtc_g.chat_id), ft_compose_message(DEAD_BATTERY, 0), "");
-        ft_go_to_sleep(DEAD_BATTERY_SLEEP_MS);
+        bot.sendMessage(String(rtc_g.chat_id), compose_message(DEAD_BATTERY, 0), "");
+        go_to_sleep(DEAD_BATTERY_SLEEP_MS);
     }
     else if (battery < BATTERY_GOOD)
     {
-        ft_display_cluster_number(LOW_BATTERY);
+        display_cluster_number(LOW_BATTERY);
         DEBUG_PRINTF("[BATTERY] Low battery! Need charging!\n\n");
-        bot.sendMessage(String(rtc_g.chat_id), ft_compose_message(LOW_BATTERY, 0), "");
+        bot.sendMessage(String(rtc_g.chat_id), compose_message(LOW_BATTERY, 0), "");
     }
 }
 
-void  ft_battery_init(void)
+void  battery_init(void)
 {
-    ft_watchdog_reset();
+    watchdog_reset();
     adc1_config_width(ADC_WIDTH_BIT_12);
     adc1_config_channel_atten(ADC1_CHANNEL_0, ADC_ATTEN_DB_12);
 }

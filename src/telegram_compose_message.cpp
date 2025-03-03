@@ -15,7 +15,7 @@
 
 #include "42-Smart-Cluster-Sign.h"
 
-static String ft_about_intra_exams(String output)
+static String about_intra_exams(String output)
 {
     output += "I am writing to report an exceptional situation! Code: INTRA 404\n\n";
     output += "After several tries, I was unable to get any exam information from the Intra server. ";
@@ -28,7 +28,7 @@ static String ft_about_intra_exams(String output)
     return (output);
 }
 
-static String ft_about_intra_token(String output)
+static String about_intra_token(String output)
 {
     output += "I am writing to report an exceptional situation! Code: INTRA 401\n\n";
     output += "After several tries, I was unable to get the access token from the Intra server. ";
@@ -42,7 +42,7 @@ static String ft_about_intra_token(String output)
     return (output);
 }
 
-static String ft_about_intra_server(String output)
+static String about_intra_server(String output)
 {
     output += "I am writing to report an exceptional situation! Code: INTRA 503\n\n";
     output += "After several retries, I was unable to connect to the Intra server. ";
@@ -55,7 +55,7 @@ static String ft_about_intra_server(String output)
     return (output);
 }
 
-static String ft_about_time_daylight(String output)
+static String about_time_daylight(String output)
 {
     output += "I am writing to report an exceptional situation! Code: GET_TIME 104\n\n";
     output += "After several retries, I was unable to get the Daylight Saving Time data. ";
@@ -69,7 +69,7 @@ static String ft_about_time_daylight(String output)
     return (output);
 }
 
-static String ft_about_time_server(String output)
+static String about_time_server(String output)
 {
     output += "I am writing to report an exceptional situation! Code: GET_TIME 103\n\n";
     output += "After several retries, I was unable to connect to the NTP server ";
@@ -82,7 +82,7 @@ static String ft_about_time_server(String output)
     return (output);
 }
 
-static String ft_about_time_wifi(String output)
+static String about_time_wifi(String output)
 {
     output += "I am writing to report an exceptional situation! Code: GET_TIME 102\n\n";
     output += "After several retries, I was unable to connect to Wi-Fi to get current time. ";
@@ -95,7 +95,7 @@ static String ft_about_time_wifi(String output)
     return (output);
 }
 
-static String ft_about_dead_battery(String output)
+static String about_dead_battery(String output)
 {
     output += "I need your assistance! ";
     output += "My battery is dead, so I am stopping all the processes and turning off. ";
@@ -103,7 +103,7 @@ static String ft_about_dead_battery(String output)
     return (output);
 }
 
-static String ft_about_low_battery(String output)
+static String about_low_battery(String output)
 {
     output += "I need your assistance! ";
     output += "My battery is low. I am currently sitting on 3% ";
@@ -111,7 +111,7 @@ static String ft_about_low_battery(String output)
     return (output);
 }
 
-static String ft_about_expired_secret(String output, int16_t days_left)
+static String about_expired_secret(String output, int16_t days_left)
 {
     output += "I need your assistance! ";
     output += "My SECRET token ";
@@ -132,7 +132,7 @@ static String ft_about_expired_secret(String output, int16_t days_left)
     return (output);
 }
 
-static String ft_about_device_status(String output)
+static String about_device_status(String output)
 {
     uint8_t     day;
     uint8_t     month;
@@ -152,41 +152,41 @@ static String ft_about_device_status(String output)
     }
     else
         output += "no exams are planned for today";
-    if (ft_unix_timestamp_decoder(&day, &month, &year))
+    if (unix_timestamp_decoder(&day, &month, &year))
         output += ", Secret token expires on " + String(day) + "." + String(month) + "." + String(year);
     return (output);
 }
 
-String  ft_compose_message(int32_t subject, int16_t days_left)
+String  compose_message(int32_t subject, int16_t days_left)
 {
     String  output;
 
-    ft_watchdog_reset();
+    watchdog_reset();
     if (!rtc_g.from_name[0])
         output = "Dear User";
     else
         output = "Dear " + String(rtc_g.from_name);
     output += ", ";
     if (subject == TELEGRAM_STATUS)
-        output = ft_about_device_status(output);
+        output = about_device_status(output);
     else if (subject == SECRET_EXPIRED)
-        output = ft_about_expired_secret(output, days_left);
+        output = about_expired_secret(output, days_left);
     else if (subject == LOW_BATTERY)
-        output = ft_about_low_battery(output);
+        output = about_low_battery(output);
     else if (subject == DEAD_BATTERY)
-        output = ft_about_dead_battery(output);
+        output = about_dead_battery(output);
     else if (subject == TIME_NO_WIFI)
-        output = ft_about_time_wifi(output);
+        output = about_time_wifi(output);
     else if (subject == TIME_NO_SERVER)
-        output = ft_about_time_server(output);
+        output = about_time_server(output);
     else if (subject == TIME_NO_DST)
-        output = ft_about_time_daylight(output);   
+        output = about_time_daylight(output);   
     else if (subject == INTRA_NO_SERVER)
-        output = ft_about_intra_server(output);
+        output = about_intra_server(output);
     else if (subject == INTRA_NO_TOKEN)
-        output = ft_about_intra_token(output);
+        output = about_intra_token(output);
     else if (subject == INTRA_NO_INFO)
-        output = ft_about_intra_exams(output);
+        output = about_intra_exams(output);
     return (output);
 }
  

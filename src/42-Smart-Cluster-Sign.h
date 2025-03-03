@@ -31,73 +31,73 @@
 # include "globals.h"
 
 /* intra_interaction.cpp */
-ERROR_t         ft_fetch_exams(void);
+ERROR_t         fetch_exams(void);
 
 /* battery_management.cpp */
-void            ft_battery_check(void);
-void            ft_battery_init(void);
+void            battery_check(void);
+void            battery_init(void);
 
 /* buttons_handling.cpp */
-void            ft_buttons_init(void);
+void            buttons_init(void);
 void IRAM_ATTR  isr_diagnostics(void);
 void IRAM_ATTR  isr_ota(void);
 void IRAM_ATTR  isr_warning(void);
 
 /* cluster_number_mode.cpp */
-void            ft_cluster_number_mode(unsigned int* p_sleep_length);
+void            cluster_number_mode(unsigned int* p_sleep_length);
 
 /* display_handling.cpp */
-void            ft_draw_colour_bitmap(const unsigned char* black_image, const unsigned char* red_image);
-void IRAM_ATTR  ft_display_cluster_number(IMAGE_t mode);
-void            ft_clear_display(void);
-void IRAM_ATTR  ft_display_init(void);
+void            draw_colour_bitmap(const unsigned char* black_image, const unsigned char* red_image);
+void IRAM_ATTR  display_cluster_number(IMAGE_t mode);
+void            clear_display(void);
+void IRAM_ATTR  display_init(void);
 
 /* exam_mode.cpp */
-void            ft_exam_mode(void);
+void            exam_mode(void);
 
 /* file_system.cpp */
-ERROR_t         ft_secret_verification(String text);
-void            ft_data_restore(const char* file_name);
-void            ft_data_integrity_check(void);
-ERROR_t         ft_write_spiffs_file(const char* file_name, char* input);
-ERROR_t         ft_read_spiffs_file(const char* file_name, char* output);
-ERROR_t         ft_spiffs_init(void);
+ERROR_t         secret_verification(String text);
+void            data_restore(const char* file_name);
+void            data_integrity_check(void);
+ERROR_t         write_spiffs_file(const char* file_name, char* input);
+ERROR_t         read_spiffs_file(const char* file_name, char* output);
+ERROR_t         spiffs_init(void);
 
 /* ota.h */
-inline void     ft_ota_init(void) __attribute__((always_inline));
-inline void     ft_ota_waiting_loop(void) __attribute__((always_inline));
+inline void     ota_init(void) __attribute__((always_inline));
+inline void     ota_waiting_loop(void) __attribute__((always_inline));
 
 /* other.cpp */
-void            ft_go_to_sleep(uint64_t time_in_millis);
+void            go_to_sleep(uint64_t time_in_millis);
 void IRAM_ATTR  ft_delay(uint64_t time_in_millis);
-void            ft_serial_init(void);
-void            ft_wifi_connect(void);
+void            serial_init(void);
+void            wifi_connect(void);
 # ifdef EXAM_SIMULATION
-    String      ft_exam_simulation(void);
+    String      exam_simulation(void);
 # endif
 
 /* power_down_recovery.cpp */
-void            ft_power_down_recovery(void);
+void            power_down_recovery(void);
 
 /* telegram_bot.cpp */
-void            ft_telegram_check(void);
+void            telegram_check(void);
 
 /* telegram_compose_message.cpp */
-String          ft_compose_message(int32_t subject, int16_t days_left);
+String          compose_message(int32_t subject, int16_t days_left);
 
 /* time_utilities.cpp */
-int16_t         ft_expiration_counter(void);
-bool            ft_unix_timestamp_decoder(uint8_t* p_day, uint8_t* p_month, uint16_t* p_year);
-ERROR_t         ft_get_time(void);
-unsigned int    ft_time_till_wakeup(void);
-unsigned int    ft_time_till_event(int8_t hours, uint8_t minutes);
-int             ft_time_sync(unsigned int preexam_time);
+int16_t         expiration_counter(void);
+bool            unix_timestamp_decoder(uint8_t* p_day, uint8_t* p_month, uint16_t* p_year);
+ERROR_t         get_time(void);
+unsigned int    time_till_wakeup(void);
+unsigned int    time_till_event(int8_t hours, uint8_t minutes);
+int             time_sync(unsigned int preexam_time);
 
 /* watchdog.cpp */
-void IRAM_ATTR  ft_watchdog_start(void);
-void IRAM_ATTR  ft_watchdog_reset(void);
-void IRAM_ATTR  ft_watchdog_stop(void);
-void            ft_watchdog_init(void);
+void IRAM_ATTR  watchdog_start(void);
+void IRAM_ATTR  watchdog_reset(void);
+void IRAM_ATTR  watchdog_stop(void);
+void            watchdog_init(void);
 
 # include "ota.h"                                                   // has to be here
 

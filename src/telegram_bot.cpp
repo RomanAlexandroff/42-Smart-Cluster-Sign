@@ -11,23 +11,23 @@
 /*                                                                            */
 /*   These functions are for checking new Telegram messages, reading them     */
 /*   and reacting to them.                                                    */
-/*   WARNING! DO NOT CALL ft_go_to_sleep(), ft_delay() or ESP.restart()       */
+/*   WARNING! DO NOT CALL go_to_sleep(), ft_delay() or ESP.restart()       */
 /*   FROM THESE FUNCTIONS! THE DEVICE WILL BECOME UNRESPONSIVE TO ANY         */
 /*   MESSAGES FROM THE TELEGRAM CHAT! YOU MAY DO IT ONLY WHEN YOU ARE ABOUT   */
-/*   TO EXIT FROM ft_telegram_check().                                        */
+/*   TO EXIT FROM telegram_check().                                        */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "42-Smart-Cluster-Sign.h"
 
-static void ft_reply_machine(String text)
+static void reply_machine(String text)
 {
     String  message;
     ERROR_t check_result;
 
     if (text == "/status")
     {
-        bot.sendMessage(String(rtc_g.chat_id), ft_compose_message(TELEGRAM_STATUS, 0), "");
+        bot.sendMessage(String(rtc_g.chat_id), compose_message(TELEGRAM_STATUS, 0), "");
         return;
     }
     else if (text == "/ota")
@@ -38,11 +38,11 @@ static void ft_reply_machine(String text)
     else
     {
         text.remove(0, 1);
-        check_result = ft_secret_verification(text);
+        check_result = secret_verification(text);
         if (check_result == FS_VALID_SECRET)
         {
             text.toCharArray(rtc_g.Secret, sizeof(rtc_g.Secret));
-            ft_write_spiffs_file("/secret.txt", rtc_g.Secret);
+            write_spiffs_file("/secret.txt", rtc_g.Secret);
             message = "Accepted!\nThe SECRET token has been renewed.\n\n";
             message += "Current token now is:\n" + String(rtc_g.Secret);
             bot.sendMessage(String(rtc_g.chat_id), message, "");
@@ -65,7 +65,7 @@ static void ft_reply_machine(String text)
     }
 }
 
-static void  ft_sender_handling(uint8_t i)
+static void  sender_handling(uint8_t i)
 {
     String  id_buffer;
     String  name_buffer;
@@ -81,12 +81,12 @@ static void  ft_sender_handling(uint8_t i)
         bot.sendMessage(String(rtc_g.chat_id), message, "");
     }
     id_buffer.toCharArray(rtc_g.chat_id, sizeof(rtc_g.chat_id));
-    ft_write_spiffs_file("/chat_id.txt", rtc_g.chat_id);
+    write_spiffs_file("/chat_id.txt", rtc_g.chat_id);
     name_buffer = bot.messages[i].from_name;
     name_buffer.toCharArray(rtc_g.from_name, sizeof(rtc_g.from_name));
 }
 
-static void  ft_new_messages(short message_count)
+static void  new_messages(short message_count)
 {
     uint8_t i;
     String  text;
@@ -96,29 +96,29 @@ static void  ft_new_messages(short message_count)
     DEBUG_PRINTF("[TELEGRAM BOT] Number of messages to handle: %d\n", message_count);
     while (i < message_count) 
     {
-        ft_watchdog_reset();
+        watchdog_reset();
         DEBUG_PRINTF("[TELEGRAM BOT] Handling loop iterations: i = %d\n", i);
-        ft_sender_handling(i);
+        sender_handling(i);
         text = bot.messages[i].text;
         DEBUG_PRINTF("[TELEGRAM BOT] %s says: ", rtc_g.from_name);
         DEBUG_PRINTF("%s\n\n", text.c_str());
-        ft_reply_machine(text);
+        reply_machine(text);
         i++;
     }
 }
 
-void  ft_telegram_check(void)
+void  telegram_check(void)
 {
     short message_count;
 
     if (WiFi.status() != WL_CONNECTED)
-        ft_wifi_connect();  
-    ft_watchdog_reset();
+        wifi_connect();  
+    watchdog_reset();
     message_count = bot.getUpdates(bot.last_message_received + 1);
     while (message_count)
     {
-        ft_watchdog_reset();
-        ft_new_messages(message_count);
+        watchdog_reset();
+        new_messages(message_count);
         message_count = bot.getUpdates(bot.last_message_received + 1);
     }
 }

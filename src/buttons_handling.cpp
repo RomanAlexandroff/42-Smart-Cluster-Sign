@@ -56,9 +56,9 @@ void  isr_warning(void)
     }
 }
 
-void  ft_buttons_init(void)
+void  buttons_init(void)
 {   
-    ft_watchdog_reset();
+    watchdog_reset();
     pinMode(DIAGNOSTICS_BUTTON, INPUT_PULLUP);
     attachInterrupt(DIAGNOSTICS_BUTTON, isr_diagnostics, FALLING);
     pinMode(OTA_BUTTON, INPUT_PULLUP);
