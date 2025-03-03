@@ -12,11 +12,11 @@
 
 #include "42-Smart-Cluster-Sign.h"
 
-bool  ft_unix_timestamp_decoder(uint8_t* p_day, uint8_t* p_month, uint16_t* p_year)
+bool  unix_timestamp_decoder(uint8_t* p_day, uint8_t* p_month, uint16_t* p_year)
 {
     if (rtc_g.secret_expiration < 1000000000)
         return (false);
-    ft_watchdog_reset();
+    watchdog_reset();
     struct tm* time_info = localtime(&rtc_g.secret_expiration);
     *p_day = time_info->tm_mday;
     *p_month = time_info->tm_mon + 1;
@@ -24,7 +24,7 @@ bool  ft_unix_timestamp_decoder(uint8_t* p_day, uint8_t* p_month, uint16_t* p_ye
     return (true);
 }
 
-int16_t  ft_expiration_counter(void)
+int16_t  expiration_counter(void)
 {
     const int months_days[] = {MONTHS_DAYS};
     uint8_t   expire_day;
@@ -32,8 +32,8 @@ int16_t  ft_expiration_counter(void)
     uint16_t  expire_year;
     uint16_t  year_correction;
 
-    ft_watchdog_reset();
-    if (!ft_unix_timestamp_decoder(&expire_day, &expire_month, &expire_year))
+    watchdog_reset();
+    if (!unix_timestamp_decoder(&expire_day, &expire_month, &expire_year))
         return (FAILED_TO_COUNT);
     if (expire_year < com_g.year)
         return (FAILED_TO_COUNT);
@@ -44,7 +44,7 @@ int16_t  ft_expiration_counter(void)
         return (expire_day + year_correction + months_days[com_g.month - 1] - com_g.day);     //TO-DO: account for multiple months difference
 }
 
-ERROR_t  ft_get_time(void)
+ERROR_t  get_time(void)
 {
     const char* ntp_server PROGMEM = "pool.ntp.org";
     const long  gmt_offset_sec = TIME_ZONE * 3600;
@@ -52,13 +52,13 @@ ERROR_t  ft_get_time(void)
     struct tm   time_info;
 
     if (WiFi.status() != WL_CONNECTED)
-        ft_wifi_connect();
+        wifi_connect();
     if (WiFi.status() != WL_CONNECTED)
     {
         DEBUG_PRINTF("\n[SYSTEM TIME] Failed to obtain time due to Wi-Fi connection issues\n");
         return (TIME_NO_WIFI);
     }
-    ft_watchdog_reset();
+    watchdog_reset();
     configTime(gmt_offset_sec, daylight_offset_sec, ntp_server);
     if(!getLocalTime(&time_info))
     {
@@ -89,12 +89,12 @@ ERROR_t  ft_get_time(void)
     return (TIME_OK);
 }
 
-unsigned int  ft_time_till_wakeup(void)
+unsigned int  time_till_wakeup(void)
 {
     const uint8_t wakeup_hour[] = {WAKE_UP_HOURS};
     uint8_t       i;
 
-    ft_watchdog_reset();
+    watchdog_reset();
     i = sizeof(wakeup_hour) / sizeof(wakeup_hour[0]) - 1;
     if (com_g.hour >= wakeup_hour[i])
         return ((wakeup_hour[0] + 24 - com_g.hour) * HOUR_MS - (com_g.minute * MINUTE_MS) - millis());
@@ -108,21 +108,22 @@ unsigned int  ft_time_till_wakeup(void)
 /*
 *   Returns value in milliseconds.
 */
-unsigned int  ft_time_till_event(int8_t hours, uint8_t minutes)
+unsigned int  time_till_event(int8_t hours, uint8_t minutes)
 {
     unsigned int result;
 
-    ft_watchdog_reset();
+    watchdog_reset();
     result = (hours - com_g.hour) * HOUR_MS;
     result += (minutes * MINUTE_MS) - (com_g.minute * MINUTE_MS);
     return (result);
 }
 
-int  ft_time_sync(unsigned int preexam_time)
+int  time_sync(unsigned int preexam_time)
 {
     int minutes;
 
-    ft_watchdog_stop();
+    watchdog_stop();
+    DEBUG_PRINTF("\n[TIME_SYNC] Synchronizing time...\n");
     minutes = ceil(preexam_time / 1000);
     while (minutes % 10 != 0)
     {
@@ -136,7 +137,8 @@ int  ft_time_sync(unsigned int preexam_time)
         ft_delay(59990);
         minutes--;
     }
-    ft_watchdog_start();
+    watchdog_start();
+    DEBUG_PRINTF("[TIME_SYNC] Synchronization is complete.\n");
     return (minutes);
 }
  
