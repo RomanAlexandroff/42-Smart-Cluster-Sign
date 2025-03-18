@@ -60,6 +60,7 @@ static void  draw_exam_start_time(void)
     const int16_t  window_height PROGMEM = 40;
 
     watchdog_stop();
+    display.init(115200);                             // insures the display is still on
     text = "TODAY AT ";
     text += String(rtc_g.exam_start_hour);
     if (rtc_g.exam_start_minutes < 10)
@@ -98,7 +99,7 @@ static void draw_bitmap_partial_update(const unsigned char* image, uint16_t widt
         display.fillScreen(GxEPD_WHITE);
         display.drawBitmap(630, 0, image, width, height, GxEPD_BLACK);
     }
-    while (display.nextPage());
+    while (display.nextPage());   
     watchdog_start();
 }
 
@@ -193,7 +194,6 @@ void  display_cluster_number(IMAGE_t mode)
     {
         DEBUG_PRINTF("[THE DISPLAY] ...the exam time note\n");
         draw_bitmap_partial_update(reserve_note_img, 170, 480);
-        delay (7000);                                                 // experimentally derived
         draw_exam_start_time();
         display_cluster = false;
         displaying_now = EXAM_DAY;
