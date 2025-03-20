@@ -27,6 +27,8 @@ bool  unix_timestamp_decoder(uint8_t* p_day, uint8_t* p_month, uint16_t* p_year)
 int16_t  expiration_counter(void)
 {
     const int months_days[] = {MONTHS_DAYS};
+    int       current_month = com_g.month;
+    int       days_in_between = 0;
     uint8_t   expire_day;
     uint8_t   expire_month;
     uint16_t  expire_year;
@@ -41,7 +43,16 @@ int16_t  expiration_counter(void)
     if (expire_month == com_g.month)
         return (expire_day + year_correction - com_g.day);
     else
-        return (expire_day + year_correction + months_days[com_g.month - 1] - com_g.day);     //TO-DO: account for multiple months difference
+    {
+        while (current_month != expire_month - 1)
+        {
+            days_in_between += months_days[current_month - 1];
+            current_month++;
+            if (current_month > 12)
+                current_month = 1;
+        }
+        return (expire_day + year_correction + days_in_between + (months_days[com_g.month - 1] - com_g.day));
+    }
 }
 
 ERROR_t  get_time(void)
