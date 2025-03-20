@@ -78,7 +78,12 @@ ERROR_t  get_time(void)
     com_g.daylight_flag = time_info.tm_isdst;
     DEBUG_PRINTF("\n[SYSTEM TIME] Obtained time from the NTP server as follows:\n");
     if (com_g.daylight_flag)
+    {
+        com_g.hour -= 1;
+        if (com_g.hour < 0)
+            com_g.hour = 23;
         DEBUG_PRINTF("  --daylight saving time is ACTIVE (summer time)\n");
+    }
     else
         DEBUG_PRINTF("  --daylight saving time is INACTIVE (winter time)\n");
     DEBUG_PRINTF("  --hour:   %d\n", com_g.hour);
