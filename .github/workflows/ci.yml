@@ -44,7 +44,8 @@ jobs:
     - name: Cleanup on failure
       if: failure() && steps.compile_sketch.outcome == 'failure'
       run: |
-        echo "Failed to compile. The commit will be undone."
-        git reset --hard HEAD~1
-        git push --force
-        echo "Unstable commit has been removed."
+        echo "Failed to compile. This commit will be reverted."
+        git revert HEAD
+        git commit -m "Revert unstable commit"
+        git push
+        echo "Unstable commit has been reverted."
