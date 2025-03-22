@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      ARDUINO_BOARD: 'esp32:esp32:XIAO_ESP32C3'
+      SKETCH: 'src/src.ino'
+      CREDENTIALS_PATH: 'src/credentials-example.h'
+      LIBRARIES_PATH: 'libraries'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Arduino CLI
+      run: |
+        curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+        echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
+
+    - name: Configure Arduino CLI
+      run: |
+        arduino-cli core update-index
+        arduino-cli core install esp32:esp32
+
+    - name: Prepare Project
+      run: |
+        cp ${{ env.CREDENTIALS_PATH }} src/credentials.h
+
+    - name: Compile Sketch
+      id: compile_sketch
+      run: |
+        arduino-cli compile --fqbn ${{ env.ARDUINO_BOARD }} --libraries ${{ env.LIBRARIES_PATH }} --build-property build.partitions=min_spiffs --build-property upload.maximum_size=1966080 --verbose ${{ env.SKETCH }}
+
+    - name: Cleanup on failure
+      if: failure() && steps.compile_sketch.outcome == 'failure'
+      run: |
+        echo "Failed to compile. The commit will be undone."
+        git reset --hard HEAD~1
+        git push --force
+        echo "Unstable commit has been removed."
