@@ -90,13 +90,15 @@ ERROR_t  get_time(void)
     DEBUG_PRINTF("\n[SYSTEM TIME] Obtained time from the NTP server as follows:\n");
     if (com_g.daylight_flag)
     {
-        com_g.hour -= 1;
-        if (com_g.hour < 0)
-            com_g.hour = 23;
         DEBUG_PRINTF("  --daylight saving time is ACTIVE (summer time)\n");
     }
     else
+    {
         DEBUG_PRINTF("  --daylight saving time is INACTIVE (winter time)\n");
+        com_g.hour -= 1;
+        if (com_g.hour < 0)
+            com_g.hour = 23;
+    }
     DEBUG_PRINTF("  --hour:   %d\n", com_g.hour);
     DEBUG_PRINTF("  --minute: %d\n", com_g.minute);
     DEBUG_PRINTF("  --day:    %d\n", com_g.day);

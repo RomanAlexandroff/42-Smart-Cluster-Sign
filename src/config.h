@@ -48,7 +48,7 @@
 
 /* Battery config */
 # define BATTERY_CRITICAL       400
-# define BATTERY_GOOD           800
+# define BATTERY_GOOD           750
 # define BATTERY_SAMPLES_LIMIT  5
 
 #endif
