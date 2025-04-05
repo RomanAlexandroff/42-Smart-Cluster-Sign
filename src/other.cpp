@@ -39,9 +39,12 @@ void  go_to_sleep(uint64_t time_in_millis)
 */
 void  ft_delay(uint64_t time_in_millis)
 {
+    if (time_in_millis <= 1)
+    {
+        delay(time_in_millis);
+        return;
+    }
     watchdog_stop();
-    if (time_in_millis < MIN_SLEEP_LIMIT_MS)
-        time_in_millis = MIN_SLEEP_LIMIT_MS;
     if (time_in_millis > MAX_SLEEP_LIMIT_MS)
         time_in_millis = MAX_SLEEP_LIMIT_MS;
     esp_sleep_enable_timer_wakeup(time_in_millis * mS_TO_uS_FACTOR);
