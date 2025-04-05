@@ -6,6 +6,7 @@ credentials.*
 # This project unique files and folders
 Images
 Research Materials
+rtc_memory_test
 
 # macOS system files
 .DS_Store
