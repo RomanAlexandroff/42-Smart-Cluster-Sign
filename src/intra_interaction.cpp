@@ -53,6 +53,11 @@ static void  get_exam_time(String &server_response)
         i = server_response.indexOf("\"end_at\":\"");
         com_g.exam_end_hour = server_response.substring(i + 21, i + 23).toInt() + TIME_ZONE;
         com_g.exam_end_minutes = server_response.substring(i + 24, i + 26).toInt();
+        if (com_g.daylight_flag)
+        {
+            rtc_g.exam_start_hour += 1;
+            com_g.exam_end_hour += 1;
+        }
         DEBUG_PRINTF("\n[INTRA] EXAM STATUS: Exam information detected\n");
         DEBUG_PRINTF("-- Begins at %d:", rtc_g.exam_start_hour);
         DEBUG_PRINTF("%d0\n", rtc_g.exam_start_minutes);
