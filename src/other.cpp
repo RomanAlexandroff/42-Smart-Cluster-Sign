@@ -45,7 +45,11 @@ void  ft_delay(uint64_t time_in_millis)
     if (time_in_millis > MAX_SLEEP_LIMIT_MS)
         time_in_millis = MAX_SLEEP_LIMIT_MS;
     esp_sleep_enable_timer_wakeup(time_in_millis * mS_TO_uS_FACTOR);
-    esp_light_sleep_start();
+    if (esp_light_sleep_start() != ESP_OK)
+    {
+        DEBUG_PRINTF("\n[FT_DELAY] Light sleep fail. Delaying without sleep.\n");
+        delay(time_in_millis - 1);
+    }
     watchdog_start();
 }
 
@@ -100,9 +104,9 @@ void  serial_init(void)
         else
             day = String(com_g.day);
         virtual_exam = "[{\"begin_at\":\"";
-        virtual_exam += String(com_g.year) + "-" + month + "-" + day + "T14:00:00.000Z\",";           // Change begin time here. Mind the TIME_ZONE correction
+        virtual_exam += String(com_g.year) + "-" + month + "-" + day + "T20:00:00.000Z\",";           // Change begin time here. Mind the TIME_ZONE correction
         virtual_exam += "\"end_at\":\"";
-        virtual_exam += String(com_g.year) + "-" + month + "-" + day + "T17:00:00.000Z\",";           // Change end time here. Mind the TIME_ZONE correction
+        virtual_exam += String(com_g.year) + "-" + month + "-" + day + "T22:00:00.000Z\",";           // Change end time here. Mind the TIME_ZONE correction
         virtual_exam += "\"nbr_subscribers\":4,}]";
         DEBUG_PRINTF("\n\n[EXAM SIMULATION] ATTENTION! EXAM SIMULATION IS ACTIVE!\n");
         DEBUG_PRINTF("[EXAM SIMULATION] The following exam is just a simulation!\n");
