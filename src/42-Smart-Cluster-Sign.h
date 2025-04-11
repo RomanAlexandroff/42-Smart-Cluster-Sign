@@ -6,7 +6,7 @@
 /*   By: raleksan <r.aleksandroff@gmail.com>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/09 12:50:00 by raleksan          #+#    #+#             */
-/*   Updated: 2025/02/03 16:30:00 by raleksan         ###   ########.fr       */
+/*   Updated: 2025/04/11 16:30:00 by raleksan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,9 +59,9 @@ void            exam_mode(void);
 ERROR_t         secret_verification(String text);
 void            data_restore(const char* file_name);
 void            data_integrity_check(void);
-ERROR_t         write_spiffs_file(const char* file_name, char* input);
-ERROR_t         read_spiffs_file(const char* file_name, char* output);
-ERROR_t         spiffs_init(void);
+ERROR_t         write_to_file(const char* file_name, char* input);
+ERROR_t         read_from_file(const char* file_name, char* output);
+ERROR_t         file_sys_init(void);
 
 /* ota.h */
 inline void     ota_init(void) __attribute__((always_inline));

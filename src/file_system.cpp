@@ -6,7 +6,7 @@
 /*   By: raleksan <r.aleksandroff@gmail.com>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/09 13:02:00 by raleksan          #+#    #+#             */
-/*   Updated: 2024/11/27 13:40:00 by raleksan         ###   ########.fr       */
+/*   Updated: 2025/04/11 13:40:00 by raleksan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@ void data_restore(const char* file_name)
     watchdog_reset();
     if (strcmp(file_name, "/secret.txt") == 0)
     {
-        if (read_spiffs_file(file_name, rtc_g.Secret) == FS_OK)
+        if (read_from_file(file_name, rtc_g.Secret) == FS_OK)
             DEBUG_PRINTF("\n[FILE SYSTEM] Successfully restored data from %s.\n", file_name);
         else
             DEBUG_PRINTF("\n[FILE SYSTEM] Failed to restore data from %s!\n", file_name);
@@ -50,7 +50,7 @@ void data_restore(const char* file_name)
     }
     else if (strcmp(file_name, "/chat_id.txt") == 0)
     {
-        if (read_spiffs_file(file_name, rtc_g.chat_id) == FS_OK)
+        if (read_from_file(file_name, rtc_g.chat_id) == FS_OK)
             DEBUG_PRINTF("\n[FILE SYSTEM] Successfully restored data from %s.\n", file_name);
         else
             DEBUG_PRINTF("\n[FILE SYSTEM] Failed to restore data from %s!\n", file_name);
@@ -66,7 +66,7 @@ void  data_integrity_check(void)
     {
         DEBUG_PRINTF("\n[FILE SYSTEM] The secret.txt file does not exist. Creating...\n");
         char input[] = SECRET;
-        if (write_spiffs_file("/secret.txt", input) == FS_OK)
+        if (write_to_file("/secret.txt", input) == FS_OK)
             DEBUG_PRINTF("\n[FILE SYSTEM] secret.txt file has been created.\n");
         else
             DEBUG_PRINTF("\n[FILE SYSTEM] Failed to create the secret.txt file!\n");
@@ -75,7 +75,7 @@ void  data_integrity_check(void)
     {
         DEBUG_PRINTF("\n[FILE SYSTEM] The chat_id.txt file does not exist. Creating...\n");
         char input[] = "0000000000000";
-        if (write_spiffs_file("/chat_id.txt", input) == FS_OK)
+        if (write_to_file("/chat_id.txt", input) == FS_OK)
         {
             DEBUG_PRINTF("\n[FILE SYSTEM] chat_id.txt file has been created.\n");
             DEBUG_PRINTF("\n[FILE SYSTEM] To set chat_id write \"/status\" into the Telegram chat %s", BOT_NAME);
@@ -93,7 +93,7 @@ void  data_integrity_check(void)
     }
 }
 
-ERROR_t  write_spiffs_file(const char* file_name, char* input)
+ERROR_t  write_to_file(const char* file_name, char* input)
 {
     File  file;
     short i;
@@ -107,13 +107,13 @@ ERROR_t  write_spiffs_file(const char* file_name, char* input)
         file = LittleFS.open(file_name, "w");
         if (file)
             break;
-        DEBUG_PRINTF("[FILE SYSTEM] An error occurred while opening %s file for writing in LittleFS. Retrying.\n", file_name);
+        DEBUG_PRINTF("[FILE SYSTEM] An error occurred while opening %s file for writing in the File System. Retrying.\n", file_name);
         i++;
         delay(100);
     }
     if (!file)
     {
-        DEBUG_PRINTF("[FILE SYSTEM] Failed to open %s file for writing in LittleFS. Its dependant function will be unavailable during this programm cycle.\n", file_name);
+        DEBUG_PRINTF("[FILE SYSTEM] Failed to open %s file for writing in the File System. Its dependant function will be unavailable during this programm cycle.\n", file_name);
         return FS_OPEN_FAIL;
     }
     file.println(input);
@@ -121,7 +121,7 @@ ERROR_t  write_spiffs_file(const char* file_name, char* input)
     return FS_OK;
 }
 
-ERROR_t  read_spiffs_file(const char* file_name, char* output)
+ERROR_t  read_from_file(const char* file_name, char* output)
 {
     File    file;
     short   i;
@@ -136,13 +136,13 @@ ERROR_t  read_spiffs_file(const char* file_name, char* output)
         file = LittleFS.open(file_name, "r");
         if (file)
             break;
-        DEBUG_PRINTF("[FILE SYSTEM] An error occurred while opening %s file for reading in LittleFS. Retrying.\n", file_name);
+        DEBUG_PRINTF("[FILE SYSTEM] An error occurred while opening %s file for reading in the File System. Retrying.\n", file_name);
         i++;
         delay(100);
     }
     if (!file)
     {
-        DEBUG_PRINTF("[FILE SYSTEM] Failed to open %s file for reading in LittleFS. Its dependant function will be unavailable during this programm cycle.\n", file_name);
+        DEBUG_PRINTF("[FILE SYSTEM] Failed to open %s file for reading in the File System. Its dependant function will be unavailable during this programm cycle.\n", file_name);
         return FS_OPEN_FAIL;
     }  
     buffer = file.readStringUntil('\n');
@@ -154,7 +154,7 @@ ERROR_t  read_spiffs_file(const char* file_name, char* output)
     return FS_OK;
 }
 
-ERROR_t  spiffs_init(void)
+ERROR_t  file_sys_init(void)
 {
     short i;
 
@@ -162,16 +162,16 @@ ERROR_t  spiffs_init(void)
     watchdog_reset();
     if (!LittleFS.begin(true) && i < 5)
     {
-        DEBUG_PRINTF("\n[FILE SYSTEM] Failed to initialise SPIFFS. Retrying...\n");
+        DEBUG_PRINTF("\n[FILE SYSTEM] Failed to initialise the File System. Retrying...\n");
         ft_delay(500);
         i++;
     }
     else
     {
-        DEBUG_PRINTF("\n[FILE SYSTEM] SPIFFS is successfully initialised.\n");
+        DEBUG_PRINTF("\n[FILE SYSTEM] File System is successfully initialised.\n");
         return FS_OK;
     }
-    DEBUG_PRINTF("\n[FILE SYSTEM] SPIFFS was not initialised. Reading and Writing data is unavailable this session.\n");
+    DEBUG_PRINTF("\n[FILE SYSTEM] File System was not initialised. Reading and Writing data is unavailable this session.\n");
     return FS_INIT_FAIL;
 }
  

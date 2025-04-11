@@ -6,7 +6,7 @@
 /*   By: raleksan <r.aleksandroff@gmail.com>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/09 12:50:00 by raleksan          #+#    #+#             */
-/*   Updated: 2024/11/27 13:20:00 by raleksan         ###   ########.fr       */
+/*   Updated: 2025/04/11 13:20:00 by raleksan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@ void  setup(void)
     #ifdef DEBUG
         serial_init();
     #endif
-    spiffs_init();
+    file_sys_init();
     buttons_init();
     battery_init();
     power_down_recovery();

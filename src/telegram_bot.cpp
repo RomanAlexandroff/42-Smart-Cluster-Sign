@@ -6,12 +6,12 @@
 /*   By: raleksan <r.aleksandroff@gmail.com>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/09 13:02:56 by raleksan          #+#    #+#             */
-/*   Updated: 2024/11/27 14:00:00 by raleksan         ###   ########.fr       */
+/*   Updated: 2025/04/11 14:00:00 by raleksan         ###   ########.fr       */
 /*                                                                            */
 /*                                                                            */
 /*   These functions are for checking new Telegram messages, reading them     */
 /*   and reacting to them.                                                    */
-/*   WARNING! DO NOT CALL go_to_sleep(), ft_delay() or ESP.restart()          */
+/*   WARNING! DO NOT CALL go_to_sleep(), ft_delay() OR ESP.restart()          */
 /*   FROM THESE FUNCTIONS! THE DEVICE WILL BECOME UNRESPONSIVE TO ANY         */
 /*   MESSAGES FROM THE TELEGRAM CHAT! YOU MAY DO IT ONLY WHEN YOU ARE ABOUT   */
 /*   TO EXIT FROM telegram_check().                                           */
@@ -42,7 +42,7 @@ static void reply_machine(String text)
         if (check_result == FS_VALID_SECRET)
         {
             text.toCharArray(rtc_g.Secret, sizeof(rtc_g.Secret));
-            write_spiffs_file("/secret.txt", rtc_g.Secret);
+            write_to_file("/secret.txt", rtc_g.Secret);
             message = "Accepted!\nThe SECRET token has been renewed.\n\n";
             message += "Current token now is:\n" + String(rtc_g.Secret);
             bot.sendMessage(String(rtc_g.chat_id), message, "");
@@ -81,7 +81,7 @@ static void  sender_handling(uint8_t i)
         bot.sendMessage(String(rtc_g.chat_id), message, "");
     }
     id_buffer.toCharArray(rtc_g.chat_id, sizeof(rtc_g.chat_id));
-    write_spiffs_file("/chat_id.txt", rtc_g.chat_id);
+    write_to_file("/chat_id.txt", rtc_g.chat_id);
     name_buffer = bot.messages[i].from_name;
     name_buffer.toCharArray(rtc_g.from_name, sizeof(rtc_g.from_name));
 }
