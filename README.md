@@ -79,6 +79,7 @@ When contributing, please adhere to the existing code style and follow the estab
 - Logging error messages into a log file in the microcontroller's memory and the log file extraction mechanism;
 - The direct OTA implementation - the Sign itself creates a Wi-Fi access point that you can connect to and to update the firmware without the need of a Wi-Fi modem in the middle;
 - Replacing Telegram with Slack: refactoring all the Sign's Telegram functionality to work via Slack would allow integrating the Sign better into the 42 ecosystem as well as developing new functionality, e.g. notifying all the students about an upcomming exam.
+- Fine-tune the timing mechanisms — make the processor wake up slightly earlier and wait before beginning or continuing execution. Know RISC-V Assembly? You could get precision down to nanoseconds!
 
 The **Issues** tab of this repository may also be worth checking, as it might contain suggestions that have not yet made their way onto this list.
 
