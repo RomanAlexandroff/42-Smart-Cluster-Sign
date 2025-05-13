@@ -54,7 +54,7 @@ void  ft_delay(uint64_t time_in_millis)
         #ifdef DEBUG
             uint64_t debug_print_time_ms = ceil(52.0 * 10 / BAUD_RATE * 1000);
             if (time_in_millis > debug_print_time_ms)
-                time_in_millis -= debug_print_time_ms);
+                time_in_millis -= debug_print_time_ms;
             else
                 time_in_millis = 0;
         #endif
