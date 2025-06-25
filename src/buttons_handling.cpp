@@ -65,5 +65,8 @@ void  buttons_init(void)
     attachInterrupt(OTA_BUTTON, isr_ota, FALLING);
     pinMode(WARNING_BUTTON, INPUT_PULLUP);
     attachInterrupt(WARNING_BUTTON, isr_warning, FALLING);
+    /* parking unused pins */
+    pinMode(D3, INPUT_PULLDOWN);
+    pinMode(D9, INPUT_PULLDOWN);
 }
  
