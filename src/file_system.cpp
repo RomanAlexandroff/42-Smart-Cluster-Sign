@@ -156,22 +156,25 @@ ERROR_t  read_from_file(const char* file_name, char* output)
 
 ERROR_t  file_sys_init(void)
 {
-    short i;
+    short          i;
+    const uint16_t delay_length_ms = 500;
 
     i = 0;
     watchdog_reset();
-    if (!LittleFS.begin(true) && i < 5)
+    while (i < RETRIES_LIMIT && !LittleFS.begin(true))
     {
         DEBUG_PRINTF("\n[FILE SYSTEM] Failed to initialise the File System. Retrying...\n");
-        ft_delay(500);
+        ft_delay(delay_length_ms);
         i++;
     }
-    else
+    if (RETRIES_LIMIT * delay_length_ms >= WD_TIMEOUT_MS)
+        DEBUG_PRINTF("\n[FILE SYSTEM] Be adviced that the current time delay in file_sys_init() may trigger the Watchdog\n");
+    if (i >= RETRIES_LIMIT)
     {
-        DEBUG_PRINTF("\n[FILE SYSTEM] File System is successfully initialised.\n");
-        return FS_OK;
+        DEBUG_PRINTF("\n[FILE SYSTEM] File System was not initialised. Reading and Writing data is unavailable this session.\n");
+        return FS_INIT_FAIL;
     }
-    DEBUG_PRINTF("\n[FILE SYSTEM] File System was not initialised. Reading and Writing data is unavailable this session.\n");
-    return FS_INIT_FAIL;
+    DEBUG_PRINTF("\n[FILE SYSTEM] File System is successfully initialised.\n");
+    return FS_OK;
 }
  
