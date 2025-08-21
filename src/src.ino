@@ -12,6 +12,8 @@
 
 #include "42-Smart-Cluster-Sign.h"
 
+static void pathfinder(void);
+
 void  setup(void)
 {
     watchdog_init();
