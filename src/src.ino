@@ -43,8 +43,7 @@ static void  pathfinder(void)
     watchdog_reset();
     if (rtc_g.exam_status)
         exam_mode();
-    if (!rtc_g.exam_status)                         // do not change
-        cluster_number_mode(&sleep_length);
+    cluster_number_mode(&sleep_length);
     go_to_sleep(sleep_length);
     DEBUG_PRINTF("  ---- This message will never be printed out");
 }
