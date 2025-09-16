@@ -160,11 +160,13 @@ void  display_cluster_number(IMAGE_t mode)
     RTC_DATA_ATTR static IMAGE_t displaying_now;
 
     watchdog_reset();
+    /* DECIDE WHETHER TO DRAW ANYTHING AT ALL */ 
     if (display_cluster && mode == displaying_now)
     {
         DEBUG_PRINTF("\n[THE DISPLAY] Nothing new to draw. Drawing aborted\n\n");
         return;
     }
+    /* DECIDE WHETHER TO DRAW THE CLUSTER NUMBER PART OR NOT */
     if (!display_cluster)
     {
         DEBUG_PRINTF("\n[THE DISPLAY] Drawing the cluster number with...\n");
@@ -172,6 +174,7 @@ void  display_cluster_number(IMAGE_t mode)
         display_cluster = true;
         displaying_now = CLUSTER;
     }
+    /* DECIDE WHAT TO DRAW ON THE SIDE NOTE PART */
     if (mode == DEFAULT_IMG && (displaying_now != DEFAULT_IMG && displaying_now != LOW_BATTERY))
     {
         DEBUG_PRINTF("[THE DISPLAY] ...the default cluster icons\n");
