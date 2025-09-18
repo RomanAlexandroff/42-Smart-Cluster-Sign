@@ -83,10 +83,7 @@ void  exam_mode(void)
     if (preexam_time > 600000)
         preexam_warning(&preexam_time);
     if (preexam_time <= 600000 && preexam_time >= 25000)
-    {
         ft_delay(preexam_time - 25000);
-        preexam_time = 0;
-    }
     get_time();
     go_to_sleep(exam());
 }
