@@ -26,7 +26,6 @@ struct common_global_variables com_g = {
     .ota = false,
     .exam_end_hour = 0,
     .exam_end_minutes = 0,
-    .daylight_flag = false,
     .hour = 0,
     .minute = 0,
     .day = 0,

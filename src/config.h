@@ -35,8 +35,8 @@
 # define BAUD_RATE              115200                       // speed of the Serial communication
 # define WAKE_UP_HOURS          6, 9, 12, 15, 18, 21         // e.g. 15 means 15:00
 # define RETRIES_LIMIT          3                            // for getting time and exam info, file system operations
-# define TIME_ZONE              1                            // campus time zone according to the GMT standart
-
+# define TIME_ZONE              1                            // campus time zone according to GMT or UTC standart
+                                                                // Include "-" sign if applies. Do not include "+" sign.
 /* Time limits */
 # define CONNECT_TIMEOUT_S      5                            // wi-fi
 # define DEBOUNCE_DELAY_MS      1000ul                       // buttons

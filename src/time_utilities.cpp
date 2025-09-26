@@ -76,29 +76,12 @@ ERROR_t  get_time(void)
         DEBUG_PRINTF("\n[SYSTEM TIME] Failed to obtain time from the NTP server\n");
         return (TIME_NO_SERVER);
     }
-    if (time_info.tm_isdst < 0)
-    {
-        DEBUG_PRINTF("\n[SYSTEM TIME] Daylight Saving Time is not available\n");
-        return (TIME_NO_DST);
-    }
     com_g.hour = time_info.tm_hour;
     com_g.minute = time_info.tm_min;
     com_g.day = time_info.tm_mday;
     com_g.month = 1 + time_info.tm_mon;
     com_g.year = 1900 + time_info.tm_year;
-    com_g.daylight_flag = time_info.tm_isdst;
     DEBUG_PRINTF("\n[SYSTEM TIME] Obtained time from the NTP server as follows:\n");
-    if (com_g.daylight_flag)
-    {
-        DEBUG_PRINTF("  --daylight saving time is ACTIVE (summer time)\n");
-    }
-    else
-    {
-        DEBUG_PRINTF("  --daylight saving time is INACTIVE (winter time)\n");
-        com_g.hour -= 1;
-        if (com_g.hour < 0)
-            com_g.hour = 23;
-    }
     DEBUG_PRINTF("  --hour:   %d\n", com_g.hour);
     DEBUG_PRINTF("  --minute: %d\n", com_g.minute);
     DEBUG_PRINTF("  --day:    %d\n", com_g.day);

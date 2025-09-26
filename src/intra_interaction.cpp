@@ -42,22 +42,22 @@ static void  check_exam_subscribers(String &server_response)
 static void  get_exam_time(String &server_response)
 {
     int i;
+    int time_correction;                      // correction for Intra server time zone (UTC+1, Paris, France)
 
     i = 0;
     watchdog_reset();
+    if (TIME_ZONE > 0)
+        time_correction = TIME_ZONE - 1;
+    else
+        time_correction = TIME_ZONE + 1;
     while (i != NOT_FOUND)
     {
         i = server_response.indexOf("\"begin_at\":\"");
-        rtc_g.exam_start_hour = server_response.substring(i + 23, i + 25).toInt() + TIME_ZONE;
+        rtc_g.exam_start_hour = server_response.substring(i + 23, i + 25).toInt() + time_correction;
         rtc_g.exam_start_minutes = server_response.substring(i + 26, i + 28).toInt();
         i = server_response.indexOf("\"end_at\":\"");
-        com_g.exam_end_hour = server_response.substring(i + 21, i + 23).toInt() + TIME_ZONE;
+        com_g.exam_end_hour = server_response.substring(i + 21, i + 23).toInt() + time_correction;
         com_g.exam_end_minutes = server_response.substring(i + 24, i + 26).toInt();
-        if (com_g.daylight_flag)
-        {
-            rtc_g.exam_start_hour += 1;
-            com_g.exam_end_hour += 1;
-        }
         DEBUG_PRINTF("\n[INTRA] EXAM STATUS: Exam information detected\n");
         DEBUG_PRINTF("-- Begins at %d:", rtc_g.exam_start_hour);
         DEBUG_PRINTF("%d0\n", rtc_g.exam_start_minutes);

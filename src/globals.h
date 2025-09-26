@@ -51,7 +51,6 @@ struct common_global_variables {
     volatile bool          ota;
     uint8_t  exam_end_hour;
     uint8_t  exam_end_minutes;
-    bool     daylight_flag;
     uint8_t  hour;
     uint8_t  minute;
     uint8_t  day;
