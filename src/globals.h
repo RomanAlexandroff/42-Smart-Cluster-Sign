@@ -31,6 +31,7 @@ extern UniversalTelegramBot bot;
 /*
 *   RTC globals preserve their values
 *   over deep sleep. Others do not.
+*   DO NOT USE String OBJECTS HERE!!!
 */
 struct rtc_global_variables {
     time_t        secret_expiration;
