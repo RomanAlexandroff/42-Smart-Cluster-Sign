@@ -6,7 +6,7 @@
 /*   By: raleksan <r.aleksandroff@gmail.com>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/21 17:20:00 by raleksan          #+#    #+#             */
-/*   Updated: 2024/11/29 17:00:00 by raleksan         ###   ########.fr       */
+/*   Updated: 2025/10/14 18:00:00 by raleksan         ###   ########.fr       */
 /*                                                                            */
 /*                                                                            */
 /*   Creating Telegram messages from the Sign to the User.                    */
@@ -52,20 +52,6 @@ static String about_intra_server(String output)
     output += "you probably should notify them yourself.\n\n";
     output += "I will try to connect to Intra in a few hours. ";
     output += "If you do not get this message again, it means that I was successful.";
-    return (output);
-}
-
-static String about_time_daylight(String output)
-{
-    output += "I am writing to report an exceptional situation! Code: GET_TIME 104\n\n";
-    output += "After several retries, I was unable to get the Daylight Saving Time data. ";
-    output += "Without it my time calculations may be wrong by 1 whole hour. ";
-    output += "This is why I am unable to continue and currently displaying an error.\n\n";
-    output += "I understand that you can hardly do anything about it. ";
-    output += "I just wanted to let you know that now I cannot inform students about exams. ";
-    output += "So, if there is one today, you probably should notify them yourself.\n\n";
-    output += "I will try to get the Daylight Saving Time data in a few hours. ";
-    output += "If you do not receive this message again, it means that I was successful.";
     return (output);
 }
 
@@ -180,8 +166,6 @@ String  compose_message(int32_t subject, int16_t days_left)
         output = about_time_wifi(output);
     else if (subject == TIME_NO_SERVER)
         output = about_time_server(output);
-    else if (subject == TIME_NO_DST)
-        output = about_time_daylight(output);   
     else if (subject == INTRA_NO_SERVER)
         output = about_intra_server(output);
     else if (subject == INTRA_NO_TOKEN)
