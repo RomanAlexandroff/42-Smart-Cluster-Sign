@@ -55,6 +55,69 @@ int16_t  expiration_counter(void)
     }
 }
 
+
+// Zeller's congruence for weekday calculating
+static int is_weekday(int year, int month, int day)
+{
+    int k;          // year of the century
+    int j;          // century
+    int h;          // weekday result
+
+    if (month < 3)
+    {
+        month += 12;
+        year -= 1;
+    }
+    k = year % 100;
+    j = year / 100;
+    h = (day + 13 * (month + 1) / 5 + k + k / 4 + j / 4 + 5 * j) % 7;
+    return (h + 6) % 7;
+}
+
+static int last_sunday(int year, int month)
+{
+    int weekday;
+    int last_day = 31;
+
+    if (month == 4 || month == 6 || month == 9 || month == 11)
+        last_day = 30;
+    else if (month == 2)
+        last_day = 28;
+    weekday = is_weekday(year, month, last_day);
+    return (last_day - weekday);
+}
+
+int winter_summer_time_offset(int year, int month, int day, int hour)
+{
+    int start;
+    int end;
+
+    start = last_sunday(year, 3);   // March
+    end = last_sunday(year, 10);    // October
+    if (month < 3 || month > 10)
+        return (0);
+    if (month > 3 && month < 10)
+        return (1);
+    if (month == 3)
+    {
+        if (day > start)
+            return (1);
+        if (day < start)
+            return (0);
+        return (hour >= 1);
+    }
+    if (month == 10)
+    {
+        if (day < end)
+            return 1;
+        if (day > end)
+            return 0;
+        return (hour < 1);
+    }
+    return (0);
+}
+
+
 bool get_and_ensure_current_time(String server_response)
 {
     int     i;
@@ -94,7 +157,7 @@ bool get_and_ensure_current_time(String server_response)
         com_g.minute = 0;
         com_g.hour += 1;
     }
-    com_g.hour += TIME_ZONE;
+    com_g.hour += TIME_ZONE + winter_summer_time_offset(com_g.year, com_g.month, com_g.day, com_g.hour);
     if (com_g.hour >= 24)
     {
         com_g.hour -= 24;
