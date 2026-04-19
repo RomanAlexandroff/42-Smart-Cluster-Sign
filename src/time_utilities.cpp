@@ -26,7 +26,7 @@ bool  unix_timestamp_decoder(uint8_t* p_day, uint8_t* p_month, uint16_t* p_year)
 
 int16_t  expiration_counter(void)
 {
-    const int months_days[] = {MONTHS_DAYS};
+    const int months_days[12] = {MONTHS_DAYS};
     int       current_month = com_g.month;
     int       days_in_between = 0;
     uint8_t   expire_day;
@@ -55,39 +55,93 @@ int16_t  expiration_counter(void)
     }
 }
 
-ERROR_t  get_time(void)
+bool get_and_ensure_current_time(String server_response)
 {
-    const char* ntp_server PROGMEM = "pool.ntp.org";
-    const long  gmt_offset_sec = TIME_ZONE * 3600;
-    const int   daylight_offset_sec PROGMEM = 3600;
-    struct tm   time_info;
+    int     i;
+    int     seconds;
+    String  current_month;
+    int     month_days[12] = {MONTHS_DAYS};
+    String  month_names[13] = {
+        "-", "Jan", "Feb", "Mar", "Apr",
+        "May", "Jun", "Jul", "Aug",
+        "Sep", "Oct", "Nov", "Dec"
+    };
 
-    if (WiFi.status() != WL_CONNECTED)
-        wifi_connect();
-    if (WiFi.status() != WL_CONNECTED)
-    {
-        DEBUG_PRINTF("\n[SYSTEM TIME] Failed to obtain time due to Wi-Fi connection issues\n");
-        return (TIME_NO_WIFI);
-    }
     watchdog_reset();
-    configTime(gmt_offset_sec, daylight_offset_sec, ntp_server);
-    if(!getLocalTime(&time_info))
+    i = server_response.indexOf("date:");
+    if (i == NOT_FOUND)
     {
-        DEBUG_PRINTF("\n[SYSTEM TIME] Failed to obtain time from the NTP server\n");
-        return (TIME_NO_SERVER);
+        i = server_response.indexOf("Date:");
+        if (i == NOT_FOUND)
+        {
+            DEBUG_PRINTF("[SYSTEM TIME] Current time was not found in the server response\n\n");
+            return (false);
+        }
     }
-    com_g.hour = time_info.tm_hour;
-    com_g.minute = time_info.tm_min;
-    com_g.day = time_info.tm_mday;
-    com_g.month = 1 + time_info.tm_mon;
-    com_g.year = 1900 + time_info.tm_year;
-    DEBUG_PRINTF("\n[SYSTEM TIME] Obtained time from the NTP server as follows:\n");
+    com_g.day = server_response.substring(i + 11, i + 13).toInt();
+    current_month = server_response.substring(i + 14, i + 17);
+    com_g.month = 1;
+    while (com_g.month <= 12 && month_names[com_g.month] != current_month)
+        com_g.month++;
+    com_g.year = server_response.substring(i + 18, i + 22).toInt();
+    com_g.hour = server_response.substring(i + 23, i + 25).toInt();
+    com_g.minute = server_response.substring(i + 26, i + 28).toInt();
+    seconds = server_response.substring(i + 29, i + 31).toInt();
+    if (seconds > 25)
+        com_g.minute += 1;
+    if (com_g.minute == 60)
+    {
+        com_g.minute = 0;
+        com_g.hour += 1;
+    }
+    com_g.hour += TIME_ZONE;
+    if (com_g.hour >= 24)
+    {
+        com_g.hour -= 24;
+        com_g.day += 1;
+        if (com_g.day > month_days[com_g.month - 1])
+        {
+            com_g.day = 1;
+            com_g.month += 1;
+
+            if (com_g.month > 12)
+            {
+                com_g.month = 1;
+                com_g.year += 1;
+            }
+        }
+    }
+    else if (com_g.hour < 0)
+    {
+        com_g.hour += 24;
+        com_g.day -= 1;
+        if (com_g.day < 1)
+        {
+            com_g.month -= 1;
+            if (com_g.month < 1)
+            {
+                com_g.month = 12;
+                com_g.year += 1;
+            }
+            com_g.day = month_days[com_g.month - 1];
+        }
+    }
+    DEBUG_PRINTF("\n[SYSTEM TIME] Obtained time from the Intra server as follows:\n");
     DEBUG_PRINTF("  --hour:   %d\n", com_g.hour);
     DEBUG_PRINTF("  --minute: %d\n", com_g.minute);
     DEBUG_PRINTF("  --day:    %d\n", com_g.day);
     DEBUG_PRINTF("  --month:  %d\n", com_g.month);
     DEBUG_PRINTF("  --year:   %d\n\n", com_g.year);
-    return (TIME_OK);
+    if (com_g.day < 1 || com_g.day > 31
+      || com_g.year < 2000
+      || com_g.hour < 0 || com_g.hour > 23
+      || com_g.minute < 0 || com_g.minute > 59
+      || com_g.month < 1 || com_g.month > 12)
+    {
+        DEBUG_PRINTF("[SYSTEM TIME] Current time has incorrect values!\n\n");
+        return (false);
+    }
+    return (true);
 }
 
 unsigned int  time_till_wakeup(void)

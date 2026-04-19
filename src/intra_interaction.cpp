@@ -39,24 +39,20 @@ static void  check_exam_subscribers(String &server_response)
         DEBUG_PRINTF("\n[INTRA] %d subscribers detected. Continuing with the Exam mode.\n\n", subscribers);
 }
 
+
 static void  get_exam_time(String &server_response)
 {
     int i;
-    int time_correction;                      // correction for Intra server time zone (UTC+1, Paris, France)
 
     i = 0;
     watchdog_reset();
-    if (TIME_ZONE > 0)
-        time_correction = TIME_ZONE - 1;
-    else
-        time_correction = TIME_ZONE + 1;
     while (i != NOT_FOUND)
     {
         i = server_response.indexOf("\"begin_at\":\"");
-        rtc_g.exam_start_hour = server_response.substring(i + 23, i + 25).toInt() + time_correction;
+        rtc_g.exam_start_hour = server_response.substring(i + 23, i + 25).toInt() + TIME_ZONE;
         rtc_g.exam_start_minutes = server_response.substring(i + 26, i + 28).toInt();
         i = server_response.indexOf("\"end_at\":\"");
-        com_g.exam_end_hour = server_response.substring(i + 21, i + 23).toInt() + time_correction;
+        com_g.exam_end_hour = server_response.substring(i + 21, i + 23).toInt() + TIME_ZONE;
         com_g.exam_end_minutes = server_response.substring(i + 24, i + 26).toInt();
         DEBUG_PRINTF("\n[INTRA] EXAM STATUS: Exam information detected\n");
         DEBUG_PRINTF("-- Begins at %d:", rtc_g.exam_start_hour);
@@ -77,6 +73,7 @@ static void  get_exam_time(String &server_response)
     DEBUG_PRINTF("\n[INTRA] EXAM STATUS: All the detected exams have already passed.\n\n");
     rtc_g.exam_status = false;
 }
+
 
 static bool  handle_exams_info(void)
 {
@@ -117,6 +114,7 @@ static bool  handle_exams_info(void)
     return (true);
 }
 
+
 static void  request_exams_info(const char* server, String* token)
 {
     String  day;
@@ -151,6 +149,7 @@ static void  request_exams_info(const char* server, String* token)
     delay(SERVER_WAIT_MS);
 }
 
+
 static void get_secret_expiration(String server_response)
 {
     int      i;
@@ -176,6 +175,7 @@ static void get_secret_expiration(String server_response)
     }
 }
 
+
 static String get_token(String server_response)
 {
     int     i;
@@ -192,6 +192,7 @@ static String get_token(String server_response)
     DEBUG_PRINTF("\n[INTRA] Access Token has been extracted:\n%s\n", token.c_str());
     return (token);
 }
+
 
 static bool  handle_server_response(const char* server, String* token)
 {
@@ -218,9 +219,12 @@ static bool  handle_server_response(const char* server, String* token)
     *token = get_token(server_response);
     if (*token == "NOT_FOUND")
         return (false);
+    if (!get_and_ensure_current_time(server_response))
+        return (false);
     get_secret_expiration(server_response);
     return (true);
 }
+
 
 static void  access_server(const char* server)
 {
@@ -243,6 +247,7 @@ static void  access_server(const char* server)
     auth_request.clear();
 }
 
+
 static bool  intra_connect(const char* server)
 {
     if (WiFi.status() != WL_CONNECTED)
@@ -262,6 +267,7 @@ static bool  intra_connect(const char* server)
     }
     return (true);
 }
+
 
 ERROR_t fetch_exams(void)
 {

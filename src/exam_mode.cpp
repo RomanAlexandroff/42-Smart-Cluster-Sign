@@ -25,6 +25,7 @@ static unsigned int exam(void)
     return (exam_remaining_time);
 }
 
+
 /*
 *   Waits out until exam using light sleep.
 *   Drawing functions, time_sync and
@@ -65,17 +66,15 @@ static void preexam_warning(unsigned int* p_preexam_time)
 *   when it starts executing too early or too
 *   late due to any timing errors.
 *   
-*   Two calls to get time are not redundant.
+*   Two calls to fetch exams are not redundant.
 */
 void  exam_mode(void)
 {
     unsigned int  preexam_time;
 
-    preexam_time = 0;
     watchdog_reset();
     if (WiFi.status() != WL_CONNECTED)
         wifi_connect();
-    get_time();
     fetch_exams();
     if (!rtc_g.exam_status)
         return;
@@ -84,7 +83,7 @@ void  exam_mode(void)
         preexam_warning(&preexam_time);
     if (preexam_time <= 600000 && preexam_time >= 25000)
         ft_delay(preexam_time - 25000);
-    get_time();
+    fetch_exams();
     go_to_sleep(exam());
 }
  

@@ -23,6 +23,7 @@ static void report_exception(ERROR_t status)
     bot.sendMessage(String(rtc_g.chat_id), compose_message(status, 0), "");
 }
 
+
 static bool handle_secret_expiration(void)
 {
     int16_t  days_left;
@@ -73,48 +74,12 @@ static bool ensure_exams(unsigned int* p_sleep_length)
     return (true);
 }
 
-/*
-*   Makes sure to get actual time or
-*   display error and notify user.
-*   Since default time is 00:00, sleep
-*   length always calculates to 6 hours.
-*/
-static bool ensure_time(unsigned int* p_sleep_length)
-{
-    uint8_t retries;
-    ERROR_t time_status = UNKNOWN;
-    
-    retries = 0;    
-    while (time_status != TIME_OK && retries < RETRIES_LIMIT)
-    {
-        watchdog_stop();
-        delay (retries * 300000);
-        watchdog_start();
-        time_status = get_time();
-        retries++;
-        if (time_status != TIME_OK && retries != RETRIES_LIMIT)
-            DEBUG_PRINTF("\n[SYSTEM TIME] Retrying in %d minute(s)\n", retries * 5);
-        
-    }
-    if (time_status != TIME_OK)
-    {
-        display_cluster_number(INTRA_ERROR);
-        DEBUG_PRINTF("\n[SYSTEM TIME] ERROR OBTAINING TIME. Cannot proceed. Turning off\n");
-        report_exception(time_status);
-        rtc_g.exam_status = false;
-        *p_sleep_length = time_till_wakeup();
-        return (false);
-    }
-    return (true);
-}
 
 void  cluster_number_mode(unsigned int* p_sleep_length)
 {
     watchdog_reset();
     if (WiFi.status() != WL_CONNECTED)
         wifi_connect();
-    if (!ensure_time(p_sleep_length))
-        return;
     if (!ensure_exams(p_sleep_length))
         return;
     if (rtc_g.exam_status)
