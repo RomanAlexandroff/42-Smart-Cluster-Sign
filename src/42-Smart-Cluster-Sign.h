@@ -17,9 +17,10 @@
 # include <LittleFS.h>
 # include <WiFiUdp.h>
 # include <ESPmDNS.h>
-# include <ArduinoOTA.h> 
-# include <time.h>
-# include <stdio.h>
+# include <ArduinoOTA.h>
+# ifdef DEBUG
+    # include <stdio.h>
+# endif
 # include <stdint.h>
 # include <esp_system.h>
 # include <esp_sleep.h>

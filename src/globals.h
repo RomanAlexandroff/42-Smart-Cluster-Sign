@@ -34,7 +34,7 @@ extern UniversalTelegramBot bot;
 *   DO NOT USE String OBJECTS HERE!!!
 */
 struct rtc_global_variables {
-    time_t        secret_expiration;
+    uint32_t      secret_expiration;
     uint16_t      exam_start_hour;
     uint16_t      exam_start_minutes;
     bool          exam_status;

@@ -12,15 +12,49 @@
 
 #include "42-Smart-Cluster-Sign.h"
 
-bool  unix_timestamp_decoder(uint8_t* p_day, uint8_t* p_month, uint16_t* p_year)
+bool unix_timestamp_decoder(uint8_t* p_day, uint8_t* p_month, uint16_t* p_year)
 {
-    if (rtc_g.secret_expiration < 1000000000)
+    const uint32_t SECONDS_PER_DAY        = 86400UL;
+    const uint32_t DAYS_OFFSET_1970_TO_CE = 719468UL;
+    const uint32_t DAYS_PER_400_YEARS     = 146097UL;
+    const uint32_t DAYS_PER_100_YEARS     = 36524UL;
+    const uint32_t DAYS_PER_4_YEARS       = 1461UL;
+    const uint32_t DAYS_PER_YEAR          = 365UL;
+    const uint32_t DAYS_TO_MONTH_FACTOR   = 153UL;
+    const uint32_t MONTH_FACTOR           = 5UL;
+    const uint32_t MONTH_OFFSET           = 2UL;
+    const uint32_t MARCH_BASED_OFFSET     = 3UL;
+    const uint32_t JAN_FEB_OFFSET         = 9UL;
+    uint32_t       days_since_epoch;
+    int32_t        adjusted_days;
+    int32_t        era;
+    uint32_t       day_of_era;
+    uint32_t       year_of_era;
+    uint32_t       day_of_year;
+    uint32_t       month_param;
+    uint32_t       day;
+    uint32_t       month;
+    uint32_t       year;
+
+    if (rtc_g.secret_expiration < 1000000000UL)
         return (false);
     watchdog_reset();
-    struct tm* time_info = localtime(&rtc_g.secret_expiration);
-    *p_day = time_info->tm_mday;
-    *p_month = time_info->tm_mon + 1;
-    *p_year = time_info->tm_year + 1900;
+    days_since_epoch = rtc_g.secret_expiration / SECONDS_PER_DAY;
+    adjusted_days = days_since_epoch + DAYS_OFFSET_1970_TO_CE;
+    era = (adjusted_days >= 0 ? adjusted_days : adjusted_days - (DAYS_PER_400_YEARS - 1)) / DAYS_PER_400_YEARS;
+    day_of_era = adjusted_days - era * DAYS_PER_400_YEARS;
+    year_of_era = (day_of_era - day_of_era / (DAYS_PER_4_YEARS) + day_of_era
+        / (DAYS_PER_100_YEARS) - day_of_era
+        / (DAYS_PER_400_YEARS)) / DAYS_PER_YEAR;
+    year = year_of_era + era * 400;
+    day_of_year = day_of_era - (DAYS_PER_YEAR * year_of_era + year_of_era / 4 - year_of_era / 100);
+    month_param = (MONTH_FACTOR * day_of_year + MONTH_OFFSET) / DAYS_TO_MONTH_FACTOR;
+    day = day_of_year - (DAYS_TO_MONTH_FACTOR * month_param + MONTH_OFFSET) / MONTH_FACTOR + 1;
+    month = month_param + (month_param < 10 ? MARCH_BASED_OFFSET : -JAN_FEB_OFFSET);
+    year += (month <= 2);
+    *p_day   = (uint8_t)day;
+    *p_month = (uint8_t)month;
+    *p_year  = (uint16_t)year;
     return (true);
 }
 
@@ -131,10 +165,10 @@ bool get_and_ensure_current_time(String server_response)
     };
 
     watchdog_reset();
-    i = server_response.indexOf("date:");
+    i = server_response.indexOf("Date:");
     if (i == NOT_FOUND)
     {
-        i = server_response.indexOf("Date:");
+        i = server_response.indexOf("date:");
         if (i == NOT_FOUND)
         {
             DEBUG_PRINTF("[SYSTEM TIME] Current time was not found in the server response\n\n");
@@ -196,7 +230,7 @@ bool get_and_ensure_current_time(String server_response)
     DEBUG_PRINTF("  --month:  %d\n", com_g.month);
     DEBUG_PRINTF("  --year:   %d\n\n", com_g.year);
     if (com_g.day < 1 || com_g.day > 31
-      || com_g.year < 2000
+      || com_g.year < 2000 || com_g.year > 9999
       || com_g.hour < 0 || com_g.hour > 23
       || com_g.minute < 0 || com_g.minute > 59
       || com_g.month < 1 || com_g.month > 12)
