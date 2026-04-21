@@ -166,7 +166,7 @@ static void get_secret_expiration(String server_response)
     else
     {
         rtc_g.secret_expiration = server_response.substring(i + 21, i + 31).toInt();
-        DEBUG_PRINTF("[INTRA] The secret expires on %lld (UNIX timestamp format)\n", rtc_g.secret_expiration);
+        DEBUG_PRINTF("[INTRA] The secret expires on %lu (UNIX timestamp format)\n", rtc_g.secret_expiration);
         if (unix_timestamp_decoder(&expire_day, &expire_month, &expire_year))
         {
             DEBUG_PRINTF("[INTRA] The secret expires on %d.", expire_day);
