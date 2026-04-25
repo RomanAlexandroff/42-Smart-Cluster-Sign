@@ -92,7 +92,8 @@ This project is a group effort of various 42 students with support from the 42 P
 - **cgray**, 42 Prague — hardware development. Modeled beautiful and functional inner frame for the electronics,
 - **phelebra**, 42 Prague — 3D printing. Turned 3D model into high-quality pieces of hardware.
 - **arosado-**, 42 Lisboa — 42 API expert. Tought how to get the data from the 42 servers,
-- **jrathelo**, 42 Nice — memory wizard. Helped resolve the microcontroller's RAM overflow.
+- **jrathelo**, 42 Nice — memory wizard. Helped resolve the microcontroller's RAM overflow,
+- **psimcak**, 42 Prague — support master. Keeps the 42 Prague's Sign up and running, improved the Sign's reliability multiple times.
 
 The project is based on Jean-Marc Zingg's [GxEPD2](https://github.com/ZinggJM/GxEPD2) library for e-paper displays.
 The project uses the [ArduinoOTA](https://github.com/jandrassy/ArduinoOTA) library by Juraj Andrassy for the Over-The-Air software update functionality.
