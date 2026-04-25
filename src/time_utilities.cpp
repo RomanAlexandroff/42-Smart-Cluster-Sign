@@ -41,7 +41,10 @@ bool unix_timestamp_decoder(uint8_t* p_day, uint8_t* p_month, uint16_t* p_year)
     watchdog_reset();
     days_since_epoch = rtc_g.secret_expiration / SECONDS_PER_DAY;
     adjusted_days = days_since_epoch + DAYS_OFFSET_1970_TO_CE;
-    era = (adjusted_days >= 0 ? adjusted_days : adjusted_days - (DAYS_PER_400_YEARS - 1)) / DAYS_PER_400_YEARS;
+    if (adjusted_days >= 0)
+        era = adjusted_days / DAYS_PER_400_YEARS;
+    else
+        era = (adjusted_days - (DAYS_PER_400_YEARS - 1)) / DAYS_PER_400_YEARS;
     day_of_era = adjusted_days - era * DAYS_PER_400_YEARS;
     year_of_era = (day_of_era - day_of_era / (DAYS_PER_4_YEARS) + day_of_era
         / (DAYS_PER_100_YEARS) - day_of_era
@@ -50,8 +53,12 @@ bool unix_timestamp_decoder(uint8_t* p_day, uint8_t* p_month, uint16_t* p_year)
     day_of_year = day_of_era - (DAYS_PER_YEAR * year_of_era + year_of_era / 4 - year_of_era / 100);
     month_param = (MONTH_FACTOR * day_of_year + MONTH_OFFSET) / DAYS_TO_MONTH_FACTOR;
     day = day_of_year - (DAYS_TO_MONTH_FACTOR * month_param + MONTH_OFFSET) / MONTH_FACTOR + 1;
-    month = month_param + (month_param < 10 ? MARCH_BASED_OFFSET : -JAN_FEB_OFFSET);
-    year += (month <= 2);
+    if (month_param < 10)
+        month = month_param + MARCH_BASED_OFFSET;
+    else
+        month = month_param - JAN_FEB_OFFSET;
+    if (month <= 2)
+        year += 1;
     *p_day   = (uint8_t)day;
     *p_month = (uint8_t)month;
     *p_year  = (uint16_t)year;
@@ -89,8 +96,10 @@ int16_t  expiration_counter(void)
     }
 }
 
-
-// Zeller's congruence for weekday calculating
+/*
+*   Helper function for winter_summer_time_offset().
+*   Uses Zeller's congruence for calculating weekdays.
+*/
 static int is_weekday(int year, int month, int day)
 {
     int k;          // year of the century
@@ -105,9 +114,12 @@ static int is_weekday(int year, int month, int day)
     k = year % 100;
     j = year / 100;
     h = (day + 13 * (month + 1) / 5 + k + k / 4 + j / 4 + 5 * j) % 7;
-    return (h + 6) % 7;
+    return ((h + 6) % 7);
 }
 
+/*
+*   Helper function for winter_summer_time_offset()
+*/
 static int last_sunday(int year, int month)
 {
     int weekday;
@@ -151,7 +163,18 @@ int winter_summer_time_offset(int year, int month, int day, int hour)
     return (0);
 }
 
-
+/*
+*   This function extracts day of the month, month name,
+*   year, hours, minutes and seconds from an Intra server
+*   response. Then it converts the month name into month
+*   number, rounds seconds up into minutes, adjusts hours
+*   to the Time Zone and winter/summer time. The function
+*   handles overflows and underflows of minutes, hours,
+*   days and months. The final result gets outputed into
+*   the Serial monitor. The function checks the final
+*   result for correctness. The function returns False
+*   in case anything of the above goes wrong.
+*/
 bool get_and_ensure_current_time(String server_response)
 {
     int     i;
@@ -241,6 +264,7 @@ bool get_and_ensure_current_time(String server_response)
     return (true);
 }
 
+
 unsigned int  time_till_wakeup(void)
 {
     const uint8_t wakeup_hour[] = {WAKE_UP_HOURS};
@@ -269,6 +293,7 @@ unsigned int  time_till_event(int8_t hours, uint8_t minutes)
     result += (minutes * MINUTE_MS) - (com_g.minute * MINUTE_MS);
     return (result);
 }
+
 
 int  time_sync(unsigned int preexam_time)
 {
