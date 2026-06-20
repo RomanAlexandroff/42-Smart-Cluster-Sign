@@ -1,0 +1,27 @@
+{
+	"project": "42-Smart-Cluster-Sign",
+	"hardware": "seeed_xiao_esp32c3",
+	"default": {
+		"version": "4.33",
+		"url": "https://github.com/RomanAlexandroff/your-repo/releases/download/v4.33/firmware-v4.33.bin",
+		"sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		"size": 1512345,
+		"enabled": true
+	},
+	"devices": {
+		"A8B61F123456": {
+		"version": "4.34",
+		"url": "https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/releases/download/v4.34/firmware-xiao-esp32c3-v4.34.bin",
+		"sha256": "fb5b098f60656bc0a8fadae3218f007e9d9613c45d529e6ad5501bdd076f13db",
+		"size": 1683808,
+		"enabled": false
+		},
+		"TESTING_STAND_001": {
+		"version": "4.34",
+		"url": "https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/releases/download/v4.34/firmware-xiao-esp32c3-v4.34.bin",
+		"sha256": "fb5b098f60656bc0a8fadae3218f007e9d9613c45d529e6ad5501bdd076f13db",
+		"size": 1683808,
+		"enabled": true
+		}
+	}
+}

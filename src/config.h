@@ -17,7 +17,7 @@
 #ifndef CONFIG_H
 # define CONFIG_H
 
-# define SOFTWARE_VERSION       4.33
+# define SOFTWARE_VERSION       4.34
 # define DEVICE_NAME            "42 Prague Smart Sign"
 
 # define DEBUG                                               // comment out this line to turn off Serial output
