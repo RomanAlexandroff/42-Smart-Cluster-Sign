@@ -15,9 +15,10 @@
 
 # include <Arduino.h>
 # include <LittleFS.h>
-# include <WiFiUdp.h>
-# include <ESPmDNS.h>
-# include <ArduinoOTA.h>
+# include <HTTPClient.h>            // new library for cloud pull OTA update
+# include <Update.h>                // new library for cloud pull OTA update
+# include <ArduinoJson.h>           // new library for cloud pull OTA update
+# include <mbedtls/sha256.h>        // new library for cloud pull OTA update
 # ifdef DEBUG
     # include <stdio.h>
 # endif
@@ -64,9 +65,8 @@ ERROR_t         write_to_file(const char* file_name, char* input);
 ERROR_t         read_from_file(const char* file_name, char* output);
 ERROR_t         file_sys_init(void);
 
-/* ota.h */
-inline void     ota_init(void) __attribute__((always_inline));
-inline void     ota_waiting_loop(void) __attribute__((always_inline));
+/* ota.cpp */
+void ota_handling(void);
 
 /* other.cpp */
 void            go_to_sleep(uint64_t time_in_millis);
@@ -100,8 +100,6 @@ void IRAM_ATTR  watchdog_start(void);
 void IRAM_ATTR  watchdog_reset(void);
 void IRAM_ATTR  watchdog_stop(void);
 void            watchdog_init(void);
-
-# include "ota.h"                                                   // has to be here
 
 #endif
  

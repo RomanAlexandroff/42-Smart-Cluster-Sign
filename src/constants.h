@@ -53,6 +53,31 @@
 # define MAX_DISPLAY_BUFFER_SIZE 96124ul
 # define MAX_HEIGHT(EPD)         (EPD::HEIGHT <= (MAX_DISPLAY_BUFFER_SIZE / 2) / (EPD::WIDTH / 8) ? EPD::HEIGHT : (MAX_DISPLAY_BUFFER_SIZE / 2) / (EPD::WIDTH / 8))
 
+/* Cloud pull OTA update */
+# define OTA_MANIFEST_URL        "https://raw.githubusercontent.com/RomanAlexandroff/42-Smart-Cluster-Sign/cloud_pull_ota_update_feature/ota/manifest.json"
+# define OTA_PROJECT_NAME        "42-Smart-Cluster-Sign"
+# define OTA_HARDWARE_NAME       "seeed_xiao_esp32c3"
+# define OTA_TEST_DEVICE_ID      "TESTING_STAND_001"
+# define OTA_HTTP_TIMEOUT_MS     15000
+# define OTA_BUFFER_SIZE         1024
+
+typedef enum e_ota_result
+{
+    OTA_RESULT_NO_UPDATE = 0,
+    OTA_RESULT_UPDATED_REBOOTING = 1,
+    OTA_RESULT_ERR_WIFI = -1,
+    OTA_RESULT_ERR_MANIFEST_DOWNLOAD = -2,
+    OTA_RESULT_ERR_MANIFEST_PARSE = -3,
+    OTA_RESULT_ERR_MANIFEST_INVALID = -4,
+    OTA_RESULT_ERR_DISABLED = -5,
+    OTA_RESULT_ERR_NOT_ENOUGH_SPACE = -6,
+    OTA_RESULT_ERR_FIRMWARE_DOWNLOAD = -7,
+    OTA_RESULT_ERR_UPDATE_BEGIN = -8,
+    OTA_RESULT_ERR_UPDATE_WRITE = -9,
+    OTA_RESULT_ERR_UPDATE_END = -10,
+    OTA_RESULT_ERR_SHA256 = -11
+}   OTA_RESULT_t;
+
 /* Images constants */
 typedef enum {
     CLUSTER = 1000,

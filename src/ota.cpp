@@ -1,0 +1,468 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ota.cpp                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: raleksan <r.aleksandroff@gmail.com>        +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/05/19 12:50:00 by raleksan          #+#    #+#             */
+/*   Updated: 2026/06/20 17:20:00 by raleksan         ###   ########.fr       */
+/*                                                                            */
+/*   Cloud pull OTA implementation using GitHub manifest + GitHub Releases    */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "42-Smart-Cluster-Sign.h"
+
+
+static String ota_get_current_version_string(void)
+{
+    return String(SOFTWARE_VERSION, 2);
+}
+
+
+static uint32_t ota_version_to_code(const String& version)
+{
+    int dot;
+    uint32_t major;
+    uint32_t minor;
+
+    dot = version.indexOf('.');
+    if (dot < 0)
+        return version.toInt() * 100;
+    major = version.substring(0, dot).toInt();
+    minor = version.substring(dot + 1).toInt();
+    return major * 100 + minor;
+}
+
+
+static String ota_get_chip_id(void)
+{
+    uint64_t    mac;
+    char        id[13];
+
+    mac = ESP.getEfuseMac();
+    snprintf(id, sizeof(id), "%04X%08X", (uint16_t)(mac >> 32), (uint32_t)mac);
+    return String(id);
+}
+
+
+static String ota_get_device_id(void)
+{
+    /*
+     * First OTA test:
+     * Use the ID already enabled in your manifest.
+     */
+    return String(OTA_TEST_DEVICE_ID);
+
+    /*
+     * Later:
+     * 1. Uncomment this.
+     * 2. Print/send the ID once.
+     * 3. Put that ID into manifest.json.
+     */
+    // return ota_get_chip_id();
+}
+
+
+static void ota_send_telegram(const String& message)
+{
+    if (strlen(rtc_g.chat_id) > 0)
+        bot.sendMessage(String(rtc_g.chat_id), message, "");
+}
+
+
+static bool ota_ensure_wifi(void)
+{
+    if (WiFi.status() == WL_CONNECTED)
+        return true;
+    wifi_connect();
+    return (WiFi.status() == WL_CONNECTED);
+}
+
+
+static bool ota_download_text(const char* url, String& output)
+{
+    WiFiClientSecure client;
+    HTTPClient       http;
+    int              code;
+
+    output = "";
+
+    /*
+     * setInsecure() still uses HTTPS encryption, but it does NOT validate
+     * GitHub's certificate chain. For the university project first pass,
+     * this is acceptable together with SHA-256 firmware verification.
+     *
+     * Later, you can replace this with client.setCACert(...).
+     */
+    client.setInsecure();
+    http.setTimeout(OTA_HTTP_TIMEOUT_MS);
+    http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+    if (!http.begin(client, url))
+        return false;
+    code = http.GET();
+    if (code != HTTP_CODE_OK)
+    {
+        DEBUG_PRINTF("[OTA] HTTP GET failed, code: %d\n", code);
+        http.end();
+        return false;
+    }
+    output = http.getString();
+    http.end();
+    return (output.length() > 0);
+}
+
+
+static bool ota_manifest_target_from_variant(JsonVariant variant, OTA_TARGET_t& target, bool device_specific)
+{
+    const char* version;
+    const char* url;
+    const char* sha256;
+
+    if (variant.isNull())
+        return false;
+    version = variant["version"] | "";
+    url = variant["url"] | "";
+    sha256 = variant["sha256"] | "";
+    target.version = String(version);
+    target.url = String(url);
+    target.sha256 = String(sha256);
+    target.size = variant["size"] | 0;
+    target.enabled = variant["enabled"] | false;
+    target.device_specific = device_specific;
+    if (target.version.length() == 0)
+        return false;
+    if (target.url.length() == 0)
+        return false;
+    if (target.sha256.length() != 64)
+        return false;
+    if (target.size == 0)
+        return false;
+    return true;
+}
+
+
+static bool ota_parse_manifest(const String& manifest_json, const String& device_id, OTA_TARGET_t& target)
+{
+    StaticJsonDocument<4096> doc;
+    DeserializationError     error;
+    const char*              project;
+    const char*              hardware;
+    JsonVariant              selected;
+
+    error = deserializeJson(doc, manifest_json);
+    if (error)
+    {
+        DEBUG_PRINTF("[OTA] JSON parse error: %s\n", error.c_str());
+        return false;
+    }
+    project = doc["project"] | "";
+    hardware = doc["hardware"] | "";
+    if (String(project) != OTA_PROJECT_NAME)
+    {
+        DEBUG_PRINTF("[OTA] Manifest project mismatch: %s\n", project);
+        return false;
+    }
+    if (String(hardware) != OTA_HARDWARE_NAME)
+    {
+        DEBUG_PRINTF("[OTA] Manifest hardware mismatch: %s\n", hardware);
+        return false;
+    }
+    selected = doc["devices"][device_id];
+    if (!selected.isNull())
+    {
+        DEBUG_PRINTF("[OTA] Device-specific manifest entry found\n");
+        return ota_manifest_target_from_variant(selected, target, true);
+    }
+    DEBUG_PRINTF("[OTA] No device-specific entry, using default\n");
+    selected = doc["default"];
+    return ota_manifest_target_from_variant(selected, target, false);
+}
+
+
+static void ota_sha256_to_hex(const uint8_t hash[32], char output[65])
+{
+    static const char* hex = "0123456789abcdef";
+    uint8_t           i;
+
+    i = 0;
+    while (i < 32)
+    {
+        output[i * 2] = hex[(hash[i] >> 4) & 0x0F];
+        output[i * 2 + 1] = hex[hash[i] & 0x0F];
+        i++;
+    }
+    output[64] = '\0';
+}
+
+
+static bool ota_download_and_flash(const OTA_TARGET_t& target)
+{
+    WiFiClientSecure       client;
+    HTTPClient             http;
+    WiFiClient*            stream;
+    int                    code;
+    int                    content_length;
+    uint8_t                buffer[OTA_BUFFER_SIZE];
+    size_t                 available;
+    int                    read_bytes;
+    size_t                 written;
+    mbedtls_sha256_context sha_ctx;
+    uint8_t                sha_result[32];
+    char                   sha_hex[65];
+
+    client.setInsecure();
+    http.setTimeout(OTA_HTTP_TIMEOUT_MS);
+    http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+    DEBUG_PRINTF("[OTA] Firmware URL: %s\n", target.url.c_str());
+    if (!http.begin(client, target.url))
+    {
+        DEBUG_PRINTF("[OTA] Failed to begin firmware HTTP request\n");
+        return false;
+    }
+    code = http.GET();
+    if (code != HTTP_CODE_OK)
+    {
+        DEBUG_PRINTF("[OTA] Firmware HTTP GET failed, code: %d\n", code);
+        http.end();
+        return false;
+    }
+    content_length = http.getSize();
+    DEBUG_PRINTF("[OTA] Manifest firmware size: %u\n", target.size);
+    DEBUG_PRINTF("[OTA] HTTP content length: %d\n", content_length);
+    DEBUG_PRINTF("[OTA] Free sketch space: %u\n", ESP.getFreeSketchSpace());
+    if (content_length > 0 && (uint32_t)content_length != target.size)
+    {
+        DEBUG_PRINTF("[OTA] Size mismatch between manifest and HTTP header\n");
+        http.end();
+        return false;
+    }
+    if (target.size > ESP.getFreeSketchSpace())
+    {
+        DEBUG_PRINTF("[OTA] Not enough OTA space\n");
+        http.end();
+        return false;
+    }
+    if (!Update.begin(target.size))
+    {
+        DEBUG_PRINTF("[OTA] Update.begin() failed. Error: %s\n",
+            Update.errorString());
+        http.end();
+        return false;
+    }
+    mbedtls_sha256_init(&sha_ctx);
+    mbedtls_sha256_starts(&sha_ctx, 0);
+    stream = http.getStreamPtr();
+    written = 0;
+    while (http.connected() && written < target.size)
+    {
+        watchdog_reset();
+        available = stream->available();
+        if (available == 0)
+        {
+            delay(1);
+            continue;
+        }
+        if (available > OTA_BUFFER_SIZE)
+            available = OTA_BUFFER_SIZE;
+        if (available > target.size - written)
+            available = target.size - written;
+
+        read_bytes = stream->readBytes(buffer, available);
+        if (read_bytes <= 0)
+        {
+            DEBUG_PRINTF("[OTA] Stream read failed\n");
+            Update.abort();
+            http.end();
+            mbedtls_sha256_free(&sha_ctx);
+            return false;
+        }
+        mbedtls_sha256_update(&sha_ctx, buffer, read_bytes);
+        if (Update.write(buffer, read_bytes) != (size_t)read_bytes)
+        {
+            DEBUG_PRINTF("[OTA] Update.write() failed. Error: %s\n",
+                Update.errorString());
+            Update.abort();
+            http.end();
+            mbedtls_sha256_free(&sha_ctx);
+            return false;
+        }
+        written += read_bytes;
+        DEBUG_PRINTF("[OTA] Written %u / %u bytes\n",
+            (unsigned int)written,
+            (unsigned int)target.size);
+    }
+    http.end();
+    mbedtls_sha256_finish(&sha_ctx, sha_result);
+    mbedtls_sha256_free(&sha_ctx);
+    ota_sha256_to_hex(sha_result, sha_hex);
+    DEBUG_PRINTF("[OTA] Expected SHA-256: %s\n", target.sha256.c_str());
+    DEBUG_PRINTF("[OTA] Actual SHA-256:   %s\n", sha_hex);
+    if (!target.sha256.equalsIgnoreCase(String(sha_hex)))
+    {
+        DEBUG_PRINTF("[OTA] SHA-256 mismatch\n");
+        Update.abort();
+        return false;
+    }
+    if (written != target.size)
+    {
+        DEBUG_PRINTF("[OTA] Written size mismatch\n");
+        Update.abort();
+        return false;
+    }
+    if (!Update.end(true))
+    {
+        DEBUG_PRINTF("[OTA] Update.end() failed. Error: %s\n",
+            Update.errorString());
+        return (false);
+    }
+    if (!Update.isFinished())
+    {
+        DEBUG_PRINTF("[OTA] Update not finished\n");
+        return (false);
+    }
+    return (true);
+}
+
+
+static OTA_RESULT_t ota_check_and_update(void)
+{
+    String          manifest_json;
+    String          device_id;
+    String          current_version;
+    OTA_TARGET_t    target;
+    uint32_t        current_code;
+    uint32_t        target_code;
+
+    DEBUG_PRINTF("\n[OTA] Cloud pull OTA started\n");
+    if (!ota_ensure_wifi())
+    {
+        DEBUG_PRINTF("[OTA] Wi-Fi unavailable\n");
+        return OTA_RESULT_ERR_WIFI;
+    }
+    watchdog_reset();
+    device_id = ota_get_device_id();
+    current_version = ota_get_current_version_string();
+    DEBUG_PRINTF("[OTA] Device ID: %s\n", device_id.c_str());
+    DEBUG_PRINTF("[OTA] Current firmware version: %s\n",
+        current_version.c_str());
+    if (!ota_download_text(OTA_MANIFEST_URL, manifest_json))
+    {
+        DEBUG_PRINTF("[OTA] Failed to download manifest\n");
+        return OTA_RESULT_ERR_MANIFEST_DOWNLOAD;
+    }
+    DEBUG_PRINTF("[OTA] Manifest downloaded, %u bytes\n",
+        (unsigned int)manifest_json.length());
+    if (!ota_parse_manifest(manifest_json, device_id, target))
+    {
+        DEBUG_PRINTF("[OTA] Failed to parse/select manifest target\n");
+        return OTA_RESULT_ERR_MANIFEST_PARSE;
+    }
+    DEBUG_PRINTF("[OTA] Target version: %s\n", target.version.c_str());
+    DEBUG_PRINTF("[OTA] Target enabled: %s\n",
+        target.enabled ? "true" : "false");
+    DEBUG_PRINTF("[OTA] Device-specific: %s\n",
+        target.device_specific ? "true" : "false");
+    if (!target.enabled)
+    {
+        DEBUG_PRINTF("[OTA] Selected update entry is disabled\n");
+        return OTA_RESULT_ERR_DISABLED;
+    }
+    current_code = ota_version_to_code(current_version);
+    target_code = ota_version_to_code(target.version);
+    DEBUG_PRINTF("[OTA] Current version code: %u\n", current_code);
+    DEBUG_PRINTF("[OTA] Target version code: %u\n", target_code);
+    if (target_code <= current_code)
+    {
+        DEBUG_PRINTF("[OTA] No update needed\n");
+        return OTA_RESULT_NO_UPDATE;
+    }
+    if (target.size > ESP.getFreeSketchSpace())
+    {
+        DEBUG_PRINTF("[OTA] Firmware too large for OTA partition\n");
+        return OTA_RESULT_ERR_NOT_ENOUGH_SPACE;
+    }
+    ota_send_telegram("OTA update found. Downloading firmware...");
+    display_cluster_number(OTA_WAITING);
+    watchdog_stop();
+    if (!ota_download_and_flash(target))
+    {
+        watchdog_start();
+        display_cluster_number(OTA_FAIL);
+        ota_send_telegram("OTA update failed.");
+        ft_delay(3000);
+        clear_display();
+        return OTA_RESULT_ERR_FIRMWARE_DOWNLOAD;
+    }
+    display_cluster_number(OTA_SUCCESS);
+    ota_send_telegram("OTA update installed. Rebooting...");
+    delay(3000);
+    ESP.restart();
+    return (OTA_RESULT_UPDATED_REBOOTING);
+}
+
+
+static bool ota_is_scheduled_day(void)
+{
+    uint8_t     day;
+    uint8_t     month;
+    uint16_t    year;
+
+    /*
+     * This assumes your RTC/time restoration logic already makes
+     * unix_timestamp_decoder() usable here.
+     */
+    if (!unix_timestamp_decoder(&day, &month, &year))
+        return false;
+
+    return (day == 3 || day == 11 || day == 19 || day == 27);
+}
+
+
+static bool ota_is_scheduled_time(void)
+{
+    struct tm timeinfo;
+
+    if (!getLocalTime(&timeinfo, 1000))
+        return false;
+
+    if (timeinfo.tm_hour >= 12)
+        return false;
+    return (ota_is_scheduled_day());
+}
+
+
+static void ota_run_if_needed(bool manual_trigger)
+{
+    static int  ota_checked_day = -1;
+    struct tm   timeinfo;
+    bool        scheduled_trigger;
+
+    scheduled_trigger = false;
+    if (com_g.hour < 12 && (com_g.day == 3 || com_g.day == 11 || com_g.day == 19 || com_g.day == 27))
+    {
+        scheduled_trigger = true;
+    }
+    if (!manual_trigger && !scheduled_trigger)
+        return;
+    if (scheduled_trigger && !manual_trigger)
+    {
+        ota_checked_day = current_day;
+        delay(random(0, 60000));
+    }
+    ota_check_and_update();
+}
+
+
+void ota_handling(void)
+{
+    bool manual_trigger;
+
+    manual_trigger = com_g.ota;
+    if (manual_trigger)
+        ota_send_telegram("OTA check started.");
+    ota_run_if_needed(manual_trigger);
+    com_g.ota = false;
+}
+ 
