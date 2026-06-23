@@ -18,7 +18,7 @@
 # define CONFIG_H
 
 # define SOFTWARE_VERSION       4.34
-# define DEVICE_NAME            "42 Prague Smart Sign"
+# define DEVICE_NAME            "42_Prague_Smart_Sign"
 
 # define DEBUG                                               // comment out this line to turn off Serial output
 # ifdef DEBUG
@@ -31,7 +31,6 @@
 
 //# define EXAM_SIMULATION                                   // uncomment to simulate an exam. See exam_simulation() function
 
-# pragma GCC optimize           ("O0")                       // project compilation optimization level
 # define BAUD_RATE              115200                       // speed of the Serial communication
 # define WAKE_UP_HOURS          6, 9, 12, 15, 18, 21         // e.g. 15 means 15:00
 # define RETRIES_LIMIT          3                            // for getting time and exam info, file system operations

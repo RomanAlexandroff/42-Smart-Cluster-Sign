@@ -57,7 +57,6 @@
 # define OTA_MANIFEST_URL        "https://raw.githubusercontent.com/RomanAlexandroff/42-Smart-Cluster-Sign/cloud_pull_ota_update_feature/ota/manifest.json"
 # define OTA_PROJECT_NAME        "42-Smart-Cluster-Sign"
 # define OTA_HARDWARE_NAME       "seeed_xiao_esp32c3"
-# define OTA_TEST_DEVICE_ID      "TESTING_STAND_001"
 # define OTA_HTTP_TIMEOUT_MS     15000
 # define OTA_BUFFER_SIZE         1024
 
