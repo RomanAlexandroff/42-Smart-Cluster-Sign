@@ -30,33 +30,15 @@ static uint32_t SW_ver_to_int(const String &version)
 }
 
 
-static String ota_get_chip_id(void)
-{
-    uint64_t    mac;
-    char        id[13];
-
-    mac = ESP.getEfuseMac();
-    snprintf(id, sizeof(id), "%04X%08X", (uint16_t)(mac >> 32), (uint32_t)mac);
-    return String(id);
-}
-
-
-static String ota_get_device_id(void)
-{
-    /*
-     * First OTA test:
-     * Use the ID already enabled in your manifest.
-     */
-    return String(OTA_TEST_DEVICE_ID);
-
-    /*
-     * Later:
-     * 1. Uncomment this.
-     * 2. Print/send the ID once.
-     * 3. Put that ID into manifest.json.
-     */
-    // return ota_get_chip_id();
-}
+//static String ota_get_chip_id(void)
+//{
+//    uint64_t    mac;
+//    char        id[13];
+//
+//    mac = ESP.getEfuseMac();
+//    snprintf(id, sizeof(id), "%04X%08X", (uint16_t)(mac >> 32), (uint32_t)mac);
+//    return String(id);
+//}
 
 
 static void ota_send_telegram(const String &message)
@@ -169,38 +151,47 @@ static void ota_sha256_to_hex(const uint8_t hash[32], char output[65])
     output[64] = '\0';
 }
 
-
+/*
+ *  Caller takes care of stopping and restarting the watchdog
+ */
 static bool ota_download_and_flash(const OTA_TARGET_t &target)
 {
     WiFiClientSecure       client;
     HTTPClient             http;
     WiFiClient*            stream;
-    int                    code;
+    int                    status_code;
     int                    content_length;
     uint8_t                buffer[OTA_BUFFER_SIZE];
     size_t                 available;
+    uint32_t               last_progress;
     int                    read_bytes;
     size_t                 written;
     mbedtls_sha256_context sha_ctx;
     uint8_t                sha_result[32];
     char                   sha_hex[65];
 
+/* INITIAL SETUP */
     client.setInsecure();
+//    client.setTimeout(20);                    // if fails, try with this line uncommented -- works for the Intra server
     http.setTimeout(OTA_HTTP_TIMEOUT_MS);
     http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
     DEBUG_PRINTF("[OTA] Firmware URL: %s\n", target.url.c_str());
+
+/* CONNECTING TO SERVER AND GATHERING SIZE DATA */
     if (!http.begin(client, target.url))
     {
         DEBUG_PRINTF("[OTA] Failed to begin firmware HTTP request\n");
-        return false;
+        return (false);
     }
-    code = http.GET();
-    if (code != HTTP_CODE_OK)
+    status_code = http.GET();
+    if (status_code != HTTP_CODE_OK)
     {
-        DEBUG_PRINTF("[OTA] Firmware HTTP GET failed, code: %d\n", code);
+        DEBUG_PRINTF("[OTA] Firmware HTTP GET failed, code: %d\n", status_code);
         http.end();
-        return false;
+        return (false);
     }
+
+/* CHECKING IF FIRMWARE SIZE MATCHES */
     content_length = http.getSize();
     DEBUG_PRINTF("[OTA] Manifest firmware size: %u\n", target.size);
     DEBUG_PRINTF("[OTA] HTTP content length: %d\n", content_length);
@@ -209,39 +200,49 @@ static bool ota_download_and_flash(const OTA_TARGET_t &target)
     {
         DEBUG_PRINTF("[OTA] Size mismatch between manifest and HTTP header\n");
         http.end();
-        return false;
+        return (false);
     }
     if (target.size > ESP.getFreeSketchSpace())
     {
         DEBUG_PRINTF("[OTA] Not enough OTA space\n");
         http.end();
-        return false;
+        return (false);
     }
+
+/* READING FIRMWARE FROM SERVER AND WRITING IT INTO MEMORY */
     if (!Update.begin(target.size))
     {
         DEBUG_PRINTF("[OTA] Update.begin() failed. Error: %s\n",
             Update.errorString());
         http.end();
-        return false;
+        return (false);
     }
     mbedtls_sha256_init(&sha_ctx);
     mbedtls_sha256_starts(&sha_ctx, 0);
     stream = http.getStreamPtr();
     written = 0;
+    last_progress = millis();                                         // Download stall detection
     while (http.connected() && written < target.size)
     {
-        watchdog_reset();
         available = stream->available();
         if (available == 0)
         {
+            if (millis() - last_progress > OTA_HTTP_TIMEOUT_MS)       // Download stall detection
+            {
+                DEBUG_PRINTF("[OTA] Download stalled\n");
+                Update.abort();
+                http.end();
+                mbedtls_sha256_free(&sha_ctx);
+                return (false);
+            }
             delay(1);
             continue;
         }
+        last_progress = millis();                                     // Download stall detection
         if (available > OTA_BUFFER_SIZE)
             available = OTA_BUFFER_SIZE;
         if (available > target.size - written)
             available = target.size - written;
-
         read_bytes = stream->readBytes(buffer, available);
         if (read_bytes <= 0)
         {
@@ -249,7 +250,7 @@ static bool ota_download_and_flash(const OTA_TARGET_t &target)
             Update.abort();
             http.end();
             mbedtls_sha256_free(&sha_ctx);
-            return false;
+            return (false);
         }
         mbedtls_sha256_update(&sha_ctx, buffer, read_bytes);
         if (Update.write(buffer, read_bytes) != (size_t)read_bytes)
@@ -259,14 +260,14 @@ static bool ota_download_and_flash(const OTA_TARGET_t &target)
             Update.abort();
             http.end();
             mbedtls_sha256_free(&sha_ctx);
-            return false;
+            return (false);
         }
         written += read_bytes;
-        DEBUG_PRINTF("[OTA] Written %u / %u bytes\n",
-            (unsigned int)written,
-            (unsigned int)target.size);
+        DEBUG_PRINTF("[OTA] Written %u / %u bytes\n", (unsigned int)written, (unsigned int)target.size);
     }
     http.end();
+
+/* CHECKING FOR ANY POSSIBLE FAILS */
     mbedtls_sha256_finish(&sha_ctx, sha_result);
     mbedtls_sha256_free(&sha_ctx);
     ota_sha256_to_hex(sha_result, sha_hex);
@@ -276,13 +277,13 @@ static bool ota_download_and_flash(const OTA_TARGET_t &target)
     {
         DEBUG_PRINTF("[OTA] SHA-256 mismatch\n");
         Update.abort();
-        return false;
+        return (false);
     }
     if (written != target.size)
     {
         DEBUG_PRINTF("[OTA] Written size mismatch\n");
         Update.abort();
-        return false;
+        return (false);
     }
     if (!Update.end(true))
     {
@@ -387,11 +388,10 @@ void ota_handling(void)
     scheduled_ota = com_g.hour <= wakeup_hour[0] &&
                       (com_g.day == 3 || com_g.day == 11 ||
                         com_g.day == 19 || com_g.day == 27);
-    if (scheduled_ota || com_g.ota)
-    {
+    if (com_g.ota)
         ota_send_telegram("OTA check started.");
+    if (scheduled_ota || com_g.ota)
         ota_check_and_update();
-    }
     com_g.ota = false;
 }
  
