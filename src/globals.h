@@ -60,15 +60,5 @@ struct common_global_variables {
 };
 extern struct common_global_variables com_g;
 
-typedef struct s_ota_target
-{
-    String      version;
-    String      url;
-    String      sha256;
-    uint32_t    size;
-    bool        enabled;
-    bool        device_specific;
-}   OTA_TARGET_t;
-
 #endif
  

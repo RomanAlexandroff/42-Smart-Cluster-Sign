@@ -15,10 +15,6 @@
 
 # include <Arduino.h>
 # include <LittleFS.h>
-# include <HTTPClient.h>            // new library for cloud pull OTA update
-# include <Update.h>                // new library for cloud pull OTA update
-# include <ArduinoJson.h>           // new library for cloud pull OTA update
-# include <mbedtls/sha256.h>        // new library for cloud pull OTA update
 # ifdef DEBUG
     # include <stdio.h>
 # endif
@@ -66,7 +62,7 @@ ERROR_t         read_from_file(const char* file_name, char* output);
 ERROR_t         file_sys_init(void);
 
 /* ota.cpp */
-void ota_handling(void);
+void            ota_handling(void);
 
 /* other.cpp */
 void            go_to_sleep(uint64_t time_in_millis);

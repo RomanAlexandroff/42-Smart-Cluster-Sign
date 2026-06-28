@@ -6,13 +6,69 @@
 /*   By: raleksan <r.aleksandroff@gmail.com>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/19 12:50:00 by raleksan          #+#    #+#             */
-/*   Updated: 2026/06/20 17:20:00 by raleksan         ###   ########.fr       */
+/*   Updated: 2026/06/28 14:35:00 by raleksan         ###   ########.fr       */
 /*                                                                            */
-/*   Cloud pull OTA implementation using GitHub manifest + GitHub Releases    */
+/*                                                                            */
+/*   Cloud pull OTA implementation using GitHub manifest + GitHub Releases.   */
+/*                                                                            */
+/*   This file is intentionally designed to contain everything related to     */
+/*   the OTA functionality in order to prevent unwanted alterations during    */
+/*   the future development of the project.                                   */
+/*                                                                            */
+/*   General description of the OTA pipeline:                                 */
+/*      0. Connect Wi-Fi if needed.                                           */
+/*      1. Download manifest.json from raw GitHub.                            */
+/*      2. Parse JSON.                                                        */
+/*      3. Compare with DEVICE_NAME.                                          */
+/*      4. Select devices[DEVICE_NAME], otherwise select default device.      */
+/*      5. If manifest "enabled" set to "false", stop.                        */
+/*      6. If manifest software version <= SOFTWARE_VERSION, stop.            */
+/*      7. If manifest firmware size > ESP.getFreeSketchSpace(), stop.        */
+/*      8. If manifest firmware size != firmware .bin file size, stop.        */
+/*      9. Download firmware .bin.                                            */
+/*      10. Compute SHA-256 while streaming.                                  */
+/*      11. If SHA-256 matches, call Update.end(true), otherwise stop.        */
+/*      12. Reboot.                                                           */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <HTTPClient.h>
+#include <Update.h>
+#include <ArduinoJson.h>
+#include <mbedtls/sha256.h>
 #include "42-Smart-Cluster-Sign.h"
+
+#define OTA_MANIFEST_URL        "https://raw.githubusercontent.com/RomanAlexandroff/42-Smart-Cluster-Sign/cloud_pull_ota_update_feature/ota/manifest.json"
+#define OTA_HTTP_TIMEOUT_MS     15000
+#define OTA_BUFFER_SIZE         1024
+
+typedef enum e_ota_result
+{
+    OTA_RESULT_NO_UPDATE = 0,
+    OTA_RESULT_UPDATED_REBOOTING = 1,
+    OTA_RESULT_ERR_WIFI = -1,
+    OTA_RESULT_ERR_MANIFEST_DOWNLOAD = -2,
+    OTA_RESULT_ERR_MANIFEST_PARSE = -3,
+    OTA_RESULT_ERR_MANIFEST_INVALID = -4,
+    OTA_RESULT_ERR_DISABLED = -5,
+    OTA_RESULT_ERR_NOT_ENOUGH_SPACE = -6,
+    OTA_RESULT_ERR_FIRMWARE_DOWNLOAD = -7,
+    OTA_RESULT_ERR_UPDATE_BEGIN = -8,
+    OTA_RESULT_ERR_UPDATE_WRITE = -9,
+    OTA_RESULT_ERR_UPDATE_END = -10,
+    OTA_RESULT_ERR_SHA256 = -11
+}   OTA_RESULT_t;
+
+typedef struct s_ota_target
+{
+    String      version;
+    String      url;
+    String      sha256;
+    uint32_t    size;
+    bool        enabled;
+    bool        device_specific;
+}   OTA_TARGET_t;
+
 
 /*
 *   This function converts a software version string into an
