@@ -14,7 +14,12 @@
 
 #include "42-Smart-Cluster-Sign.h"
 
-
+/*
+*   This function converts a software version string into an
+*   integer value suitable for comparison. For example, "4.34"
+*   becomes 434. The function expects a simple major.minor
+*   version format and does not handle semantic versions.
+*/
 static uint32_t SW_ver_to_int(const String &version)
 {
     int dot;
@@ -28,17 +33,6 @@ static uint32_t SW_ver_to_int(const String &version)
     minor = version.substring(dot + 1).toInt();
     return (major * 100 + minor);
 }
-
-
-//static String ota_get_chip_id(void)
-//{
-//    uint64_t    mac;
-//    char        id[13];
-//
-//    mac = ESP.getEfuseMac();
-//    snprintf(id, sizeof(id), "%04X%08X", (uint16_t)(mac >> 32), (uint32_t)mac);
-//    return String(id);
-//}
 
 
 static void ota_send_telegram(const String &message)
@@ -57,6 +51,12 @@ static bool ota_ensure_wifi(void)
 }
 
 
+/*
+*   This function downloads a text file from the given HTTPS URL
+*   and stores its content in the output String. It is used for
+*   downloading the OTA manifest. Certificate validation is currently
+*   disabled with setInsecure().
+*/
 static bool ota_download_text(const char *url, String &output)
 {
     WiFiClientSecure client;
@@ -65,7 +65,6 @@ static bool ota_download_text(const char *url, String &output)
 
     output = "";
     client.setInsecure();
-//    client.setTimeout(20);                    // if fails, try with this line uncommented -- works for the Intra server
     http.setTimeout(OTA_HTTP_TIMEOUT_MS);
     http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
     if (!http.begin(client, url))
@@ -83,6 +82,12 @@ static bool ota_download_text(const char *url, String &output)
 }
 
 
+/*
+*   This function extracts one firmware target entry from the parsed
+*   manifest JSON. It reads version, URL, SHA-256 hash, file size
+*   and enabled flag. The function returns false if any required
+*   value is missing or invalid.
+*/
 static bool ota_manifest_target_from_variant(JsonVariant variant, OTA_TARGET_t &target, bool device_specific)
 {
     const char* version;
@@ -112,6 +117,12 @@ static bool ota_manifest_target_from_variant(JsonVariant variant, OTA_TARGET_t &
 }
 
 
+/*
+*   This function parses the downloaded manifest and selects the
+*   correct firmware target for this device. It first looks for a
+*   device-specific entry. If none is found, it falls back to the
+*   default manifest entry.
+*/
 static bool ota_parse_manifest(const String &manifest_json, const String &device_id, OTA_TARGET_t &target)
 {
     StaticJsonDocument<4096> doc;
@@ -136,6 +147,11 @@ static bool ota_parse_manifest(const String &manifest_json, const String &device
 }
 
 
+/*
+*   This function converts a 32-byte SHA-256 hash into a lowercase
+*   hexadecimal string. The output buffer must have space for
+*   64 characters plus the final null terminator.
+*/
 static void ota_sha256_to_hex(const uint8_t hash[32], char output[65])
 {
     static const char* hex = "0123456789abcdef";
@@ -151,9 +167,14 @@ static void ota_sha256_to_hex(const uint8_t hash[32], char output[65])
     output[64] = '\0';
 }
 
+
 /*
- *  Caller takes care of stopping and restarting the watchdog
- */
+*   This function downloads the firmware binary from GitHub Releases
+*   and writes it into the inactive OTA partition. While downloading,
+*   it calculates SHA-256 and later compares it with the manifest.
+*   The update is finalized only if size and hash checks pass.
+*   Calling function is responsible for pausing the watchdog.
+*/
 static bool ota_download_and_flash(const OTA_TARGET_t &target)
 {
     WiFiClientSecure       client;
@@ -172,7 +193,6 @@ static bool ota_download_and_flash(const OTA_TARGET_t &target)
 
 /* INITIAL SETUP */
     client.setInsecure();
-//    client.setTimeout(20);                    // if fails, try with this line uncommented -- works for the Intra server
     http.setTimeout(OTA_HTTP_TIMEOUT_MS);
     http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
     DEBUG_PRINTF("[OTA] Firmware URL: %s\n", target.url.c_str());
@@ -300,6 +320,12 @@ static bool ota_download_and_flash(const OTA_TARGET_t &target)
 }
 
 
+/*
+*   This function performs the full cloud-pull OTA workflow. It
+*   downloads the manifest, selects the target firmware, compares
+*   versions, checks firmware size, downloads and verifies the binary,
+*   then reboots the device if the update succeeds.
+*/
 static OTA_RESULT_t ota_check_and_update(void)
 {
     String          manifest_json;
@@ -380,6 +406,11 @@ static OTA_RESULT_t ota_check_and_update(void)
 }
 
 
+/*
+*   This function is an API of the OTA functionality for
+*   the rest of the program. It decides whether to run
+*   the updating or not whether on schedule or on request. 
+*/
 void ota_handling(void)
 {
     const uint8_t wakeup_hour[] = {WAKE_UP_HOURS};
