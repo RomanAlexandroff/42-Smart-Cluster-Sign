@@ -29,6 +29,7 @@ void  go_to_sleep(uint64_t time_in_millis)
     DEBUG_PRINTF("Going to sleep for %llu seconds.\n", time_in_millis / mS_TO_S_FACTOR);
     DEBUG_PRINTF("\nDEVICE STOP\n\n\n");
     esp_sleep_enable_timer_wakeup(time_in_millis * mS_TO_uS_FACTOR);
+    confirm_valid_firmware();
     esp_deep_sleep_start();
 }
 

@@ -12,7 +12,7 @@
 
 #include "42-Smart-Cluster-Sign.h"
 
-void  battery_check(void)
+int16_t  battery_check(void)
 {
     int8_t  samples_count;
     int16_t battery;
@@ -29,7 +29,7 @@ void  battery_check(void)
     battery = battery / samples_count;
     DEBUG_PRINTF("[BATTERY] Current battery state: %d\n\n", battery);
     if (battery >= BATTERY_GOOD)
-        return;
+        return (battery);
     if (WiFi.status() != WL_CONNECTED)
         wifi_connect();    
     if (battery < BATTERY_CRITICAL)
@@ -45,6 +45,7 @@ void  battery_check(void)
         DEBUG_PRINTF("[BATTERY] Low battery! Need charging!\n\n");
         bot.sendMessage(String(rtc_g.chat_id), compose_message(LOW_BATTERY, 0), "");
     }
+    return (battery);
 }
 
 void  battery_init(void)

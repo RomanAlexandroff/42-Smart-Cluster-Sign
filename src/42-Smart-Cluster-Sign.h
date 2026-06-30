@@ -32,7 +32,7 @@
 ERROR_t         fetch_exams(void);
 
 /* battery_management.cpp */
-void            battery_check(void);
+int16_t         battery_check(void);
 void            battery_init(void);
 
 /* buttons_handling.cpp */
@@ -63,6 +63,10 @@ ERROR_t         file_sys_init(void);
 
 /* ota.cpp */
 void            ota_handling(void);
+
+/* ota_rollback.cpp */
+void            confirm_valid_firmware(void);
+void            reject_firmware_and_reboot(void);
 
 /* other.cpp */
 void            go_to_sleep(uint64_t time_in_millis);

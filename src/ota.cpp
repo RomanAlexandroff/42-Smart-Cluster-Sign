@@ -11,9 +11,13 @@
 /*                                                                            */
 /*   Cloud pull OTA implementation using GitHub manifest + GitHub Releases.   */
 /*                                                                            */
-/*   This file is intentionally designed to contain everything related to     */
-/*   the OTA functionality in order to prevent unwanted alterations during    */
-/*   the future development of the project.                                   */
+/*   DO NOT CHANGE ANYTHING IN THIS FILE UNLES YOU ARE ABSOLUTELY CERTAIN     */
+/*   THAT YOU KNOW WHAT YOU ARE DOING. A SINGLE MISSED MISTAKE IN THIS FILE   */
+/*   MAY RENDER THE FUTURE OTA UPDATES OF THE AFFECTED DEVICES IMPOSSIBLE.    */
+/*                                                                            */
+/*   This file is intentionally designed to contain everything related        */
+/*   to the OTA functionality in one place in order to prevent unwanted       */
+/*   alterations during the future development of the project.                */
 /*                                                                            */
 /*   General description of the OTA pipeline:                                 */
 /*      0. Connect Wi-Fi if needed.                                           */
@@ -471,12 +475,21 @@ void ota_handling(void)
 {
     const uint8_t wakeup_hour[] = {WAKE_UP_HOURS};
     bool          scheduled_ota;
+    bool          battery_charged;
 
+    watchdog_reset();
+    battery_charged = battery_check() >= BATTERY_GOOD;
     scheduled_ota = com_g.hour <= wakeup_hour[0] &&
                       (com_g.day == 3 || com_g.day == 11 ||
                         com_g.day == 19 || com_g.day == 27);
     if (com_g.ota)
         ota_send_telegram("OTA check started.");
+    if (!battery_charged)
+    {
+        if (com_g.ota)
+            ota_send_telegram("Battery is too low for OTA. Updating was canceled.");
+        return ;
+    }
     if (scheduled_ota || com_g.ota)
         ota_check_and_update();
     com_g.ota = false;
