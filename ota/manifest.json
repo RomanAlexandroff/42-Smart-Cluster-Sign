@@ -10,10 +10,10 @@
 	},
 	"devices": {
 		"42PRAGUEAPI SCREEN": {
-		"version": "4.36",
-		"url": "https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/releases/download/v4.35/firmware_xiao_esp32c3_4.35.bin",
-		"sha256": "dd0eb432b87c0484e70b06a9f970f2408ad3e723efa137af894b244a06d58cb7",
-		"size": 1663568,
+		"version": "99.99",
+		"url": "https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/releases/download/Test/ota_rollback_test_firmware.bin",
+		"sha256": "51d997cf324b160e6ecb273d94fe94b362d0ddefa65a0adf20422e83e6dab8c9",
+		"size": 1663680,
 		"enabled": true
 		},
 		"TESTING_STAND_001": {
