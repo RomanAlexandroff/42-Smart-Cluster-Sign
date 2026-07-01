@@ -10,7 +10,7 @@
 	},
 	"devices": {
 		"42PRAGUEAPI SCREEN": {
-		"version": "4.35",
+		"version": "4.36",
 		"url": "https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/releases/download/v4.35/firmware_xiao_esp32c3_4.35.bin",
 		"sha256": "dd0eb432b87c0484e70b06a9f970f2408ad3e723efa137af894b244a06d58cb7",
 		"size": 1663568,
