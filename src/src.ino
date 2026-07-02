@@ -14,6 +14,7 @@
 
 void  setup(void)
 {
+    rollback_firmware_update();
     watchdog_init();
     display_init();
     #ifdef DEBUG

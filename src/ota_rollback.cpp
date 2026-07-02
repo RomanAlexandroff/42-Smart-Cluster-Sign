@@ -24,48 +24,65 @@
 #include <esp_partition.h>
 #include "42-Smart-Cluster-Sign.h"
 
-static bool rollback_is_pending_verify(void)
+/*
+*   Device reset does not not always happen because of a crash. This
+*   function detects the device reset reason and prevents firmware
+*   rollback if the reset was caused by a normal device behaviour.
+*/
+static bool bad_reset_reason(void)
 {
-    const esp_partition_t  *running;
-    esp_ota_img_states_t   ota_state;
+    esp_reset_reason_t reason;
 
-    running = esp_ota_get_running_partition();
-    if (running == NULL)
-        return (false);
-    if (esp_ota_get_state_partition(running, &ota_state) != ESP_OK)
-        return (false);
-    return (ota_state == ESP_OTA_IMG_PENDING_VERIFY);
+    reason = esp_reset_reason();
+    return (reason == ESP_RST_PANIC || reason == ESP_RST_TASK_WDT
+        || reason == ESP_RST_INT_WDT || reason == ESP_RST_WDT);
 }
 
 /*
-*   This function confirms to the bootloader that the newly
-*   downloaded firmware is in a fully working state and that
-*   it is safe to keep it permanently. If any kind of reset
-*   happens before execution reaches this function,
-*   the bootloader will consider the newly downloaded firmware
-*   disfunctional and rollback to the previous firmware.
+*   This function switches the next boot to the other OTA app
+*   partition. If the device is running from app0, it selects app1;
+*   if it is running from app1, it selects app0. The device restarts
+*   immediately after the boot partition is changed.
 */
-void  confirm_valid_firmware(void)
+void rollback_firmware_update(void)
 {
-    if (!rollback_is_pending_verify())
-        return;
-    if (battery_check() <= (BATTERY_GOOD + BATTERY_CRITICAL) / 2)
-        return;
-    DEBUG_PRINTF("[ROLLBACK] Firmware is pending verification\n");
-    if (esp_ota_mark_app_valid_cancel_rollback() == ESP_OK)
-        DEBUG_PRINTF("[ROLLBACK] Firmware marked as valid\n");
+    const esp_partition_t *running_partition;
+    const esp_partition_t *rollback_partition;
+    esp_err_t             result;
+
+    if (!rtc_g.defective_firmware)
+    {
+        rtc_g.defective_firmware = true;
+        return ;
+    }
+    if (!bad_reset_reason())
+    {
+        rtc_g.defective_firmware = true;
+        return ;
+    }
+    running_partition = esp_ota_get_running_partition();
+    if (running_partition == NULL)
+        // TODO: Partition Guess Game - if you don't know which partition fails,
+        // label them yourself and try running, then discart the one failing
+        return ;
+    rollback_partition = NULL;
+    if (strcmp(running_partition->label, "app0") == 0)
+        rollback_partition = esp_partition_find_first(ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_OTA_1, NULL);
+    else if (strcmp(running_partition->label, "app1") == 0)
+        rollback_partition = esp_partition_find_first(ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_OTA_0, NULL);
     else
-        DEBUG_PRINTF("[ROLLBACK] Failed to mark firmware as valid\n");
-}
-
-/*
-*   Calling this function tells the bootloader that the newly
-*   downloaded firmware has malfunctions and that the system
-*   has to be instantly rolled back to the previous firmware.
-*/
-void  reject_firmware_and_reboot(void)
-{
-    DEBUG_PRINTF("[ROLLBACK] Firmware rejected, rolling back\n");
-    esp_ota_mark_app_invalid_rollback_and_reboot();
+        // TODO: Partition Guess Game - if you don't know which partition fails,
+        // label them yourself and try running, then discart the one failing
+        return ;
+    if (rollback_partition == NULL)
+        // TODO: Partition Guess Game - if you don't know which partition fails,
+        // label them yourself and try running, then discart the one failing
+        return ;
+    result = esp_ota_set_boot_partition(rollback_partition);
+    if (result != ESP_OK)
+        return ;
+    rtc_g.defective_firmware = false;
+    delay(1000);
+    ESP.restart();
 }
  

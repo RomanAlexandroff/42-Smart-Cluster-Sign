@@ -65,8 +65,7 @@ ERROR_t         file_sys_init(void);
 void            ota_handling(void);
 
 /* ota_rollback.cpp */
-void            confirm_valid_firmware(void);
-void            reject_firmware_and_reboot(void);
+void            rollback_firmware_update(void);
 
 /* other.cpp */
 void            go_to_sleep(uint64_t time_in_millis);

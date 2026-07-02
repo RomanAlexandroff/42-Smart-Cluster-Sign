@@ -273,9 +273,9 @@ static bool ota_download_and_flash(const OTA_TARGET_t &target)
 
 /* CHECKING IF FIRMWARE SIZE MATCHES */
     content_length = http.getSize();
-    DEBUG_PRINTF("[OTA] Manifest firmware size: %u\n", target.size);
+    DEBUG_PRINTF("[OTA] Manifest firmware size: %lu\n", target.size);
     DEBUG_PRINTF("[OTA] HTTP content length: %d\n", content_length);
-    DEBUG_PRINTF("[OTA] Free sketch space: %u\n", ESP.getFreeSketchSpace());
+    DEBUG_PRINTF("[OTA] Free sketch space: %lu\n", ESP.getFreeSketchSpace());
     if (content_length > 0 && (uint32_t)content_length != target.size)
     {
         DEBUG_PRINTF("[OTA] Size mismatch between manifest and HTTP header\n");
@@ -460,9 +460,10 @@ static OTA_RESULT_t ota_check_and_update(void)
     }
     display_cluster_number(OTA_SUCCESS);
     ota_send_telegram("OTA update installed. Rebooting...");
+    rtc_g.defective_firmware = false;
     delay(3000);
     ESP.restart();
-    return (OTA_RESULT_UPDATED_REBOOTING);
+    return (OTA_RESULT_UPDATED_REBOOTING);          // for the compiler
 }
 
 
