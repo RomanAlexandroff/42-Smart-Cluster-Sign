@@ -283,15 +283,19 @@ unsigned int  time_till_wakeup(void)
 
 /*
 *   Returns value in milliseconds.
+*   Works on the assumption that
+*   the event never crosses midnight
 */
 unsigned int  time_till_event(int8_t hours, uint8_t minutes)
 {
-    unsigned int result;
+    long    time_left_ms;
 
     watchdog_reset();
-    result = (hours - com_g.hour) * HOUR_MS;
-    result += (minutes * MINUTE_MS) - (com_g.minute * MINUTE_MS);
-    return (result);
+    time_left_ms = (hours - com_g.hour) * HOUR_MS;
+    time_left_ms += (minutes * MINUTE_MS) - (com_g.minute * MINUTE_MS);
+    if (time_left_ms < 0)
+        time_left_ms = 0;
+    return ((unsigned int)time_left_ms);
 }
 
 
