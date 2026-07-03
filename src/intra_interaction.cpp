@@ -273,17 +273,20 @@ static bool  intra_connect(const char* server)
 
 ERROR_t fetch_exams(void)
 {
-    const char* server PROGMEM = "api.intra.42.fr";
-    String      token;
+    const char*   server PROGMEM = "api.intra.42.fr";
+    static String token = "NOT_FOUND";
 
     watchdog_reset();
     if (!intra_connect(server))
         return INTRA_NO_SERVER;
-    access_server(server);
-    if (!handle_server_response(server, &token))
+    if (token == "NOT_FOUND")
     {
-        Intra_client.stop();
-        return INTRA_NO_TOKEN;
+        access_server(server);
+        if (!handle_server_response(server, &token))
+        {
+            Intra_client.stop();
+            return INTRA_NO_TOKEN;
+        }
     }
     request_exams_info(server, &token);
     if (!handle_exams_info())

@@ -38,6 +38,7 @@ struct rtc_global_variables {
     uint16_t      exam_start_hour;
     uint16_t      exam_start_minutes;
     bool          exam_status;
+    bool          firmware_verified;
     volatile bool warning_active;
     char          Secret[74];
     char          chat_id[15];

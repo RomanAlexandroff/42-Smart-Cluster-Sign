@@ -15,9 +15,6 @@
 
 # include <Arduino.h>
 # include <LittleFS.h>
-# include <WiFiUdp.h>
-# include <ESPmDNS.h>
-# include <ArduinoOTA.h>
 # ifdef DEBUG
     # include <stdio.h>
 # endif
@@ -35,7 +32,7 @@
 ERROR_t         fetch_exams(void);
 
 /* battery_management.cpp */
-void            battery_check(void);
+int16_t         battery_check(void);
 void            battery_init(void);
 
 /* buttons_handling.cpp */
@@ -64,9 +61,12 @@ ERROR_t         write_to_file(const char* file_name, char* input);
 ERROR_t         read_from_file(const char* file_name, char* output);
 ERROR_t         file_sys_init(void);
 
-/* ota.h */
-inline void     ota_init(void) __attribute__((always_inline));
-inline void     ota_waiting_loop(void) __attribute__((always_inline));
+/* ota.cpp */
+void            ota_handling(void);
+
+/* ota_rollback.cpp */
+void            set_rollback_flag(FIRMWARE_t state);
+void            rollback_firmware_update(void);
 
 /* other.cpp */
 void            go_to_sleep(uint64_t time_in_millis);
@@ -100,8 +100,6 @@ void IRAM_ATTR  watchdog_start(void);
 void IRAM_ATTR  watchdog_reset(void);
 void IRAM_ATTR  watchdog_stop(void);
 void            watchdog_init(void);
-
-# include "ota.h"                                                   // has to be here
 
 #endif
  

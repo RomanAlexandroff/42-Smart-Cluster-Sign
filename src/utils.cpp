@@ -22,6 +22,7 @@ void  go_to_sleep(uint64_t time_in_millis)
     if (time_in_millis > MAX_SLEEP_LIMIT_MS)
         time_in_millis = MAX_SLEEP_LIMIT_MS;
     display.powerOff();
+    set_rollback_flag(VERIFIED);
     result = esp_deep_sleep_enable_gpio_wakeup(GPIO_MASK, ESP_GPIO_WAKEUP_GPIO_LOW);
     if (result != ESP_OK)
         DEBUG_PRINTF("\nFailed to set up wake-up with a button.\n\n");
