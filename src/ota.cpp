@@ -42,7 +42,7 @@
 #include <mbedtls/sha256.h>
 #include "42-Smart-Cluster-Sign.h"
 
-#define OTA_MANIFEST_URL        "https://raw.githubusercontent.com/RomanAlexandroff/42-Smart-Cluster-Sign/cloud_pull_ota_update_feature/ota/manifest.json"
+#define OTA_MANIFEST_URL        "https://raw.githubusercontent.com/RomanAlexandroff/42-Smart-Cluster-Sign/main/ota/manifest.json"
 #define OTA_HTTP_TIMEOUT_MS     15000
 #define OTA_BUFFER_SIZE         1024
 

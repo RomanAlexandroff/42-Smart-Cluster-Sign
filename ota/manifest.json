@@ -10,10 +10,10 @@
 	},
 	"devices": {
 		"42PRAGUEAPI SCREEN": {
-		"version": "5.00",
-		"url": "https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/releases/download/Test/ota_rollback_testing_firmware.bin",
-		"sha256": "bd46b7ad6806d0c67f549cf64af9af48c21b91bf54cc8030134c3c9eb3841923",
-		"size": 1664832,
+		"version": "4.35",
+		"url": "https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/releases/download/v4.35/firmware_42prague_v4.35_stable.bin",
+		"sha256": "5aadedee554ddccc18ea1ad921058bd744499bfad055a50ccead4ed54ed8cd29",
+		"size": 1664752,
 		"enabled": true
 		},
 		"TESTING_STAND_001": {
