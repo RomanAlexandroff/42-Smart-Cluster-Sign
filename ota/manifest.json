@@ -12,8 +12,8 @@
 		"42PRAGUEAPI SCREEN": {
 		"version": "5.00",
 		"url": "https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/releases/download/Test/ota_rollback_testing_firmware.bin",
-		"sha256": "3729a8d847dd0fb9c32dcd177395d27e45cd3234b7e67480c25fd8201dcc19f1",
-		"size": 1664288,
+		"sha256": "bd46b7ad6806d0c67f549cf64af9af48c21b91bf54cc8030134c3c9eb3841923",
+		"size": 1664832,
 		"enabled": true
 		},
 		"TESTING_STAND_001": {
