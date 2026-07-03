@@ -53,6 +53,12 @@
 # define MAX_DISPLAY_BUFFER_SIZE 96124ul
 # define MAX_HEIGHT(EPD)         (EPD::HEIGHT <= (MAX_DISPLAY_BUFFER_SIZE / 2) / (EPD::WIDTH / 8) ? EPD::HEIGHT : (MAX_DISPLAY_BUFFER_SIZE / 2) / (EPD::WIDTH / 8))
 
+/* Firmware Rollback constants */
+typedef enum {
+    VERIFIED = false,
+    UNTRUSTWORTHY = true
+} FIRMWARE_t;
+
 /* Images constants */
 typedef enum {
     CLUSTER = 1000,

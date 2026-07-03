@@ -14,13 +14,13 @@
 
 void  setup(void)
 {
-    rollback_firmware_update();
     watchdog_init();
     display_init();
     #ifdef DEBUG
         serial_init();
     #endif
     file_sys_init();
+    rollback_firmware_update();
     buttons_init();
     battery_init();
     power_down_recovery();
@@ -40,7 +40,7 @@ void  loop(void)
     if (rtc_g.exam_status)
         exam_mode();
     cluster_number_mode(&sleep_length);
-    ota_handling();                         // needs to be here to have access to time values
+    ota_handling();
     go_to_sleep(sleep_length);
     DEBUG_PRINTF("  ---- This message will never be printed out");
 }

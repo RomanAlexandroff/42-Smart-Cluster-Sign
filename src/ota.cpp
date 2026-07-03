@@ -244,7 +244,7 @@ static bool ota_download_and_flash(const OTA_TARGET_t &target)
     int                    content_length;
     uint8_t                buffer[OTA_BUFFER_SIZE];
     size_t                 available;
-    uint32_t               last_progress;
+    uint32_t               last_progress;                           // Download stall detection
     int                    read_bytes;
     size_t                 written;
     mbedtls_sha256_context sha_ctx;
@@ -460,10 +460,10 @@ static OTA_RESULT_t ota_check_and_update(void)
     }
     display_cluster_number(OTA_SUCCESS);
     ota_send_telegram("OTA update installed. Rebooting...");
-    rtc_g.defective_firmware = false;
+    set_rollback_flag(VERIFIED);
     delay(3000);
     ESP.restart();
-    return (OTA_RESULT_UPDATED_REBOOTING);          // for the compiler
+    return (OTA_RESULT_UPDATED_REBOOTING);                  // for the compiler
 }
 
 
@@ -471,21 +471,20 @@ static OTA_RESULT_t ota_check_and_update(void)
 *   This function is an API of the OTA functionality for
 *   the rest of the program. It decides whether to run
 *   the updating or not whether on schedule or on request. 
+*   It may cancel an OTA update if battery is depleted.
 */
 void ota_handling(void)
 {
     const uint8_t wakeup_hour[] = {WAKE_UP_HOURS};
     bool          scheduled_ota;
-    bool          battery_charged;
 
     watchdog_reset();
-    battery_charged = battery_check() >= BATTERY_GOOD;
     scheduled_ota = com_g.hour <= wakeup_hour[0] &&
                       (com_g.day == 3 || com_g.day == 11 ||
                         com_g.day == 19 || com_g.day == 27);
     if (com_g.ota)
         ota_send_telegram("OTA check started.");
-    if (!battery_charged)
+    if (!(battery_check() >= BATTERY_GOOD))
     {
         if (com_g.ota)
             ota_send_telegram("Battery is too low for OTA. Updating was canceled.");
