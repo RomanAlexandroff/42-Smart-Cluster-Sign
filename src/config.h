@@ -17,7 +17,7 @@
 #ifndef CONFIG_H
 # define CONFIG_H
 
-# define SOFTWARE_VERSION       4.35
+# define SOFTWARE_VERSION       4.36
 # define DEVICE_NAME            "42PRAGUEAPI SCREEN"
 
 # define DEBUG                                               // comment out this line to turn off Serial output

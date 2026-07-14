@@ -292,8 +292,7 @@ static bool ota_download_and_flash(const OTA_TARGET_t &target)
 /* READING FIRMWARE FROM SERVER AND WRITING IT INTO MEMORY */
     if (!Update.begin(target.size))
     {
-        DEBUG_PRINTF("[OTA] Update.begin() failed. Error: %s\n",
-            Update.errorString());
+        DEBUG_PRINTF("[OTA] Update.begin() failed. Error: %s\n", Update.errorString());
         http.end();
         return (false);
     }
