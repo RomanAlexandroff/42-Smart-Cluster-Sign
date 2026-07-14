@@ -10,10 +10,10 @@
 	},
 	"devices": {
 		"42PRAGUEAPI SCREEN": {
-		"version": "4.35",
-		"url": "https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/releases/download/v4.35/firmware_42prague_v4.35_stable.bin",
-		"sha256": "5aadedee554ddccc18ea1ad921058bd744499bfad055a50ccead4ed54ed8cd29",
-		"size": 1664752,
+		"version": "4.36",
+		"url": "https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/releases/download/v4.36/firmware_42prague_v4.36_stable.bin",
+		"sha256": "e6e5f87a98f11a8bc996bcd6352df1a7e23a1076f36c83cf360cbd8c6412479a",
+		"size": 1664864,
 		"enabled": true
 		},
 		"TESTING_STAND_001": {
