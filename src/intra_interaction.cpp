@@ -16,7 +16,7 @@
 *   Does not check the exam subscribers unless it is
 *   less than SUBS_CHECK_LIMIT_MS before the exam.
 */
-static void  check_exam_subscribers(String &server_response)
+static void  check_exam_subscribers(const String &server_response)
 {
     int i;
     int subscribers;
@@ -79,17 +79,25 @@ static void  get_exam_time(String &server_response)
 
 static bool  handle_exams_info(void)
 {
-    int     i;
-    String  server_response;
+    uint32_t  start_time;
+    String    server_response;
 
     watchdog_reset();
-    i = WD_TIMEOUT_MS - SERVER_WAIT_MS;
-    if (i < 1000)
-        i = 1000;
-    while (Intra_client.available() && i)
+    start_time = millis();
+    while (!Intra_client.available())
+    {
+        if (millis() - start_time >= WD_TIMEOUT_MS)
+        {
+            DEBUG_PRINTF("\n[INTRA] Error! Timed out waiting for the Exam Time response\n\n");
+            return (false);
+        }
+        delay(10);
+        watchdog_reset();
+    }
+    while (Intra_client.available())
     {
         server_response += Intra_client.readString();
-        i--;
+        watchdog_reset();
     }
     #ifdef EXAM_SIMULATION
         server_response += exam_simulation();
@@ -117,7 +125,7 @@ static bool  handle_exams_info(void)
 }
 
 
-static void  request_exams_info(const char* server, String* token)
+static void  request_exams_info(const char* server, const String& token)
 {
     String  day;
     String  month;
@@ -145,14 +153,14 @@ static void  request_exams_info(const char* server, String* token)
     Intra_client.print("Host: ");
     Intra_client.println(server);
     Intra_client.print("Authorization: Bearer ");
-    Intra_client.println(*token);
+    Intra_client.println(token);
     Intra_client.println("Connection: close");
     Intra_client.println();
     delay(SERVER_WAIT_MS);
 }
 
 
-static void get_secret_expiration(String server_response)
+static void get_secret_expiration(const String& server_response)
 {
     int      i;
     uint8_t  expire_day;
@@ -178,7 +186,7 @@ static void get_secret_expiration(String server_response)
 }
 
 
-static String get_token(String server_response)
+static String get_token(const String& server_response)
 {
     int     i;
     String  token;
@@ -196,19 +204,27 @@ static String get_token(String server_response)
 }
 
 
-static bool  handle_server_response(const char* server, String* token)
+static bool  handle_server_response(String& token)
 {
-    int     i;
-    String  server_response;
+    uint32_t    start_time;
+    String      server_response;
 
     watchdog_reset();
-    i = WD_TIMEOUT_MS - SERVER_WAIT_MS;
-    if (i < 1000)
-        i = 1000;
-    while (Intra_client.available() && i)
+    start_time = millis();
+    while (!Intra_client.available())
+    {
+        if (millis() - start_time >= WD_TIMEOUT_MS)
+        {
+            DEBUG_PRINTF("\n[INTRA] Error! Timed out waiting for the Access Token response\n\n");
+            return (false);
+        }
+        delay(10);
+        watchdog_reset();
+    }
+    while (Intra_client.available())
     {
         server_response += Intra_client.readString();
-        i--;
+        watchdog_reset();
     }
     DEBUG_PRINTF("\n============================== SERVER RESPONSE START ==============================\n\n");
     DEBUG_PRINTF("%s", server_response.c_str());
@@ -218,8 +234,8 @@ static bool  handle_server_response(const char* server, String* token)
         DEBUG_PRINTF("\n[INTRA] Error! Server response to the Access Token request was not received\n\n");
         return (false);
     }
-    *token = get_token(server_response);
-    if (*token == "NOT_FOUND")
+    token = get_token(server_response);
+    if (token == "NOT_FOUND")
         return (false);
     if (!get_and_ensure_current_time(server_response))
         return (false);
@@ -247,6 +263,29 @@ static void  access_server(const char* server)
     Intra_client.println(auth_request);
     delay(SERVER_WAIT_MS);
     auth_request.clear();
+}
+
+
+static bool  ensure_getting_token(const char* server, String& token)
+{
+    int   i;
+    bool  success;
+
+    i = 0;
+    success = false;
+    while (token == "NOT_FOUND" && i < 10)
+    {
+        access_server(server);
+        success = handle_server_response(token);
+        delay(1000 * i);
+        i++;
+    }
+    if (!success)
+    {
+        Intra_client.stop();
+        return (false);
+    }
+    return (true);
 }
 
 
@@ -279,16 +318,9 @@ ERROR_t fetch_exams(void)
     watchdog_reset();
     if (!intra_connect(server))
         return INTRA_NO_SERVER;
-    if (token == "NOT_FOUND")
-    {
-        access_server(server);
-        if (!handle_server_response(server, &token))
-        {
-            Intra_client.stop();
-            return INTRA_NO_TOKEN;
-        }
-    }
-    request_exams_info(server, &token);
+    if (!ensure_getting_token(server, token))
+        return INTRA_NO_TOKEN;
+    request_exams_info(server, token);
     if (!handle_exams_info())
     {
         Intra_client.stop();

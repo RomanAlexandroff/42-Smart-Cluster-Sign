@@ -175,7 +175,7 @@ int winter_summer_time_offset(int year, int month, int day, int hour)
 *   result for correctness. The function returns False
 *   in case anything of the above goes wrong.
 */
-bool get_and_ensure_current_time(String server_response)
+bool get_and_ensure_current_time(const String& server_response)
 {
     int     i;
     int     seconds;

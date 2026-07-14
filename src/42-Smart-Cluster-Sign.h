@@ -90,7 +90,7 @@ String          compose_message(int32_t subject, int16_t days_left);
 int16_t         expiration_counter(void);
 bool            unix_timestamp_decoder(uint8_t* p_day, uint8_t* p_month, uint16_t* p_year);
 int             winter_summer_time_offset(int year, int month, int day, int hour);
-bool            get_and_ensure_current_time(String server_response);
+bool            get_and_ensure_current_time(const String& server_response);
 unsigned int    time_till_wakeup(void);
 unsigned int    time_till_event(int8_t hours, uint8_t minutes);
 int             time_sync(unsigned int preexam_time);

@@ -34,29 +34,24 @@ ERROR_t secret_verification(String input)
     return (FS_VALID_SECRET);
 }
 
+static void restore_data_value(const char* file_name, char* destination, const char* variable_name)
+{
+    if (read_from_file(file_name, destination) == FS_OK)
+        DEBUG_PRINTF("\n[FILE SYSTEM] Successfully restored data from %s.\n", file_name);
+    else
+        DEBUG_PRINTF("\n[FILE SYSTEM] Failed to restore data from %s!\n", file_name);
+    DEBUG_PRINTF("[FILE SYSTEM] The %s variable value is now:\n%s\n", variable_name, destination);
+}
+
 void data_restore(const char* file_name)
 {
     if (!file_name)
         return;
     watchdog_reset();
     if (strcmp(file_name, "/secret.txt") == 0)
-    {
-        if (read_from_file(file_name, rtc_g.Secret) == FS_OK)
-            DEBUG_PRINTF("\n[FILE SYSTEM] Successfully restored data from %s.\n", file_name);
-        else
-            DEBUG_PRINTF("\n[FILE SYSTEM] Failed to restore data from %s!\n", file_name);
-        DEBUG_PRINTF("[FILE SYSTEM] The rtc_g.Secret variable value is now:\n%s\n", rtc_g.Secret);
-        return;
-    }
+        restore_data_value(file_name, rtc_g.Secret, "rtc_g.Secret");
     else if (strcmp(file_name, "/chat_id.txt") == 0)
-    {
-        if (read_from_file(file_name, rtc_g.chat_id) == FS_OK)
-            DEBUG_PRINTF("\n[FILE SYSTEM] Successfully restored data from %s.\n", file_name);
-        else
-            DEBUG_PRINTF("\n[FILE SYSTEM] Failed to restore data from %s!\n", file_name);
-        DEBUG_PRINTF("[FILE SYSTEM] The rtc_g.chat_id variable value is now:\n%s\n", rtc_g.chat_id);
-        return;
-    }
+        restore_data_value(file_name, rtc_g.chat_id, "rtc_g.chat_id");
 }
 
 void  data_integrity_check(void)
