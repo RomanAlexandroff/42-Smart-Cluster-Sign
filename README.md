@@ -6,9 +6,9 @@
 - [Usage](#usage)
 - [Features](#features)
 - [Components](#components)
-- [Contributing](#contributing)
-- [Suggestions for Contributions](#suggestions-for-contributions)
+- [The Team behind the Sign](#the-team-behind-the-sign)
 - [Regards](#regards)
+- [Contributing to the Project](#contributing-to-the-project)
 - [License](#license)
 - [Conclusion](#conclusion)
 
@@ -57,43 +57,28 @@ The following components are used in the 42 Smart Cluster Sign:
 For more information, please, refer to the bill of materials in the docs folder of this repository.
 
 
-## Contributing
+## Contributing to the Project
 
-Contributions to the 42 Smart Cluster Sign project are welcome! If you have any ideas, bug fixes, or improvements, feel free to open an issue, fork or submit a pull request on the GitHub repository.
+Contributions to the 42 Smart Cluster Sign project are very welcome! Contact the repository admin [**HERE**](https://www.linkedin.com/in/roman-alexandrov-a75b89195/) to be added as a Collaborator*. The best place to start would be the [**Issues**](https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/issues) tab of this repository. It most likely already contains a list of features we'd appreciate your help with and you can start working on them right away. If you have your own ideas, bug fixes, or improvements, feel free to open an issue or submit a pull request.
 
 When contributing, please adhere to the existing code style and follow the established guidelines. Clearly describe your changes and provide any necessary documentation or tests.
 
+*Since the device is intended for use within the 42 network of schools, its development requires personal access to the internal information system. For this reason, only a student or a member of the Bocal staff at a 42 school can become a Collaborator on this project.
 
-## Suggestions for Contributions
 
-**good first contributions**
-- Core temperature monitoring as a safety mechanism: the temperature being too high may signal some serious hardware failure and a safety threat, e.g. the battery has the lowest maximum allowed operational temperature of 60°C — notify the Telegram chat if the temperature of the core gets at least to 50°C;
-- Forced display refresh: the Sign is programed not to refresh the content on the display unless it is absolutely necessary, but this approach causes some graphical artifacts to appear with time. Add a scheduled full display cleaning. Once a week is enough. Preferably in the night when noone can see it. After the cleaning process is done, the Sign may not stay blank and shall display relevant information.
-- Refactor the project to lower the number of the Common global (com_g) variables. But DO NOT alter the RTC global (rtc_g) variables unless you are absolutely certain of what you are doing;
-- Add a countdown till the end of an ongoing exam like the already existing one till the start of an upcoming exam. 
+## The Team behind the Sign
 
-**advanced contributions**
-- Adding a "DO NOT ENTER!" sign that can be displayed or errased from the screen by pressing the WARNING_BUTTON button;
-- ✅ Remove the ubiquitous updating of time and date from the NTP server. Instead, the time and date can be obtained from any Intra server message, similar to how the exam date and time are retrieved. Implement the process of obtaining the time and date from the Intra server messages.
-- Core temperature monitoring as a mechanism for detecting the battery charging process being finished: when the battery is being charged, the core temperature of the microcontroller rises approximatelly 10°C above its common operational temperature and then drops back down when finished charging — notify the Telegram chat when charging is finished. This functionality may not block the Sign from fulfilling its main goal of notifying students about exams;
-- Logging error messages into a log file in the microcontroller's memory and the log file extraction mechanism;
-- The direct OTA implementation - the Sign itself creates a Wi-Fi access point that you can connect to and to update the firmware without the need of a Wi-Fi modem in the middle;
-- Replacing Telegram with Slack: refactoring all the Sign's Telegram functionality to work via Slack would allow integrating the Sign better into the 42 ecosystem as well as developing new functionality, e.g. notifying all the students about an upcomming exam.
-- Fine-tune the timing mechanisms — make the processor wake up slightly earlier and wait before beginning or continuing execution. Know RISC-V Assembly? You could get precision down to nanoseconds!
-
-The **Issues** tab of this repository may also be worth checking, as it might contain suggestions that have not yet made their way onto this list.
+This project is a group effort of various 42 students with support from the 42 Prague Bocal team. Here they are:
+- **roaleksa**, 42 Roma, [linkedin](https://www.linkedin.com/in/roman-alexandrov-a75b89195/) — software and electronic hardware developer. Made the idea reality,
+- **gsura**, 42 Heilbronn, [linkedin](https://www.linkedin.com/in/grigore-sura-781025b6/) — idea starter and motivation supporter. Pitched the idea to Bocal so well they ended up asking for two devices,
+- **cgray**, 42 Prague, [linkedin](https://www.linkedin.com/in/cullen-gray-42prg/) — hardware development. Modeled beautiful and functional inner frame for the electronics,
+- **phelebra**, 42 Prague, [linkedin](https://www.linkedin.com/in/petr-helebrant-55805647/) — 3D printing. Turned 3D model into high-quality pieces of hardware.
+- **arosado-**, 42 Lisboa, [linkedin](https://www.linkedin.com/in/andré-hernández-0572a1238/) — 42 API expert. Tought how to get the data from the 42 servers,
+- **jrathelo**, 42 Nice, [linkedin](https://www.linkedin.com/in/jolan-rathelot-017bb6252/) — memory wizard. Helped resolve the microcontroller's RAM overflow,
+- **psimcak**, 42 Prague, [linkedin](https://www.linkedin.com/in/petr-simcak/) — support master. Keeps the 42 Prague's Sign up and running, improved the Sign's reliability multiple times.
 
 
 ## Regards
-
-This project is a group effort of various 42 students with support from the 42 Prague Bocal team. Here they are:
-- **raleksan**, 42 Prague — software and electronic hardware developer. Made the idea reality,
-- **gsura**, 42 Prague — idea starter and motivation supporter. Pitched the idea to Bocal so well they ended up asking for two devices,
-- **cgray**, 42 Prague — hardware development. Modeled beautiful and functional inner frame for the electronics,
-- **phelebra**, 42 Prague — 3D printing. Turned 3D model into high-quality pieces of hardware.
-- **arosado-**, 42 Lisboa — 42 API expert. Tought how to get the data from the 42 servers,
-- **jrathelo**, 42 Nice — memory wizard. Helped resolve the microcontroller's RAM overflow,
-- **psimcak**, 42 Prague — support master. Keeps the 42 Prague's Sign up and running, improved the Sign's reliability multiple times.
 
 The project is based on Jean-Marc Zingg's [GxEPD2](https://github.com/ZinggJM/GxEPD2) library for e-paper displays.
 The project uses the [ArduinoOTA](https://github.com/jandrassy/ArduinoOTA) library by Juraj Andrassy for the Over-The-Air software update functionality.
