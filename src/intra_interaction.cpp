@@ -131,6 +131,8 @@ static void  request_exams_info(const char* server, const String& token)
     String  month;
     String  api_call;
 
+    if (!ensure_wifi_connection())
+        return ;
     watchdog_reset();
     if (com_g.month < 10)
         month = "0" + String(com_g.month);
@@ -291,13 +293,8 @@ static bool  ensure_getting_token(const char* server, String& token)
 
 static bool  intra_connect(const char* server)
 {
-    if (WiFi.status() != WL_CONNECTED)
-        wifi_connect();
-    if (WiFi.status() != WL_CONNECTED)
-    {
-        DEBUG_PRINTF("\n[INTRA] Unable to connect to Wi-Fi\n\n");
+    if (!ensure_wifi_connection())
         return (false);
-    }
     watchdog_reset();
     Intra_client.setInsecure();
     Intra_client.setTimeout(20);

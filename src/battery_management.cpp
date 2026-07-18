@@ -30,8 +30,7 @@ int16_t  battery_check(void)
     DEBUG_PRINTF("[BATTERY] Current battery state: %d\n\n", battery);
     if (battery >= BATTERY_GOOD)
         return (battery);
-    if (WiFi.status() != WL_CONNECTED)
-        wifi_connect();    
+    ensure_wifi_connection();   
     if (battery < BATTERY_CRITICAL)
     {
         display_cluster_number(LOW_BATTERY);

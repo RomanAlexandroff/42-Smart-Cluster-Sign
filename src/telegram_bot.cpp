@@ -111,8 +111,8 @@ void  telegram_check(void)
 {
     short message_count;
 
-    if (WiFi.status() != WL_CONNECTED)
-        wifi_connect();  
+    if (!ensure_wifi_connection())
+        return ;  
     watchdog_reset();
     message_count = bot.getUpdates(bot.last_message_received + 1);
     while (message_count)

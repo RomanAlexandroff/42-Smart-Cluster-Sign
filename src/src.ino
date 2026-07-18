@@ -15,6 +15,7 @@
 void  setup(void)
 {
     watchdog_init();
+    bluetooth_deinit();
     display_init();
     #ifdef DEBUG
         serial_init();

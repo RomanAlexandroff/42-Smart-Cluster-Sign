@@ -303,7 +303,6 @@ int  time_sync(unsigned int preexam_time)
 {
     int minutes;
 
-    watchdog_stop();
     DEBUG_PRINTF("\n[TIME_SYNC] Synchronizing time...\n");
     minutes = ceil(preexam_time / 1000);
     while (minutes % 10 != 0)
@@ -318,7 +317,6 @@ int  time_sync(unsigned int preexam_time)
         ft_delay(59990);
         minutes--;
     }
-    watchdog_start();
     DEBUG_PRINTF("[TIME_SYNC] Synchronization is complete.\n");
     return (minutes);
 }

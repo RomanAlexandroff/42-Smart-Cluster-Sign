@@ -6,12 +6,23 @@
 /*   By: raleksan <r.aleksandroff@gmail.com>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/09 13:10:00 by raleksan          #+#    #+#             */
-/*   Updated: 2024/12/18 13:00:00 by raleksan         ###   ########.fr       */
+/*   Updated: 2026/07/18 14:00:00 by raleksan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "42-Smart-Cluster-Sign.h"
 
+
+/*
+ *   This is always the last function to be executed in any scenario.
+ *   Prepares the device for Deep Sleep by powering off the display,
+ *   configuring timer and GPIO wake-up sources, entering Deep Sleep.
+ *   This function marks the currently running firmware as VERIFIED
+ *   for the firmware update rollback feature. Caller is responsible
+ *   to make sure the value to be passed to this function cannot be
+ *   negative. The sleep duration is clamped to the supported range.
+ *   This function never returns.
+*/
 void  go_to_sleep(uint64_t time_in_millis)
 {
     esp_err_t result;
@@ -33,10 +44,19 @@ void  go_to_sleep(uint64_t time_in_millis)
     esp_deep_sleep_start();
 }
 
+
 /*
-*   Delays and puts to sleep Wi-Fi and
-*   Bluetooth modems to preserve
-*   the battery charge
+*   Low-power equivalent of delay(). The caller
+*   is responsible to make sure the value to be
+*   passed to this function cannot be negative.
+*   Puts the CPU and the Wi-Fi modem to sleep
+*   for 'time_in_millis' to preserve the battery
+*   charge. RAM values stay intact and execution
+*   can continue from where it stopped.
+*   If the device looses Wi-Fi connection or not
+*   depends on the length of 'time_in_millis' and
+*   on the Wi-Fi Access Point settings - subject
+*   of individual research.
 */
 void  ft_delay(uint64_t time_in_millis)
 {
@@ -64,15 +84,51 @@ void  ft_delay(uint64_t time_in_millis)
     watchdog_start();
 }
 
+
+/*
+*   Wrapper for wifi_connect(). Ensures that the device is connected
+*   to Wi-Fi. Returns immediately if a Wi-Fi connection is already
+*   established. Otherwise, attempts to connect to the configured
+*   network and reports a failure if cannot connect.
+*/
+bool ensure_wifi_connection(void)
+{
+    if (WiFi.status() == WL_CONNECTED)
+        return (true);
+    wifi_connect();
+    watchdog_reset();
+    if (WiFi.status() != WL_CONNECTED)
+    {
+        DEBUG_PRINTF("\n[Wi-Fi] Unable to connect to Wi-Fi\n\n");
+        return (false);
+    }
+    return (true);
+}
+
+
+/*
+*   Connects the device to the configured Wi-Fi network.
+*   On the first call, it initializes the Wi-Fi subsystem, including
+*   enabling Modem Sleep, configuring persistent Wi-Fi credentials,
+*   and loading the Telegram TLS root certificate. Waits until
+*   a connection is established or the connection timeout expires.
+*/
 void  wifi_connect(void)
 {
-    short i;
+    static bool used = false;
+    short       i;
 
     i = 0;
     watchdog_reset();
     WiFi.mode(WIFI_STA);
-    WiFi.persistent(true);
-    Telegram_client.setCACert(TELEGRAM_CERTIFICATE_ROOT);
+    if (!used)
+    {
+        if (esp_wifi_set_ps(WIFI_PS_MIN_MODEM) != ESP_OK)
+            DEBUG_PRINTF("\n[Wi-Fi] Failed to enable Wi-Fi Modem Sleep\n");
+        WiFi.persistent(true);                                  // save SSID/password changes to flash memory
+        Telegram_client.setCACert(TELEGRAM_CERTIFICATE_ROOT);
+        used = true;
+    }
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     while ((WiFi.status() != WL_CONNECTED) && i < CONNECT_TIMEOUT_S)
     {
@@ -81,6 +137,7 @@ void  wifi_connect(void)
         i++;
     }
 }
+
 
 void  serial_init(void)
 {
@@ -97,6 +154,17 @@ void  serial_init(void)
     }
     DEBUG_PRINTF("\n\nDEVICE START\nversion %.2f\n", SOFTWARE_VERSION);
 }
+
+
+/*
+*   Ensures the Bluetooth modem is OFF
+*/
+void  bluetooth_deinit(void)
+{
+    esp_bt_controller_disable();
+    esp_bt_controller_deinit();
+}
+
 
 #ifdef EXAM_SIMULATION
     String  exam_simulation(void)

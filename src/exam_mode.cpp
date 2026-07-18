@@ -73,8 +73,6 @@ void  exam_mode(void)
     unsigned int  preexam_time;
 
     watchdog_reset();
-    if (WiFi.status() != WL_CONNECTED)
-        wifi_connect();
     fetch_exams();
     if (!rtc_g.exam_status)
         return;

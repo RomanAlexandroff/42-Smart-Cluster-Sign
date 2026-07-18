@@ -19,11 +19,13 @@
     # include <stdio.h>
 # endif
 # include <stdint.h>
+# include <esp_wifi.h>
 # include <esp_system.h>
 # include <esp_sleep.h>
 # include <driver/adc.h>
 # include <driver/gpio.h>
 # include <esp_task_wdt.h>
+# include <esp_bt.h>
 # include "bitmap_library.h"
 # include "config.h"
 # include "globals.h"
@@ -68,15 +70,6 @@ void            ota_handling(void);
 void            set_rollback_flag(FIRMWARE_t state);
 void            rollback_firmware_update(void);
 
-/* other.cpp */
-void            go_to_sleep(uint64_t time_in_millis);
-void IRAM_ATTR  ft_delay(uint64_t time_in_millis);
-void            serial_init(void);
-void            wifi_connect(void);
-# ifdef EXAM_SIMULATION
-    String      exam_simulation(void);
-# endif
-
 /* power_down_recovery.cpp */
 void            power_down_recovery(void);
 
@@ -94,6 +87,17 @@ bool            get_and_ensure_current_time(const String& server_response);
 unsigned int    time_till_wakeup(void);
 unsigned int    time_till_event(int8_t hours, uint8_t minutes);
 int             time_sync(unsigned int preexam_time);
+
+/* utils.cpp */
+void            go_to_sleep(uint64_t time_in_millis);
+void IRAM_ATTR  ft_delay(uint64_t time_in_millis);
+bool            ensure_wifi_connection(void);
+void            wifi_connect(void);
+void            serial_init(void);
+void            bluetooth_deinit(void);
+# ifdef EXAM_SIMULATION
+    String      exam_simulation(void);
+# endif
 
 /* watchdog.cpp */
 void IRAM_ATTR  watchdog_start(void);
