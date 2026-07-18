@@ -59,7 +59,7 @@ For more information, please, refer to the bill of materials in the docs folder 
 
 ## Contributing to the Project
 
-Contributions to the 42 Smart Cluster Sign project are very welcome! Contact the repository admin [**HERE**](https://www.linkedin.com/in/roman-alexandrov-a75b89195/) to be added as a Collaborator*. The best place to start would be the [**Issues**](https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/issues) tab of this repository. It most likely already contains a list of features we'd appreciate your help with and you can start working on them right away. If you have your own ideas, bug fixes, or improvements, feel free to open an issue or submit a pull request.
+Contributions to the 42 Smart Cluster Sign project are very welcome! Contact the repository admin [HERE](https://www.linkedin.com/in/roman-alexandrov-a75b89195/) to be added as a Collaborator*. The best place to start would be the [**Issues**](https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/issues) tab of this repository. It most likely already contains a list of features we'd appreciate your help with and you can start working on them right away. If you have your own ideas, bug fixes, or improvements, feel free to open an issue or submit a pull request.
 
 When contributing, please adhere to the existing code style and follow the established guidelines. Clearly describe your changes and provide any necessary documentation or tests.
 
