@@ -95,19 +95,39 @@ static uint32_t SW_ver_to_int(const String &version)
 }
 
 
-static void ota_send_telegram(const String &message)
+/*
+*   Common ensure_wifi_connection() is intentionally
+*   not used here in order to encapsulate OTA-related
+*   functions inside this file.
+*/
+static bool ota_ensure_wifi(void)
 {
-    if (strlen(rtc_g.chat_id) > 0)
-        bot.sendMessage(String(rtc_g.chat_id), message, "");
+    short i;
+
+    if (WiFi.status() == WL_CONNECTED)
+        return (true);
+    watchdog_reset();
+    WiFi.mode(WIFI_STA);
+    Telegram_client.setCACert(TELEGRAM_CERTIFICATE_ROOT);
+    delay(100);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    i = 0;
+    while ((WiFi.status() != WL_CONNECTED) && i < CONNECT_TIMEOUT_S)
+    {
+        watchdog_reset();
+        delay(1000);
+        i++;
+    }
+    return (WiFi.status() == WL_CONNECTED);
 }
 
 
-static bool ota_ensure_wifi(void)
+static void ota_send_telegram(const String &message)
 {
-    if (WiFi.status() == WL_CONNECTED)
-        return true;
-    wifi_connect();
-    return (WiFi.status() == WL_CONNECTED);
+    if (!ota_ensure_wifi())
+        return ;
+    if (strlen(rtc_g.chat_id) > 0)
+        bot.sendMessage(String(rtc_g.chat_id), message, "");
 }
 
 
