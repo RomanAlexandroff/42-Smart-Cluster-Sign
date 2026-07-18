@@ -15,9 +15,7 @@
 static void report_exception(ERROR_t status)
 {
     watchdog_reset();
-    if (WiFi.status() != WL_CONNECTED)
-        wifi_connect();
-    if (WiFi.status() != WL_CONNECTED)
+    if (!ensure_wifi_connection())
         return;
     watchdog_reset();
     bot.sendMessage(String(rtc_g.chat_id), compose_message(status, 0), "");
@@ -34,15 +32,20 @@ static bool handle_secret_expiration(void)
     {
         display_cluster_number(SECRET_EXPIRED);
         DEBUG_PRINTF("\n[INTRA] IT IS TIME TO UPDATE THE SECRET!\n");
-        bot.sendMessage(String(rtc_g.chat_id), compose_message(SECRET_EXPIRED, days_left), "");
+        if (ensure_wifi_connection())
+            bot.sendMessage(String(rtc_g.chat_id), compose_message(SECRET_EXPIRED, days_left), "");
         return (true);
     }
     return (false);
 }
 
+
 /*
-*   Makes sure to get exams info or
-*   display error and notify user
+*   Makes sure to get exams info or display an error
+*   and notify the User. The function intentionally
+*   ignores turning WiFi module off in case of Intra
+*   Error because in this situation the device goes
+*   directly into sleep anyway.
 */
 static bool ensure_exams(unsigned int* p_sleep_length)
 {
@@ -52,9 +55,7 @@ static bool ensure_exams(unsigned int* p_sleep_length)
     retries = 0;
     while (intra_status != INTRA_OK && retries < RETRIES_LIMIT)
     {
-        watchdog_stop();
-        delay (retries * 300000);
-        watchdog_start();
+        ft_delay(retries * 300000);
         DEBUG_PRINTF("\n[INTRA] Fetching exams data — try #%d\n\n", retries + 1);
         intra_status = fetch_exams();
         retries++;
@@ -63,23 +64,36 @@ static bool ensure_exams(unsigned int* p_sleep_length)
     }
     if (intra_status != INTRA_OK)
     {
+        report_exception(intra_status);
+        WiFi.mode(WIFI_OFF);
         display_cluster_number(INTRA_ERROR);
         DEBUG_PRINTF("\n[INTRA] ERROR OBTAINING EXAMS. Turning off\n");
-        report_exception(intra_status);
-        watchdog_reset();
         rtc_g.exam_status = false;
         *p_sleep_length = time_till_wakeup();
         return (false);
     }
+    /* it's OK to turn WiFi off here since OTA executes only in
+    3% of all runs and handle_secret_expiration - once a year */
+    WiFi.mode(WIFI_OFF); 
     return (true);
 }
 
 
+/*
+*   This is the function that orchestrates everything happening
+*   in this file. Here is its high-level logic in simple steps:
+*   1. make sure there is a Wi-Fi connection,
+*   2. pull exams information from Intra, 
+*   3. if pulling failed, go to sleep till next scheduled hour,
+*   4. if exam is in less than 1 hour, go streight to exam mode,
+*   5. if exam is in more than 1 hour, display exam info note,
+*           set sleep time till 1 hour before the exam begins,
+*   6. if no exam, set sleep time till next scheduled hour,
+*           check secret expiration, display cluster number. 
+*/
 void  cluster_number_mode(unsigned int* p_sleep_length)
 {
     watchdog_reset();
-    if (WiFi.status() != WL_CONNECTED)
-        wifi_connect();
     if (!ensure_exams(p_sleep_length))
         return;
     if (rtc_g.exam_status)
@@ -96,6 +110,6 @@ void  cluster_number_mode(unsigned int* p_sleep_length)
     *p_sleep_length = time_till_wakeup();
     if (handle_secret_expiration())
         return;
-    display_cluster_number(DEFAULT_IMG);        // Display ordinary day (no issues, fails or exams)
+    display_cluster_number(DEFAULT_IMG);
 }
  
