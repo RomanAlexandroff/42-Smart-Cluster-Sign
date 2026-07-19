@@ -17,10 +17,10 @@
 		"enabled": true
 		},
 		"TESTING_STAND_001": {
-		"version": "1.02",
-		"url": "https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/releases/download/Test/test_1.02_clear.bin",
-		"sha256": "0dfc8aaf5aab469130b785979413c9b322c75133b9c53a7d18f41bc7cf2317b8",
-		"size": 1679728,
+		"version": "1.03",
+		"url": "https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/releases/download/Test1/test_1.03_critical.bin",
+		"sha256": "0e0ccc12c8d37518083a7df6002a0615f32612e44ce562b78e06b3dcb22aed5f",
+		"size": 1679744,
 		"enabled": true
 		}
 	}
