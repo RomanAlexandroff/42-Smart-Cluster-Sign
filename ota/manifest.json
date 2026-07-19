@@ -17,11 +17,25 @@
 		"enabled": true
 		},
 		"TESTING_STAND_001": {
-		"version": "4.34",
-		"url": "https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/releases/download/v4.34/firmware-xiao-esp32c3-v4.34.bin",
-		"sha256": "fb5b098f60656bc0a8fadae3218f007e9d9613c45d529e6ad5501bdd076f13db",
-		"size": 1683808,
+		"version": "1.02",
+		"url": "https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/releases/download/Test/test_1.02_clear.bin",
+		"sha256": "0dfc8aaf5aab469130b785979413c9b322c75133b9c53a7d18f41bc7cf2317b8",
+		"size": 1679728,
 		"enabled": true
+		},
+		"TESTING_STAND_001": {
+		"version": "1.03",
+		"url": "https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/releases/download/Test1/test_1.03_critical.bin",
+		"sha256": "0e0ccc12c8d37518083a7df6002a0615f32612e44ce562b78e06b3dcb22aed5f",
+		"size": 1679744,
+		"enabled": false
+		},
+		"TESTING_STAND_001": {
+		"version": "1.03",
+		"url": "https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/releases/download/Test2/test_1.03_WiFi_error.bin",
+		"sha256": "45256b8c669341697932e10c762a9bef82d695c0fc27dfa05755f0d1f949239b",
+		"size": 1679728,
+		"enabled": false
 		}
 	}
 }
