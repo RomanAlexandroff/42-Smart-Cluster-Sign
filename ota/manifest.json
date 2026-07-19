@@ -18,9 +18,9 @@
 		},
 		"TESTING_STAND_001": {
 		"version": "1.03",
-		"url": "https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/releases/download/Test2/test_1.03_WiFi_error.bin",
-		"sha256": "45256b8c669341697932e10c762a9bef82d695c0fc27dfa05755f0d1f949239b",
-		"size": 1679728,
+		"url": "https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/releases/download/Test/test_1.03_WiFi_error.bin",
+		"sha256": "a079a612270b77b418771d4903aa9966bf3892e4189271782ec128e239908ebc",
+		"size": 1668336,
 		"enabled": true
 		}
 	}
