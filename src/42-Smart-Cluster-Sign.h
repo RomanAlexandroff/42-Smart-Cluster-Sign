@@ -67,7 +67,8 @@ ERROR_t         file_sys_init(void);
 void            ota_handling(void);
 
 /* ota_rollback.cpp */
-void            set_rollback_flag(FIRMWARE_t state);
+void            set_rollback_flag(FIRMWARE_t new_state);
+void            write_rollback_flag(FIRMWARE_t state);
 void            rollback_firmware_update(void);
 
 /* power_down_recovery.cpp */

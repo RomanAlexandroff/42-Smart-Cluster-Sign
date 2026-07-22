@@ -6,7 +6,7 @@
 /*   By: raleksan <r.aleksandroff@gmail.com>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/30 10:30:00 by raleksan          #+#    #+#             */
-/*   Updated: 2026/07/03 09:00:00 by raleksan         ###   ########.fr       */
+/*   Updated: 2026/07/19 09:00:00 by raleksan         ###   ########.fr       */
 /*                                                                            */
 /*                                                                            */
 /*   OTA rollback functionality automatically restores previous stable        */
@@ -30,16 +30,22 @@
 #include <esp_partition.h>
 #include "42-Smart-Cluster-Sign.h"
 
-
-void set_rollback_flag(FIRMWARE_t state)
+/*
+*   For the OTA to remain functionable, correct Wi-Fi credentials
+*   are absolutely crucial. One little typo - e.g. replacing 
+*   a single capital letter with lowercase in the password - will
+*   render the whole device disfunctional AND also will cut off
+*   the posibility to fix it distantly via another OTA update.
+*   This function checks the validity of the Wi-Fi credentials by
+*   simply trying to connect to the given Wi-Fi network. If it
+*   cannot connect, the credentials are considered to be incorrect
+*   and the function prevents the firmware from being marked as
+*   VERIFIED, which in turns causes the firmware rollback to
+*   trigger after the deep slee.
+*/
+static bool wifi_credentials_test(void)
 {
-    File file;
-
-    file = LittleFS.open("/defective_firmware.txt", "w");
-    if (!file)
-        return ;
-    file.print((bool)state ? "1" : "0");
-    file.close();
+    return (ensure_wifi_connection());
 }
 
 
@@ -61,6 +67,47 @@ static FIRMWARE_t read_rollback_flag(void)
     value = file.read();
     file.close();
     return ((FIRMWARE_t)(value == '1'));
+}
+
+
+/*
+*   Updates the persistent firmware rollback state. Checks if the caller is
+*   trying to rewrite the current VERIFIED state with VERIFIED again to reduce
+*   Flash wearing out from writing to it. The function INTENTIONALLY does not
+*   check rewriting UNTRUSTWORTHY with UNTRUSTWORTHY because that would break
+*   the logic of creating the file if it did not exist yet.
+*/
+void write_rollback_flag(FIRMWARE_t state)
+{
+    File file;
+
+    if (state == VERIFIED && read_rollback_flag() == VERIFIED)         // do NOT optimise
+        return ;
+    file = LittleFS.open("/defective_firmware.txt", "w");
+    if (!file)
+        return ;
+    file.print((bool)state ? "1" : "0");
+    file.close();
+}
+
+
+/*
+*   Makes the judgement call if the firmware to be trusted. When marking the
+*   firmware as VERIFIED, Wi-Fi credentials are validated before the rollback
+*   flag is cleared. In case it fails, instant firmware rollback is triggered.
+*/
+void set_rollback_flag(FIRMWARE_t new_state)
+{
+    if (new_state == VERIFIED && read_rollback_flag() == UNTRUSTWORTHY)
+    {
+        if (!wifi_credentials_test())
+        {
+            rollback_firmware_update();
+            return ;                          // in case the previous function fails and returns here
+        }
+        rtc_g.firmware_verified = true;
+    }
+    write_rollback_flag(new_state);
 }
 
 
@@ -91,22 +138,42 @@ void  rollback_firmware_update(void)
     const esp_partition_t *rollback_partition;
     esp_err_t             result;
 
+    /* This if-block lowers Flash wearing out by reducing write operations.
+    After a new firmware runs once and gets Verified, this flag locks out
+    the rest of the function forever. A power loss or hard reset may make
+    this flag loose its value, but the next if-block will fix it. The logic
+    accounts for the fact that the value of the flag gets lost over updates
+    of the firmware */
     if (rtc_g.firmware_verified)
         return ;
+
+    /* This if-block runs only the very first cycle of a new firmware or
+    after a power loss or hard reset. Running this if-block initializes
+    a "test cycle" for the currently running firmware - no matter if it
+    is new or old. Failing a "test cycle" does not necessarily mean that
+    the firmware will be rolled back - the next if-block may give another 
+    "test cycle" if conditions apply. */    
     if (read_rollback_flag() == VERIFIED)
     {
-        set_rollback_flag(UNTRUSTWORTHY);
-        rtc_g.firmware_verified = true;
+        write_rollback_flag(UNTRUSTWORTHY);
         return ;
     }
-    if (!bad_reset_reason())
+
+    /* This if-block judges if the "test cycle" was failed for a legitemate
+    reason. For example, a brown-out or the User pressing reset button can't
+    be a sign that the firmware is defective, but they still cause failure
+    of a "test cycle". In such cases the firmware gets another "test cycle" */
+    if (!bad_reset_reason() && wifi_credentials_test())
     {
         DEBUG_PRINTF("[ROLLBACK] Previous reset was not suspicious. Skipping rollback.\n");
-        set_rollback_flag(UNTRUSTWORTHY);
-        rtc_g.firmware_verified = true;
+        write_rollback_flag(UNTRUSTWORTHY);
         return ;
     }
-    set_rollback_flag(VERIFIED);
+
+    /* At this point the program is absolutely certain that the currently
+    running firmware is defective and the device needs to be rolled back
+    to the previous firmware version. */
+    watchdog_reset();
     running_partition = esp_ota_get_running_partition();
     if (running_partition == NULL)
     {
@@ -137,6 +204,7 @@ void  rollback_firmware_update(void)
         return ;
     }
     DEBUG_PRINTF("[ROLLBACK] Boot partition changed. Restarting...\n");
+    write_rollback_flag(VERIFIED);                                        // prevents the old firmware from being instantly rolled back
     delay(1000);
     ESP.restart();
 }

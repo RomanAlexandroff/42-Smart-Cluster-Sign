@@ -479,10 +479,10 @@ static OTA_RESULT_t ota_check_and_update(void)
     }
     display_cluster_number(OTA_SUCCESS);
     ota_send_telegram("OTA update installed. Rebooting...");
-    set_rollback_flag(VERIFIED);
+    write_rollback_flag(VERIFIED);                              // prevents the new firmware from being instantly rolled back
     delay(3000);
     ESP.restart();
-    return (OTA_RESULT_UPDATED_REBOOTING);                  // for the compiler
+    return (OTA_RESULT_UPDATED_REBOOTING);                      // for the compiler
 }
 
 

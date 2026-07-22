@@ -125,7 +125,6 @@ void  wifi_connect(void)
     {
         if (esp_wifi_set_ps(WIFI_PS_MIN_MODEM) != ESP_OK)
             DEBUG_PRINTF("\n[Wi-Fi] Failed to enable Wi-Fi Modem Sleep\n");
-        WiFi.persistent(true);                                  // save SSID/password changes to flash memory
         Telegram_client.setCACert(TELEGRAM_CERTIFICATE_ROOT);
         used = true;
     }
