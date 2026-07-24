@@ -6,7 +6,7 @@
 /*   By: raleksan <r.aleksandroff@gmail.com>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/30 10:30:00 by raleksan          #+#    #+#             */
-/*   Updated: 2026/07/03 09:00:00 by raleksan         ###   ########.fr       */
+/*   Updated: 2026/07/24 13:30:00 by raleksan         ###   ########.fr       */
 /*                                                                            */
 /*                                                                            */
 /*   OTA rollback functionality automatically restores previous stable        */
@@ -14,11 +14,10 @@
 /*   to contain a bug that makes the device stall or crash. OTA rollback      */
 /*   is a safety feature that prevents an update from bricking the device.    */
 /*                                                                            */
-/*   This rollback implementation is based on a persistent LittleFS flag      */
-/*   and reset reason detection. A newly installed firmware gets one full     */
-/*   run cycle to prove itself. If the device reaches normal sleep, the       */
-/*   firmware is marked verified. If it crashes or stalls before that, the    */
-/*   next boot switches back to the other OTA application partition.          */
+/*   A newly installed firmware gets one full run cycle to prove itself.      */
+/*   If the device reaches normal sleep, the firmware is marked verified.     */
+/*   If it crashes or stalls before that, the next boot switches back to      */
+/*   the other OTA application partition.                                     */
 /*                                                                            */
 /*   DO NOT CHANGE ANYTHING IN THIS FILE UNLES YOU ARE ABSOLUTELY CERTAIN     */
 /*   THAT YOU KNOW WHAT YOU ARE DOING. A SINGLE MISSED MISTAKE IN THIS FILE   */
@@ -27,117 +26,83 @@
 /* ************************************************************************** */
 
 #include <esp_ota_ops.h>
-#include <esp_partition.h>
 #include "42-Smart-Cluster-Sign.h"
 
-
-void set_rollback_flag(FIRMWARE_t state)
+/*
+*   For Arduino to stop blocking bootloder-level firmware
+*   rollback. By default, Arduino auto-validates all the
+*   new firmware. For beginners it helps prevent confusion
+*   why their firmware suddenly changes on the fly. But for
+*   advanced users it blocks bootloder-level rollbacks.
+*   This function turns Arduino auto-validation off.
+*/
+extern "C" bool verifyRollbackLater(void)
 {
-    File file;
-
-    file = LittleFS.open("/defective_firmware.txt", "w");
-    if (!file)
-        return ;
-    file.print((bool)state ? "1" : "0");
-    file.close();
+    return true;
 }
 
 
 /*
-*   In case of any LittleFS failure, the rollback flag becomes
-*   unavailable, so the function intentionally returns "true"
-*   to let reset reason detection decide if to perform rollback.
+*   Detects pending verification. This function tells if
+*   the currently running firmware is verified or not.
 */
-static FIRMWARE_t read_rollback_flag(void)
+bool  firmware_being_tested(void)
 {
-    File file;
-    char value;
+    const esp_partition_t  *running;
+    esp_ota_img_states_t   state;
 
-    if (!LittleFS.exists("/defective_firmware.txt"))
-        return (UNTRUSTWORTHY);
-    file = LittleFS.open("/defective_firmware.txt", "r");
-    if (!file)
-        return (UNTRUSTWORTHY);
-    value = file.read();
-    file.close();
-    return ((FIRMWARE_t)(value == '1'));
+    running = esp_ota_get_running_partition();
+    if (running == NULL)
+        return (false);
+    if (esp_ota_get_state_partition(running, &state) != ESP_OK)
+        return (false);
+    return (state == ESP_OTA_IMG_PENDING_VERIFY);
 }
 
 
 /*
-*   Device reset does not not always happen because of a crash. This
-*   function detects the device reset reason and prevents firmware
-*   rollback if the reset was caused by a normal device behaviour.
+*   For the OTA to remain functionable, correct Wi-Fi
+*   credentials are absolutely crucial. This function
+*   checks the validity of the Wi-Fi credentials by
+*   trying to connect to the given Wi-Fi network. If
+*   it cannot connect, the credentials are considered
+*   to be incorrect and firmware rollback is executed.
+*   If the device had connection to download the new
+*   firmware, but the new firmware cannot connect 1
+*   second after that - credentials may be wrong.
 */
-static bool bad_reset_reason(void)
+void  wifi_credentials_test(void)
 {
-    esp_reset_reason_t reason;
+    esp_err_t result;
 
-    reason = esp_reset_reason();
-    return (reason == ESP_RST_PANIC || reason == ESP_RST_TASK_WDT
-        || reason == ESP_RST_INT_WDT || reason == ESP_RST_WDT);
+    if (!firmware_being_tested())
+        return ;
+    if (!ensure_wifi_connection())
+    {
+        DEBUG_PRINTF("\n[OTA] Firmware failed the Wi-Fi credentials test. Rolling back...\n");
+        result = esp_ota_mark_app_invalid_rollback_and_reboot();
+        if (result != ESP_OK)
+        {
+            DEBUG_PRINTF("[OTA] Failed to Rollback! Reason: %d\n", result);
+            com_g.block_validation = true;
+        }
+    }
 }
 
 
-/*
-*   This function switches the next boot to the other OTA app
-*   partition. If the device is running from app0, it selects app1;
-*   if it is running from app1, it selects app0. The device restarts
-*   immediately after the boot partition is changed.
-*/
-void  rollback_firmware_update(void)
+void  set_firmware_verified(void)
 {
-    const esp_partition_t *running_partition;
-    const esp_partition_t *rollback_partition;
-    esp_err_t             result;
+    esp_err_t result;
 
-    if (rtc_g.firmware_verified)
+    if (!firmware_being_tested())
         return ;
-    if (read_rollback_flag() == VERIFIED)
-    {
-        set_rollback_flag(UNTRUSTWORTHY);
-        rtc_g.firmware_verified = true;
+    if (com_g.block_validation)
         return ;
-    }
-    if (!bad_reset_reason())
-    {
-        DEBUG_PRINTF("[ROLLBACK] Previous reset was not suspicious. Skipping rollback.\n");
-        set_rollback_flag(UNTRUSTWORTHY);
-        rtc_g.firmware_verified = true;
-        return ;
-    }
-    set_rollback_flag(VERIFIED);
-    running_partition = esp_ota_get_running_partition();
-    if (running_partition == NULL)
-    {
-        DEBUG_PRINTF("[ROLLBACK] Failed to get running partition\n");
-        return ;
-    }
-    DEBUG_PRINTF("[ROLLBACK] Running partition: %s at 0x%06lX\n", running_partition->label, running_partition->address);
-    rollback_partition = NULL;
-    if (strcmp(running_partition->label, "app0") == 0)
-        rollback_partition = esp_partition_find_first(ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_OTA_1, NULL);
-    else if (strcmp(running_partition->label, "app1") == 0)
-        rollback_partition = esp_partition_find_first(ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_OTA_0, NULL);
+    DEBUG_PRINTF("[OTA] Firmware is pending verification\n");
+    result = esp_ota_mark_app_valid_cancel_rollback();
+    if (result == ESP_OK)
+        DEBUG_PRINTF("[OTA] Firmware marked valid\n");
     else
-    {
-        DEBUG_PRINTF("[ROLLBACK] Unknown running partition: %s\n", running_partition->label);
-        return ;
-    }
-    if (rollback_partition == NULL)
-    {
-        DEBUG_PRINTF("[ROLLBACK] Failed to find rollback partition\n");
-        return ;
-    }
-    DEBUG_PRINTF("[ROLLBACK] Switching boot partition to: %s at 0x%06lX\n",rollback_partition->label, rollback_partition->address);
-    result = esp_ota_set_boot_partition(rollback_partition);
-    if (result != ESP_OK)
-    {
-        DEBUG_PRINTF("[ROLLBACK] Failed to set boot partition. Error: %d\n", result);
-        return ;
-    }
-    DEBUG_PRINTF("[ROLLBACK] Boot partition changed. Restarting...\n");
-    delay(1000);
-    ESP.restart();
+        DEBUG_PRINTF("[OTA] Failed to mark firmware valid: %d\n", result);
 }
  

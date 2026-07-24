@@ -21,7 +21,7 @@ void  setup(void)
         serial_init();
     #endif
     file_sys_init();
-    rollback_firmware_update();
+    wifi_credentials_test();
     buttons_init();
     battery_init();
     power_down_recovery();

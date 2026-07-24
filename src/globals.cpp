@@ -24,6 +24,7 @@ struct common_global_variables com_g = {
     .last_ota = 0,
     .last_warning = 0,
     .ota = false,
+    .block_validation = false,
     .exam_end_hour = 0,
     .exam_end_minutes = 0,
     .hour = 0,

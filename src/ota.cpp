@@ -479,7 +479,6 @@ static OTA_RESULT_t ota_check_and_update(void)
     }
     display_cluster_number(OTA_SUCCESS);
     ota_send_telegram("OTA update installed. Rebooting...");
-    set_rollback_flag(VERIFIED);
     delay(3000);
     ESP.restart();
     return (OTA_RESULT_UPDATED_REBOOTING);                  // for the compiler
@@ -503,10 +502,11 @@ void ota_handling(void)
                         com_g.day == 19 || com_g.day == 27);
     if (com_g.ota)
         ota_send_telegram("OTA check started.");
-    if (!(battery_check() >= BATTERY_GOOD))
+    if ((battery_check() < BATTERY_GOOD) || firmware_being_tested())
     {
         if (com_g.ota)
-            ota_send_telegram("Battery is too low for OTA. Updating was canceled.");
+            ota_send_telegram("Updating was canceled: Low battery or Firmware still unverified.");
+        com_g.ota = false;
         return ;
     }
     if (scheduled_ota || com_g.ota)

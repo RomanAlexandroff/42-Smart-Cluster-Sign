@@ -67,8 +67,9 @@ ERROR_t         file_sys_init(void);
 void            ota_handling(void);
 
 /* ota_rollback.cpp */
-void            set_rollback_flag(FIRMWARE_t state);
-void            rollback_firmware_update(void);
+bool            firmware_being_tested(void);
+void            wifi_credentials_test(void);
+void            set_firmware_verified(void);
 
 /* power_down_recovery.cpp */
 void            power_down_recovery(void);
