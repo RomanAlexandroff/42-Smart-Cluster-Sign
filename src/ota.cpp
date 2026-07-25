@@ -465,21 +465,21 @@ static OTA_RESULT_t ota_check_and_update(void)
     }
 
 /* PROCEED TO DOWNLOADING THE SOFTWARE AND FLASHING THE DEVICE */
-    ota_send_telegram("OTA update found. Downloading firmware...");
+    ota_send_telegram(String(DEVICE_NAME) + " found OTA update. Downloading firmware...");
     display_cluster_number(OTA_WAITING);
     watchdog_stop();
     if (!ota_download_and_flash(target))
     {
         watchdog_start();
         display_cluster_number(OTA_FAIL);
-        ota_send_telegram("OTA update failed.");
-        ft_delay(3000);
+        ota_send_telegram(String(DEVICE_NAME) + " failed OTA update. Try again later.");
+        ft_delay(5000);
         clear_display();
         return (OTA_RESULT_ERR_FIRMWARE_DOWNLOAD);
     }
     display_cluster_number(OTA_SUCCESS);
-    ota_send_telegram("OTA update installed. Rebooting...");
-    delay(3000);
+    ota_send_telegram(String(DEVICE_NAME) + " installed OTA update. Rebooting...");
+    ft_delay(3000);
     ESP.restart();
     return (OTA_RESULT_UPDATED_REBOOTING);                  // for the compiler
 }
@@ -501,11 +501,11 @@ void ota_handling(void)
                       (com_g.day == 3 || com_g.day == 11 ||
                         com_g.day == 19 || com_g.day == 27);
     if (com_g.ota)
-        ota_send_telegram("OTA check started.");
-    if ((battery_check() < BATTERY_GOOD) || firmware_being_tested())
+        ota_send_telegram(String(DEVICE_NAME) + " is starting OTA check.");
+    if ((read_battery_charge() < BATTERY_GOOD) || firmware_being_tested())
     {
         if (com_g.ota)
-            ota_send_telegram("Updating was canceled: Low battery or Firmware still unverified.");
+            ota_send_telegram(String(DEVICE_NAME) + " canceled updating: Low battery or Firmware being tested.");
         com_g.ota = false;
         return ;
     }

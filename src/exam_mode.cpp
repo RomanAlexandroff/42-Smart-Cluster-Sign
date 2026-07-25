@@ -75,13 +75,15 @@ void  exam_mode(void)
     watchdog_reset();
     fetch_exams();
     if (!rtc_g.exam_status)
-        return;
+        return ;
     preexam_time = time_till_event(rtc_g.exam_start_hour, rtc_g.exam_start_minutes);
     if (preexam_time > 600000)
         preexam_warning(&preexam_time);
     if (preexam_time <= 600000 && preexam_time >= 25000)
         ft_delay(preexam_time - 25000);
     fetch_exams();
+    if (!rtc_g.exam_status)
+        return ;
     go_to_sleep(exam());
 }
  

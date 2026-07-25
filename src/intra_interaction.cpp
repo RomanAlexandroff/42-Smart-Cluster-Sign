@@ -26,7 +26,7 @@ static void  check_exam_subscribers(const String &server_response)
     if (time_till_event(rtc_g.exam_start_hour, rtc_g.exam_start_minutes) > SUBS_CHECK_LIMIT_MS)
         return;
     watchdog_reset();
-    i = server_response.indexOf("\"nbr_subscribers\":\"");
+    i = server_response.indexOf("\"nbr_subscribers\":");
     if (i == NOT_FOUND)
         return;
     subscribers = server_response.substring(i + 18, i + 19).toInt();

@@ -12,15 +12,6 @@
 
 #include "42-Smart-Cluster-Sign.h"
 
-static void report_exception(ERROR_t status)
-{
-    watchdog_reset();
-    if (!ensure_wifi_connection())
-        return;
-    watchdog_reset();
-    bot.sendMessage(String(rtc_g.chat_id), compose_message(status, 0), "");
-}
-
 
 static bool handle_secret_expiration(void)
 {
@@ -32,8 +23,7 @@ static bool handle_secret_expiration(void)
     {
         display_cluster_number(SECRET_EXPIRED);
         DEBUG_PRINTF("\n[INTRA] IT IS TIME TO UPDATE THE SECRET!\n");
-        if (ensure_wifi_connection())
-            bot.sendMessage(String(rtc_g.chat_id), compose_message(SECRET_EXPIRED, days_left), "");
+        send_telegram_message(compose_message(SECRET_EXPIRED, days_left));
         return (true);
     }
     return (false);
@@ -64,7 +54,7 @@ static bool ensure_exams(unsigned int* p_sleep_length)
     }
     if (intra_status != INTRA_OK)
     {
-        report_exception(intra_status);
+        send_telegram_message(compose_message(intra_status, 0));
         WiFi.mode(WIFI_OFF);
         display_cluster_number(INTRA_ERROR);
         DEBUG_PRINTF("\n[INTRA] ERROR OBTAINING EXAMS. Turning off\n");
