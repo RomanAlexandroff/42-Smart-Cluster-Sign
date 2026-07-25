@@ -28,6 +28,7 @@
 #include <esp_ota_ops.h>
 #include "42-Smart-Cluster-Sign.h"
 
+
 /*
 *   For Arduino to stop blocking bootloder-level firmware
 *   rollback. By default, Arduino auto-validates all the
@@ -38,13 +39,60 @@
 */
 extern "C" bool verifyRollbackLater(void)
 {
-    return true;
+    return (true);
 }
 
 
 /*
-*   Detects pending verification. This function tells if
-*   the currently running firmware is verified or not.
+*   Tells if the currently running firmware has been
+*   rolled-back into from another faulty firmware.
+*/
+static bool  firmware_rollback_happened(void)
+{
+    const esp_partition_t   *running;
+    const esp_partition_t   *last_invalid;
+    esp_ota_img_states_t    state;
+
+    running = esp_ota_get_running_partition();
+    last_invalid = esp_ota_get_last_invalid_partition();
+    if (running == NULL || last_invalid == NULL)
+        return (false);
+    if (running->address == last_invalid->address)
+        return (false);
+    if (esp_ota_get_state_partition(last_invalid, &state) != ESP_OK)
+        return (false);
+    return (state == ESP_OTA_IMG_ABORTED || state == ESP_OTA_IMG_INVALID);
+}
+
+
+/*
+*   Ensures that the Telegram chat gets notified
+*   that the newly uploaded firmware has been
+*   rolled-back to the previous firmware version,
+*   only once - during the first execution cycle.
+*/
+void notify_firmware_rollback_once(esp_reset_reason_t reason)
+{
+    String message;
+
+    if (!firmware_rollback_happened())
+        return ;
+    if (!(reason == ESP_RST_SW ||
+            reason == ESP_RST_PANIC ||
+            reason == ESP_RST_TASK_WDT ||
+            reason == ESP_RST_INT_WDT ||
+            reason == ESP_RST_WDT))
+        return ;
+    message = "Firmware Rollback has been executed. Returned to the firmware version ";
+    message += String(SOFTWARE_VERSION, 2);
+    send_telegram_message(message);
+}
+
+
+/*
+*   Detects pending verification. This function
+*   tells if the currently running firmware is
+*   being in the process of verification or not.
 */
 bool  firmware_being_tested(void)
 {
@@ -94,9 +142,7 @@ void  set_firmware_verified(void)
 {
     esp_err_t result;
 
-    if (!firmware_being_tested())
-        return ;
-    if (com_g.block_validation)
+    if (com_g.block_validation || !firmware_being_tested())
         return ;
     DEBUG_PRINTF("[OTA] Firmware is pending verification\n");
     result = esp_ota_mark_app_valid_cancel_rollback();

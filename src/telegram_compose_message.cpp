@@ -127,8 +127,10 @@ static String about_device_status(String output)
     output += String(DEVICE_NAME) + " is here! ";
     output += "I am connected to " + String(WiFi.SSID());
     output += ", Access point MAC is " + WiFi.BSSIDstr(); 
-    output += ", Signal strength is " + String(WiFi.RSSI()) + " dBm, ";
-    output += "Software version " + String(SOFTWARE_VERSION);
+    output += ", Signal strength is " + String(WiFi.RSSI()) + " dBm";
+    output += ", Battery charge is " + String(read_battery_charge());
+    output += " (everything above " + String(BATTERY_GOOD) + " is a good charge)";
+    output += ", Software version " + String(SOFTWARE_VERSION);
     output += ", Exams status: ";
     if (rtc_g.exam_status)
     {

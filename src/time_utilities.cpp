@@ -241,7 +241,7 @@ bool get_and_ensure_current_time(const String& server_response)
             if (com_g.month < 1)
             {
                 com_g.month = 12;
-                com_g.year += 1;
+                com_g.year -= 1;
             }
             com_g.day = month_days[com_g.month - 1];
         }

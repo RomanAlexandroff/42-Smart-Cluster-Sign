@@ -6,20 +6,21 @@
 /*   By: raleksan <r.aleksandroff@gmail.com>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/09 13:00:00 by raleksan          #+#    #+#             */
-/*   Updated: 2024/12/09 17:20:00 by raleksan         ###   ########.fr       */
+/*   Updated: 2026/07/25 18:30:00 by raleksan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "42-Smart-Cluster-Sign.h"
 
-int16_t  battery_check(void)
+
+int16_t  read_battery_charge(void)
 {
     int8_t  samples_count;
     int16_t battery;
 
+    watchdog_reset();
     samples_count = 0;
     battery = 0;
-    watchdog_reset();
     while (samples_count < BATTERY_SAMPLES_LIMIT)
     {
         battery += adc1_get_raw(ADC1_CHANNEL_0);
@@ -27,25 +28,47 @@ int16_t  battery_check(void)
         samples_count++;
     }
     battery = battery / samples_count;
-    DEBUG_PRINTF("[BATTERY] Current battery state: %d\n\n", battery);
+    DEBUG_PRINTF("[BATTERY] Current battery state: %d\n", battery);
+    return (battery);
+}
+
+
+/*
+*   Takes appropriate action based on the battery charge.
+*   Handles cases like low battery (it is time to charge),
+*   critical battery (battery is too low for normal work),
+*   brown-out (it is a miracle it can even boot at all).
+*/
+void  battery_monitor(void)
+{
+    int16_t battery;
+
+    watchdog_reset();
+    if (esp_reset_reason() == ESP_RST_BROWNOUT)
+    {
+        DEBUG_PRINTF("\n[BATTERY] Brown-out reset! Going into extensive sleep\n");
+        com_g.block_validation = true;
+        go_to_sleep(DEAD_BATTERY_SLEEP_MS);
+    }
+    battery = read_battery_charge();
     if (battery >= BATTERY_GOOD)
-        return (battery);
-    ensure_wifi_connection();   
+        return ;  
     if (battery < BATTERY_CRITICAL)
     {
         display_cluster_number(LOW_BATTERY);
-        DEBUG_PRINTF("[BATTERY] Battery is too low. Going into extensive sleep\n\n");
-        bot.sendMessage(String(rtc_g.chat_id), compose_message(DEAD_BATTERY, 0), "");
+        DEBUG_PRINTF("[BATTERY] Battery charge 0%! Going into extensive sleep\n\n");
+        send_telegram_message(compose_message(DEAD_BATTERY, 0));
+        com_g.block_validation = true;
         go_to_sleep(DEAD_BATTERY_SLEEP_MS);
     }
     else if (battery < BATTERY_GOOD)
     {
         display_cluster_number(LOW_BATTERY);
-        DEBUG_PRINTF("[BATTERY] Low battery! Need charging!\n\n");
-        bot.sendMessage(String(rtc_g.chat_id), compose_message(LOW_BATTERY, 0), "");
+        DEBUG_PRINTF("[BATTERY] Low battery. Need charging.\n\n");
+        send_telegram_message(compose_message(LOW_BATTERY, 0));
     }
-    return (battery);
 }
+
 
 void  battery_init(void)
 {

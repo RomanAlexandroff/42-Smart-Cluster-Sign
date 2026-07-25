@@ -20,6 +20,17 @@
 
 #include "42-Smart-Cluster-Sign.h"
 
+
+void  send_telegram_message(const String message)
+{
+    watchdog_reset();
+    if (!ensure_wifi_connection())
+        return ;
+    if (strlen(rtc_g.chat_id) > 0)
+        bot.sendMessage(String(rtc_g.chat_id), message, "");
+}
+
+
 static void reply_machine(String text)
 {
     String  message;
@@ -27,7 +38,7 @@ static void reply_machine(String text)
 
     if (text == "/status")
     {
-        bot.sendMessage(String(rtc_g.chat_id), compose_message(TELEGRAM_STATUS, 0), "");
+        send_telegram_message(compose_message(TELEGRAM_STATUS, 0));
         return;
     }
     else if (text == "/ota")
@@ -45,14 +56,14 @@ static void reply_machine(String text)
             write_to_file("/secret.txt", rtc_g.Secret);
             message = "Accepted!\nThe SECRET token has been renewed.\n\n";
             message += "Current token now is:\n" + String(rtc_g.Secret);
-            bot.sendMessage(String(rtc_g.chat_id), message, "");
+            send_telegram_message(message);
             return;
         }
         else if (check_result == FS_INVALID_SECRET)
         {
             message = "It looks like a SECRET token, but Intra rejects it. ";
             message += "It is probably an old token. I cannot use it.";
-            bot.sendMessage(String(rtc_g.chat_id), message, "");
+            send_telegram_message(message);
             return;
         }
         else
@@ -60,10 +71,11 @@ static void reply_machine(String text)
             message = "I am sorry, but I do not understand \"";
             message += text + "\".\n";
             message += "You may try to use \"/status\" command";
-            bot.sendMessage(String(rtc_g.chat_id), message, "");
+            send_telegram_message(message);
         }
     }
 }
+
 
 static void  sender_handling(uint8_t i)
 {
@@ -78,13 +90,14 @@ static void  sender_handling(uint8_t i)
         message += "\n  - name: " + bot.messages[i].from_name;
         message += "\n  - chat ID: " + bot.messages[i].chat_id;
         message += "\n  - text: " + bot.messages[i].text;
-        bot.sendMessage(String(rtc_g.chat_id), message, "");
+        send_telegram_message(message);
     }
     id_buffer.toCharArray(rtc_g.chat_id, sizeof(rtc_g.chat_id));
     write_to_file("/chat_id.txt", rtc_g.chat_id);
     name_buffer = bot.messages[i].from_name;
     name_buffer.toCharArray(rtc_g.from_name, sizeof(rtc_g.from_name));
 }
+
 
 static void  new_messages(short message_count)
 {
@@ -106,6 +119,7 @@ static void  new_messages(short message_count)
         i++;
     }
 }
+
 
 void  telegram_check(void)
 {

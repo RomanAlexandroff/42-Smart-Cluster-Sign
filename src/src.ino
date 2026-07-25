@@ -21,11 +21,11 @@ void  setup(void)
         serial_init();
     #endif
     file_sys_init();
-    wifi_credentials_test();
+    reset_recovery();
     buttons_init();
     battery_init();
-    power_down_recovery();
-    battery_check();
+    battery_monitor();
+    wifi_credentials_test();
     telegram_check();
 }
 

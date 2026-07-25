@@ -34,7 +34,8 @@
 ERROR_t         fetch_exams(void);
 
 /* battery_management.cpp */
-int16_t         battery_check(void);
+int16_t         read_battery_charge(void);
+void            battery_monitor(void);
 void            battery_init(void);
 
 /* buttons_handling.cpp */
@@ -67,14 +68,16 @@ ERROR_t         file_sys_init(void);
 void            ota_handling(void);
 
 /* ota_rollback.cpp */
+void            notify_firmware_rollback_once(esp_reset_reason_t reason);
 bool            firmware_being_tested(void);
 void            wifi_credentials_test(void);
 void            set_firmware_verified(void);
 
-/* power_down_recovery.cpp */
-void            power_down_recovery(void);
+/* reset_recovery.cpp */
+void            reset_recovery(void);
 
 /* telegram_bot.cpp */
+void            send_telegram_message(const String message);
 void            telegram_check(void);
 
 /* telegram_compose_message.cpp */
