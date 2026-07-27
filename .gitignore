@@ -6,6 +6,7 @@ credentials.*
 # This project unique files and folders
 Images
 Research Materials
+release-meta.json
 
 # macOS system files
 .DS_Store
