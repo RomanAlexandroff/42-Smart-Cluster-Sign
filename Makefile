@@ -164,10 +164,10 @@ publish-manifest:
 #
 # print("\n==================================================")
 # print("\nDevice\n------")
-# print(f"Manifest device name  : {selected_device}")
+# print(f"Manifest device name   : {selected_device}")
 # print(f"Source code DEVICE_NAME: {source_device}")
 # print("\nVersions\n--------")
-# print(f"Manifest SW number  : {manifest_version}")
+# print(f"Manifest SW number   : {manifest_version}")
 # print(f"Source code SW number: {source_version}")
 # print("\nWiFi\n----")
 # print(f"SSID           : {wifi_ssid}")
