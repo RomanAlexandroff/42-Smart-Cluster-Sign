@@ -30,9 +30,31 @@ release:
 	@set -euo pipefail; test -f "$(ARDUINO_CLI_CONFIG)" || { echo "ERROR: $(ARDUINO_CLI_CONFIG) does not exist."; exit 1; }
 	@set -euo pipefail; rm -rf "$(RELEASE_DIR)/ota-release"; rm -f "$(RELEASE_DIR)"/*.bin "$(RELEASE_META)" "$(RELEASE_INFO)"
 	@set -euo pipefail; RELEASE_PREFLIGHT=$$(awk '/^# BEGIN RELEASE_PREFLIGHT_PY/{flag=1;next}/^# END RELEASE_PREFLIGHT_PY/{flag=0}flag{sub(/^# ?/,"");print}' Makefile); python3 -c "$$RELEASE_PREFLIGHT" "$(MANIFEST)" "$(CONFIG)" "$(CREDENTIALS)" "$(RELEASE_META)"
-	@set -euo pipefail; TAG=$$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["RELEASE_TAG"])' "$(RELEASE_META)"); if git rev-parse -q --verify "refs/tags/$$TAG" >/dev/null; then echo "ERROR: Git tag $$TAG already exists locally. Change the SOFTWARE_VERSION in config.h and try again."; exit 1; fi; if gh release view "$$TAG" --repo "$(REPO)" >/dev/null 2>&1; then echo "ERROR: GitHub Release $$TAG already exists."; exit 1; fi
+	@set -euo pipefail; \
+	TAG=$$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["RELEASE_TAG"])' "$(RELEASE_META)"); \
+	LOCAL_TAG_EXISTS=0; REMOTE_TAG_EXISTS=0; RELEASE_EXISTS=0; \
+	if git rev-parse -q --verify "refs/tags/$$TAG" >/dev/null; then LOCAL_TAG_EXISTS=1; fi; \
+	if git ls-remote --exit-code --tags origin "refs/tags/$$TAG" >/dev/null 2>&1; then REMOTE_TAG_EXISTS=1; fi; \
+	if gh release view "$$TAG" --repo "$(REPO)" >/dev/null 2>&1; then RELEASE_EXISTS=1; fi; \
+	if [ "$$LOCAL_TAG_EXISTS" = "1" ] || [ "$$REMOTE_TAG_EXISTS" = "1" ] || [ "$$RELEASE_EXISTS" = "1" ]; then \
+		echo; \
+		echo "Release identity $$TAG already exists:"; \
+		if [ "$$LOCAL_TAG_EXISTS" = "1" ]; then echo "  - local Git tag"; fi; \
+		if [ "$$REMOTE_TAG_EXISTS" = "1" ]; then echo "  - remote Git tag"; fi; \
+		if [ "$$RELEASE_EXISTS" = "1" ]; then echo "  - GitHub Release"; fi; \
+		echo; \
+		printf "Delete the existing release identity and reuse $$TAG? [y/N] "; \
+		read -r answer; \
+		case "$$answer" in \
+			y|Y|yes|YES) ;; \
+			*) echo "Release process aborted."; exit 1 ;; \
+		esac; \
+		if [ "$$RELEASE_EXISTS" = "1" ]; then gh release delete "$$TAG" --repo "$(REPO)" --yes; fi; \
+		if [ "$$LOCAL_TAG_EXISTS" = "1" ]; then git tag -d "$$TAG"; fi; \
+		if [ "$$REMOTE_TAG_EXISTS" = "1" ]; then git push origin ":refs/tags/$$TAG"; fi; \
+	fi
 	@set -euo pipefail; mkdir -p "$(RELEASE_DIR)"; printf '\n[release] Compiling firmware locally\n\n'; arduino-cli --config-file "$(ARDUINO_CLI_CONFIG)" compile --fqbn "$(ARDUINO_BOARD)" --libraries "$(LIBRARIES_PATH)" --output-dir "$(RELEASE_DIR)" --build-property build.partitions=min_spiffs --build-property upload.maximum_size=1966080 --verbose "$(SKETCH)"
-	@set -euo pipefail; FIRMWARE_SOURCE=$$(python3 -c 'import pathlib,sys; root=pathlib.Path(sys.argv[1]); bins=sorted(root.glob("*.bin"), key=lambda p:p.stat().st_mtime, reverse=True); sys.exit("ERROR: no .bin firmware artifact found") if not bins else print(bins[0])' "$(RELEASE_DIR)"); FIRMWARE_ASSET=$$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["FIRMWARE_ASSET"])' "$(RELEASE_META)"); cp "$$FIRMWARE_SOURCE" "$(RELEASE_DIR)/$$FIRMWARE_ASSET"
+	@set -euo pipefail; FIRMWARE_SOURCE=$$(python3 -c 'import pathlib,sys; root=pathlib.Path(sys.argv[1]); firmware_name=pathlib.Path(sys.argv[2]).name + ".bin"; matches=list(root.glob(firmware_name)); sys.exit(f"ERROR: expected firmware binary {firmware_name} was not found in {root}") if len(matches) != 1 else print(matches[0])' "$(RELEASE_DIR)" "$(SKETCH)"); FIRMWARE_ASSET=$$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["FIRMWARE_ASSET"])' "$(RELEASE_META)"); cp "$$FIRMWARE_SOURCE" "$(RELEASE_DIR)/$$FIRMWARE_ASSET"
 	@set -euo pipefail; FIRMWARE_ASSET=$$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["FIRMWARE_ASSET"])' "$(RELEASE_META)"); FIRMWARE_ASSET_PATH="$(RELEASE_DIR)/$$FIRMWARE_ASSET"; SHA256=$$(python3 -c 'import hashlib,sys; h=hashlib.sha256(); f=open(sys.argv[1],"rb"); [h.update(c) for c in iter(lambda:f.read(1048576), b"")]; print(h.hexdigest())' "$$FIRMWARE_ASSET_PATH"); SIZE=$$(python3 -c 'import pathlib,sys; print(pathlib.Path(sys.argv[1]).stat().st_size)' "$$FIRMWARE_ASSET_PATH"); python3 -c 'import json,pathlib,sys; info=json.load(open(sys.argv[1])); info["SHA-256"]=sys.argv[3]; info["SIZE"]=int(sys.argv[4]); pathlib.Path(sys.argv[2]).write_text(json.dumps(info, indent=2)+"\n"); print(f"[release] Wrote release contract to {sys.argv[2]}")' "$(RELEASE_META)" "$(RELEASE_INFO)" "$$SHA256" "$$SIZE"
 	@set -euo pipefail; TAG=$$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["RELEASE_TAG"])' "$(RELEASE_META)"); DEVICE_NAME=$$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["DEVICE_NAME"])' "$(RELEASE_META)"); SOFTWARE_VERSION=$$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["SOFTWARE_VERSION"])' "$(RELEASE_META)"); FIRMWARE_ASSET=$$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["FIRMWARE_ASSET"])' "$(RELEASE_META)"); printf '\n[release] Creating GitHub Release %s\n\n' "$$TAG"; gh release create "$$TAG" "$(RELEASE_DIR)/$$FIRMWARE_ASSET" "$(RELEASE_INFO)" --repo "$(REPO)" --target "$$(git rev-parse HEAD)" --title "$$DEVICE_NAME $$SOFTWARE_VERSION" --notes "Automated OTA firmware release for $$DEVICE_NAME, version $$SOFTWARE_VERSION."
 	@set -euo pipefail; rm -f "$(RELEASE_INFO)"; printf '\n[release] Release complete. Local release-info.json was removed after upload.\n'
@@ -112,6 +134,20 @@ publish-manifest:
 # if status:
 #     print(status)
 #     fail("Git working tree is not clean")
+#
+# subprocess.run(["git", "fetch", "--quiet", "origin"], check=False)
+# try:
+#     upstream = git_output("rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}")
+# except subprocess.CalledProcessError:
+#     fail("Current branch has no upstream. Push the branch and try again")
+# local_sha = git_output("rev-parse", "HEAD")
+# upstream_sha = git_output("rev-parse", upstream)
+# if local_sha != upstream_sha:
+#     print(f"\nCurrent branch : {git_output('branch', '--show-current')}")
+#     print(f"Upstream branch: {upstream}")
+#     print(f"Local HEAD     : {local_sha}")
+#     print(f"Upstream HEAD  : {upstream_sha}")
+#     fail("Current HEAD is not pushed to GitHub. Push the branch and try again")
 #
 # tracked_credentials = subprocess.run(
 #     ["git", "ls-files", "--error-unmatch", str(credentials_path)],
