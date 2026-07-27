@@ -4,12 +4,23 @@ on:
   release:
     types:
       - published
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+      - labeled
+      - unlabeled
 
 permissions:
   contents: write
+  issues: write
+  pull-requests: write
 
 jobs:
   publish-manifest:
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
 
     steps:
@@ -21,31 +32,124 @@ jobs:
 
       - name: Download release metadata
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.RELEASE_MANAGER_TOKEN }}
         run: |
-          mkdir -p build/ota-release
+          if [ -z "$GH_TOKEN" ]; then
+            echo "RELEASE_MANAGER_TOKEN secret is required."
+            exit 1
+          fi
+
+          mkdir -p build
           gh release download "${{ github.event.release.tag_name }}" \
             --repo "${{ github.repository }}" \
             --pattern release-info.json \
-            --dir build/ota-release \
+            --dir build \
             --clobber
 
       - name: Update OTA manifest
         run: |
           make publish-manifest \
-            RELEASE_INFO=build/ota-release/release-info.json \
+            RELEASE_INFO=build/release-info.json \
             RELEASE_TAG="${{ github.event.release.tag_name }}" \
             REPO="${{ github.repository }}"
 
-      - name: Commit OTA manifest update
+      - name: Create OTA manifest pull request
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_MANAGER_TOKEN }}
         run: |
           if git diff --quiet -- ota/manifest.json; then
             echo "OTA manifest is already up to date."
             exit 0
           fi
 
+          branch_name="ota-manifest/${{ github.event.release.tag_name }}-${{ github.run_id }}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch_name"
           git add ota/manifest.json
           git commit -m "Update OTA manifest for ${{ github.event.release.tag_name }}"
-          git push origin HEAD:main
+          git push origin "$branch_name"
+
+          gh label create automated-ota-manifest \
+            --repo "${{ github.repository }}" \
+            --color "0E8A16" \
+            --description "OTA manifest update created by release automation" \
+            2>/dev/null || true
+
+          pr_url="$(gh pr create \
+            --repo "${{ github.repository }}" \
+            --base main \
+            --head "$branch_name" \
+            --title "Update OTA manifest for ${{ github.event.release.tag_name }}" \
+            --body "Automated OTA manifest update generated from release ${{ github.event.release.tag_name }}.")"
+
+          gh pr edit "$pr_url" --add-label automated-ota-manifest
+          gh pr merge "$pr_url" --auto --squash --delete-branch
+
+  merge-policy:
+    if: github.event_name == 'pull_request'
+    name: merge-policy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Enforce merge policy
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}/files" > files.json
+          gh api "repos/${REPOSITORY}/issues/${PR_NUMBER}/labels" > labels.json
+          gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}/reviews" > reviews.json
+
+          python3 - <<'PY'
+          import json
+          import os
+          import sys
+
+          pr_author = os.environ["PR_AUTHOR"]
+          head_ref = os.environ["HEAD_REF"]
+          head_sha = os.environ["HEAD_SHA"]
+
+          with open("files.json") as file:
+              files = [item["filename"] for item in json.load(file)]
+          with open("labels.json") as file:
+              labels = {item["name"] for item in json.load(file)}
+          with open("reviews.json") as file:
+              reviews = json.load(file)
+
+          is_automation_pr = (
+              head_ref.startswith("ota-manifest/")
+              and "automated-ota-manifest" in labels
+              and files == ["ota/manifest.json"]
+          )
+
+          if is_automation_pr:
+              print("merge-policy: approved automated OTA manifest PR")
+              sys.exit(0)
+
+          head_reviews = [
+              review for review in reviews
+              if review.get("commit_id") == head_sha
+          ]
+          has_changes_requested = any(
+              review.get("state") == "CHANGES_REQUESTED"
+              for review in head_reviews
+          )
+          has_approval = any(
+              review.get("state") == "APPROVED"
+              for review in head_reviews
+          )
+
+          if has_approval and not has_changes_requested:
+              print("merge-policy: approved human-reviewed PR")
+              sys.exit(0)
+
+          print("merge-policy: failing because this PR is not an approved OTA automation PR and has no current approval")
+          sys.exit(1)
+          PY
