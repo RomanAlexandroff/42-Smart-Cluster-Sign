@@ -24,6 +24,7 @@ release:
 	@set -euo pipefail; printf '\n[release] Starting OTA release manager\n\n'
 	@set -euo pipefail; command -v git >/dev/null || { echo 'ERROR: git is required.'; exit 1; }
 	@set -euo pipefail; command -v gh >/dev/null || { echo 'ERROR: GitHub CLI (gh) is required.'; exit 1; }
+	@set -euo pipefail; gh auth status -h github.com 2>&1 | grep -q workflow || { echo 'ERROR: GitHub CLI token is missing the workflow scope.'; echo 'Run: gh auth refresh -h github.com -s workflow'; exit 1; }
 	@set -euo pipefail; command -v arduino-cli >/dev/null || { echo 'ERROR: arduino-cli is required.'; exit 1; }
 	@set -euo pipefail; command -v python3 >/dev/null || { echo 'ERROR: python3 is required.'; exit 1; }
 	@set -euo pipefail; test -f "$(ARDUINO_CLI_CONFIG)" || { echo "ERROR: $(ARDUINO_CLI_CONFIG) does not exist."; exit 1; }
