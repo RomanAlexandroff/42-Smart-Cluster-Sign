@@ -135,6 +135,20 @@ publish-manifest:
 #     print(status)
 #     fail("Git working tree is not clean")
 #
+# subprocess.run(["git", "fetch", "--quiet", "origin"], check=False)
+# try:
+#     upstream = git_output("rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}")
+# except subprocess.CalledProcessError:
+#     fail("Current branch has no upstream. Push the branch and try again")
+# local_sha = git_output("rev-parse", "HEAD")
+# upstream_sha = git_output("rev-parse", upstream)
+# if local_sha != upstream_sha:
+#     print(f"\nCurrent branch : {git_output('branch', '--show-current')}")
+#     print(f"Upstream branch: {upstream}")
+#     print(f"Local HEAD     : {local_sha}")
+#     print(f"Upstream HEAD  : {upstream_sha}")
+#     fail("Current HEAD is not pushed to GitHub. Push the branch and try again")
+#
 # tracked_credentials = subprocess.run(
 #     ["git", "ls-files", "--error-unmatch", str(credentials_path)],
 #     stdout=subprocess.DEVNULL,
