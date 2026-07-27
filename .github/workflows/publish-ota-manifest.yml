@@ -1,0 +1,51 @@
+name: Publish OTA Manifest
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: write
+
+jobs:
+  publish-manifest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Download release metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p build/ota-release
+          gh release download "${{ github.event.release.tag_name }}" \
+            --repo "${{ github.repository }}" \
+            --pattern release-info.json \
+            --dir build/ota-release \
+            --clobber
+
+      - name: Update OTA manifest
+        run: |
+          make publish-manifest \
+            RELEASE_INFO=build/ota-release/release-info.json \
+            RELEASE_TAG="${{ github.event.release.tag_name }}" \
+            REPO="${{ github.repository }}"
+
+      - name: Commit OTA manifest update
+        run: |
+          if git diff --quiet -- ota/manifest.json; then
+            echo "OTA manifest is already up to date."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ota/manifest.json
+          git commit -m "Update OTA manifest for ${{ github.event.release.tag_name }}"
+          git push origin HEAD:main
