@@ -6,7 +6,7 @@ CONFIG ?= src/config.h
 CREDENTIALS ?= src/credentials.h
 SKETCH ?= src/src.ino
 LIBRARIES_PATH ?= libraries
-ARDUINO_BOARD ?= esp32:esp32:XIAO_ESP32C3
+ARDUINO_BOARD ?= esp32:esp32:XIAO_ESP32C3:UploadSpeed=230400,CDCOnBoot=default,CPUFreq=160,FlashFreq=80,FlashMode=qio,FlashSize=4M,PartitionScheme=min_spiffs,DebugLevel=debug,EraseFlash=none
 ARDUINO_CLI_CONFIG ?= tools/arduino-cli/arduino-cli.yaml
 RELEASE_DIR ?= build
 RELEASE_META ?= $(RELEASE_DIR)/release-meta.json
