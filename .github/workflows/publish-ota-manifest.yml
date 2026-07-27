@@ -23,17 +23,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          mkdir -p build/ota-release
+          mkdir -p build
           gh release download "${{ github.event.release.tag_name }}" \
             --repo "${{ github.repository }}" \
             --pattern release-info.json \
-            --dir build/ota-release \
+            --dir build \
             --clobber
 
       - name: Update OTA manifest
         run: |
           make publish-manifest \
-            RELEASE_INFO=build/ota-release/release-info.json \
+            RELEASE_INFO=build/release-info.json \
             RELEASE_TAG="${{ github.event.release.tag_name }}" \
             REPO="${{ github.repository }}"
 

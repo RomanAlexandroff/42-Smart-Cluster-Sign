@@ -8,9 +8,7 @@ SKETCH ?= src/src.ino
 LIBRARIES_PATH ?= libraries
 ARDUINO_BOARD ?= esp32:esp32:XIAO_ESP32C3
 ARDUINO_CLI_CONFIG ?= tools/arduino-cli/arduino-cli.yaml
-RELEASE_DIR ?= build/ota-release
-ARDUINO_BUILD_DIR ?= $(RELEASE_DIR)/arduino-build
-ARDUINO_OUTPUT_DIR ?= $(RELEASE_DIR)/arduino-output
+RELEASE_DIR ?= build
 RELEASE_META ?= $(RELEASE_DIR)/release-meta.json
 RELEASE_INFO ?= $(RELEASE_DIR)/release-info.json
 
@@ -29,11 +27,11 @@ release:
 	@set -euo pipefail; command -v arduino-cli >/dev/null || { echo 'ERROR: arduino-cli is required.'; exit 1; }
 	@set -euo pipefail; command -v python3 >/dev/null || { echo 'ERROR: python3 is required.'; exit 1; }
 	@set -euo pipefail; test -f "$(ARDUINO_CLI_CONFIG)" || { echo "ERROR: $(ARDUINO_CLI_CONFIG) does not exist."; exit 1; }
-	@set -euo pipefail; rm -rf "$(RELEASE_DIR)"
+	@set -euo pipefail; rm -rf "$(RELEASE_DIR)/ota-release"; rm -f "$(RELEASE_DIR)"/*.bin "$(RELEASE_META)" "$(RELEASE_INFO)"
 	@set -euo pipefail; RELEASE_PREFLIGHT=$$(awk '/^# BEGIN RELEASE_PREFLIGHT_PY/{flag=1;next}/^# END RELEASE_PREFLIGHT_PY/{flag=0}flag{sub(/^# ?/,"");print}' Makefile); python3 -c "$$RELEASE_PREFLIGHT" "$(MANIFEST)" "$(CONFIG)" "$(CREDENTIALS)" "$(RELEASE_META)"
 	@set -euo pipefail; TAG=$$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["RELEASE_TAG"])' "$(RELEASE_META)"); if git rev-parse -q --verify "refs/tags/$$TAG" >/dev/null; then echo "ERROR: Git tag $$TAG already exists locally."; exit 1; fi; if gh release view "$$TAG" --repo "$(REPO)" >/dev/null 2>&1; then echo "ERROR: GitHub Release $$TAG already exists."; exit 1; fi
-	@set -euo pipefail; mkdir -p "$(ARDUINO_BUILD_DIR)" "$(ARDUINO_OUTPUT_DIR)"; printf '\n[release] Compiling firmware locally\n\n'; arduino-cli --config-file "$(ARDUINO_CLI_CONFIG)" compile --fqbn "$(ARDUINO_BOARD)" --libraries "$(LIBRARIES_PATH)" --build-path "$(ARDUINO_BUILD_DIR)" --output-dir "$(ARDUINO_OUTPUT_DIR)" --build-property build.partitions=min_spiffs --build-property upload.maximum_size=1966080 --verbose "$(SKETCH)"
-	@set -euo pipefail; FIRMWARE_SOURCE=$$(python3 -c 'import pathlib,sys; root=pathlib.Path(sys.argv[1]); bins=sorted(root.rglob("*.bin"), key=lambda p:p.stat().st_mtime, reverse=True); sys.exit("ERROR: no .bin firmware artifact found") if not bins else print(bins[0])' "$(ARDUINO_OUTPUT_DIR)"); FIRMWARE_ASSET=$$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["FIRMWARE_ASSET"])' "$(RELEASE_META)"); cp "$$FIRMWARE_SOURCE" "$(RELEASE_DIR)/$$FIRMWARE_ASSET"
+	@set -euo pipefail; mkdir -p "$(RELEASE_DIR)"; printf '\n[release] Compiling firmware locally\n\n'; arduino-cli --config-file "$(ARDUINO_CLI_CONFIG)" compile --fqbn "$(ARDUINO_BOARD)" --libraries "$(LIBRARIES_PATH)" --output-dir "$(RELEASE_DIR)" --build-property build.partitions=min_spiffs --build-property upload.maximum_size=1966080 --verbose "$(SKETCH)"
+	@set -euo pipefail; FIRMWARE_SOURCE=$$(python3 -c 'import pathlib,sys; root=pathlib.Path(sys.argv[1]); bins=sorted(root.glob("*.bin"), key=lambda p:p.stat().st_mtime, reverse=True); sys.exit("ERROR: no .bin firmware artifact found") if not bins else print(bins[0])' "$(RELEASE_DIR)"); FIRMWARE_ASSET=$$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["FIRMWARE_ASSET"])' "$(RELEASE_META)"); cp "$$FIRMWARE_SOURCE" "$(RELEASE_DIR)/$$FIRMWARE_ASSET"
 	@set -euo pipefail; FIRMWARE_ASSET=$$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["FIRMWARE_ASSET"])' "$(RELEASE_META)"); FIRMWARE_ASSET_PATH="$(RELEASE_DIR)/$$FIRMWARE_ASSET"; SHA256=$$(python3 -c 'import hashlib,sys; h=hashlib.sha256(); f=open(sys.argv[1],"rb"); [h.update(c) for c in iter(lambda:f.read(1048576), b"")]; print(h.hexdigest())' "$$FIRMWARE_ASSET_PATH"); SIZE=$$(python3 -c 'import pathlib,sys; print(pathlib.Path(sys.argv[1]).stat().st_size)' "$$FIRMWARE_ASSET_PATH"); python3 -c 'import json,pathlib,sys; info=json.load(open(sys.argv[1])); info["SHA-256"]=sys.argv[3]; info["SIZE"]=int(sys.argv[4]); pathlib.Path(sys.argv[2]).write_text(json.dumps(info, indent=2)+"\n"); print(f"[release] Wrote release contract to {sys.argv[2]}")' "$(RELEASE_META)" "$(RELEASE_INFO)" "$$SHA256" "$$SIZE"
 	@set -euo pipefail; TAG=$$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["RELEASE_TAG"])' "$(RELEASE_META)"); DEVICE_NAME=$$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["DEVICE_NAME"])' "$(RELEASE_META)"); SOFTWARE_VERSION=$$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["SOFTWARE_VERSION"])' "$(RELEASE_META)"); FIRMWARE_ASSET=$$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["FIRMWARE_ASSET"])' "$(RELEASE_META)"); printf '\n[release] Creating GitHub Release %s\n\n' "$$TAG"; gh release create "$$TAG" "$(RELEASE_DIR)/$$FIRMWARE_ASSET" "$(RELEASE_INFO)" --repo "$(REPO)" --target "$$(git rev-parse HEAD)" --title "$$DEVICE_NAME $$SOFTWARE_VERSION" --notes "Automated OTA firmware release for $$DEVICE_NAME, version $$SOFTWARE_VERSION."
 	@set -euo pipefail; rm -f "$(RELEASE_INFO)"; printf '\n[release] Release complete. Local release-info.json was removed after upload.\n'
@@ -160,16 +158,17 @@ publish-manifest:
 #     print("\nWARNING: Source firmware version is not newer than the published manifest version.")
 #
 # tag = f"v{source_version}"
-# asset_name = f"firmware_{source_device}_v.{source_version}.bin"
+# asset_device_name = source_device.replace(" ", "_")
+# asset_name = f"firmware_{asset_device_name}_v.{source_version}.bin"
 # current_branch = git_output("branch", "--show-current")
 #
 # print("\n==================================================")
 # print("\nDevice\n------")
-# print(f"Manifest entry : {selected_device}")
-# print(f"DEVICE_NAME    : {source_device}")
+# print(f"Manifest device name  : {selected_device}")
+# print(f"Source code DEVICE_NAME: {source_device}")
 # print("\nVersions\n--------")
-# print(f"Published OTA  : {manifest_version}")
-# print(f"Current source : {source_version}")
+# print(f"Manifest SW number  : {manifest_version}")
+# print(f"Source code SW number: {source_version}")
 # print("\nWiFi\n----")
 # print(f"SSID           : {wifi_ssid}")
 # print(f"Password       : {wifi_password}")
