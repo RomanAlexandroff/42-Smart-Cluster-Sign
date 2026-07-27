@@ -4,6 +4,7 @@
 credentials.*
 
 # This project unique files and folders
+build
 Images
 Research Materials
 release-meta.json
