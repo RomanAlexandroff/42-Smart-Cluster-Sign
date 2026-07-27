@@ -7,6 +7,7 @@ credentials.*
 Images
 Research Materials
 release-meta.json
+release-info.json
 
 # macOS system files
 .DS_Store
