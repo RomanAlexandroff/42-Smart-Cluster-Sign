@@ -29,7 +29,7 @@ ERROR_t secret_verification(String input)
     intra_result = fetch_exams();
     strcpy(rtc_g.Secret, secret_buffer);
     rtc_g.exam_status = exam_status_buffer;
-    if (intra_result == INTRA_NO_TOKEN)
+    if (intra_result == INTRA_NO_TOKEN || intra_result == INTRA_NO_SERVER)
         return (FS_INVALID_SECRET);
     return (FS_VALID_SECRET);
 }

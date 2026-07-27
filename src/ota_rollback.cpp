@@ -83,8 +83,8 @@ void notify_firmware_rollback_once(esp_reset_reason_t reason)
             reason == ESP_RST_INT_WDT ||
             reason == ESP_RST_WDT))
         return ;
-    message = "Firmware Rollback has been executed. Returned to the firmware version ";
-    message += String(SOFTWARE_VERSION, 2);
+    message = String(DEVICE_NAME) + " has executed Firmware Rollback. ";
+    message += "Returned to the firmware version " + String(SOFTWARE_VERSION, 2);
     send_telegram_message(message);
 }
 
