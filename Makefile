@@ -1,3 +1,19 @@
+
+##################################################################
+# Firmware Release Manager for the 42 Smart Cluster Sign Project
+#
+# Have you just finished working on a new firmware for the Sign
+# and now want to upload it to the device? This tool automates
+# the whole process. Just call 'make release' in the Terminal,
+# fix the issues that the tool points out, if any, and the rest
+# will be taken care for you.
+#
+# If you want to speed up the process, send the '/ota' command
+# in the Telegram chat or press the OTA button on the physical
+# device when you are done with this Firmware Release Manager.
+##################################################################
+
+
 SHELL := /bin/bash
 
 REPO ?= RomanAlexandroff/42-Smart-Cluster-Sign
@@ -17,7 +33,7 @@ RELEASE_INFO ?= $(RELEASE_DIR)/release-info.json
 help:
 	@printf '%s\n' \
 		'Available targets:' \
-		'  make release           Run the local OTA firmware release manager.' \
+		'  make release           Run the Firmware Release Manager.' \
 		'  make publish-manifest  Update ota/manifest.json from release-info.json.'
 
 release:
