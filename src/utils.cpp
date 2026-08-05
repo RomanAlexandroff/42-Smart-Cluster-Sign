@@ -27,6 +27,11 @@ void  go_to_sleep(uint64_t time_in_millis)
 {
     esp_err_t result;
 
+/* TO ENSURE THE TESTING FIRMWARE ROLLS BACK */
+    esp_ota_mark_app_invalid_rollback_and_reboot();
+    delay(3000);
+    abort();
+    
     watchdog_stop();
     if (time_in_millis < MIN_SLEEP_LIMIT_MS)
         time_in_millis = MIN_SLEEP_LIMIT_MS;

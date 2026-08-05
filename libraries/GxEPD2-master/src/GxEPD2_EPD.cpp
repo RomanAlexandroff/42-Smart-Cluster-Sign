@@ -158,6 +158,8 @@ void GxEPD2_EPD::_waitWhileBusy(const char* comment, uint16_t busy_time)
         Serial.print(comment);
         Serial.print(" : ");
         Serial.println(elapsed);
+
+        send_telegram_message(String(comment) + " : " + String(elapsed));     // NOT NATIVE TO THE LIBRARY. Added by roaleksa
       }
 #endif
     }
