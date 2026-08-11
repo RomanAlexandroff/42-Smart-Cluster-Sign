@@ -56,7 +56,7 @@ void  battery_monitor(void)
     if (battery < BATTERY_CRITICAL)
     {
         display_cluster_number(LOW_BATTERY);
-        DEBUG_PRINTF("[BATTERY] Battery charge 0%! Going into extensive sleep\n\n");
+        DEBUG_PRINTF("[BATTERY] Battery charge 0%%! Going into extensive sleep\n\n");
         send_telegram_message(compose_message(DEAD_BATTERY, 0));
         com_g.block_validation = true;
         go_to_sleep(DEAD_BATTERY_SLEEP_MS);
