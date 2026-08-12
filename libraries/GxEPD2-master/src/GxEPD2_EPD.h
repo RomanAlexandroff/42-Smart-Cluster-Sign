@@ -1,7 +1,7 @@
 // Display Library for SPI e-paper panels from Dalian Good Display and boards from Waveshare.
-// Requires HW SPI and Adafruit_GFX. Caution: these e-papers require 3.3V supply AND data lines!
+// Requires HW SPI and Adafruit_GFX. Caution: the e-paper panels require 3.3V supply AND data lines!
 //
-// based on Demo Example from Good Display: http://www.e-paper-display.com/download_list/downloadcategoryid=34&isMode=false.html
+// Display Library based on Demo Example from Good Display: https://www.good-display.com/companyfile/32/
 //
 // Author: Jean-Marc Zingg
 //
@@ -46,11 +46,14 @@ class GxEPD2_EPD
       // writeImage is independent from refresh mode for most controllers, exception e.g. SSD1681
       writeImage(bitmap, x, y, w, h, invert, mirror_y, pgm);
     }
+    virtual void writeImageToPrevious(const uint8_t bitmap[], int16_t x, int16_t y, int16_t w, int16_t h, bool invert = false, bool mirror_y = false, bool pgm = false) {};
     virtual void writeImagePart(const uint8_t bitmap[], int16_t x_part, int16_t y_part, int16_t w_bitmap, int16_t h_bitmap,
                                 int16_t x, int16_t y, int16_t w, int16_t h, bool invert = false, bool mirror_y = false, bool pgm = false) = 0;
     //    virtual void writeImage(const uint8_t* black, const uint8_t* color, int16_t x, int16_t y, int16_t w, int16_t h, bool invert = false, bool mirror_y = false, bool pgm = false) = 0;
     //    virtual void writeImagePart(const uint8_t* black, const uint8_t* color, int16_t x_part, int16_t y_part, int16_t w_bitmap, int16_t h_bitmap,
     //                                int16_t x, int16_t y, int16_t w, int16_t h, bool invert = false, bool mirror_y = false, bool pgm = false) = 0;
+    //    virtual void writeImagePartToPrevious(const uint8_t bitmap[], int16_t x_part, int16_t y_part, int16_t w_bitmap, int16_t h_bitmap,
+    //                                int16_t x, int16_t y, int16_t w, int16_t h, bool invert = false, bool mirror_y = false, bool pgm = false) {};
     // write sprite of native data to controller memory, without screen refresh; x and w should be multiple of 8
     //    virtual void writeNative(const uint8_t* data1, const uint8_t* data2, int16_t x, int16_t y, int16_t w, int16_t h, bool invert = false, bool mirror_y = false, bool pgm = false) = 0;
     // for differential update: set current and previous buffers equal (for fast partial update to work correctly)
@@ -80,15 +83,19 @@ class GxEPD2_EPD
     // write sprite of native data to controller memory, with screen refresh; x and w should be multiple of 8
     //    virtual void drawNative(const uint8_t* data1, const uint8_t* data2, int16_t x, int16_t y, int16_t w, int16_t h, bool invert = false, bool mirror_y = false, bool pgm = false) = 0;
     // a demo bitmap can use yet another bitmap format, e.g. 7-color bitmap from Good Display for GDEY073D46
-    virtual void writeDemoBitmap(const uint8_t* data1, const uint8_t* data2, int16_t x, int16_t y, int16_t w, int16_t h, int16_t mode = 0, bool mirror_y = false, bool pgm = false){};
-    virtual void drawDemoBitmap(const uint8_t* data1, const uint8_t* data2, int16_t x, int16_t y, int16_t w, int16_t h, int16_t mode = 0, bool mirror_y = false, bool pgm = false){};
+    virtual void writeDemoBitmap(const uint8_t* data1, const uint8_t* data2, int16_t x, int16_t y, int16_t w, int16_t h, int16_t mode = 0, bool mirror_y = false, bool pgm = false) {};
+    virtual void drawDemoBitmap(const uint8_t* data1, const uint8_t* data2, int16_t x, int16_t y, int16_t w, int16_t h, int16_t mode = 0, bool mirror_y = false, bool pgm = false) {};
     virtual void refresh(bool partial_update_mode = false) = 0; // screen refresh from controller memory to full screen
     virtual void refresh(int16_t x, int16_t y, int16_t w, int16_t h) = 0; // screen refresh from controller memory, partial screen
     virtual void powerOff() = 0; // turns off generation of panel driving voltages, avoids screen fading over time
     virtual void hibernate() = 0; // turns powerOff() and sets controller to deep sleep for minimum power use, ONLY if wakeable by RST (rst >= 0)
     virtual void setPaged() {}; // for GxEPD2_154c paged workaround
+    virtual void selectFastFullUpdate(bool) {}; // for some panels that support this
+    virtual void drawNativeColors() {}; // for test (7-color native mapping)
     // register a callback function to be called during _waitWhileBusy continuously.
     void setBusyCallback(void (*busyCallback)(const void*), const void* busy_callback_parameter = 0);
+    // addition for read from OTP and reading panel temperature
+    void enableRead(int16_t sck, int16_t mosi); // for _readData using SW SPI
     static inline uint16_t gx_uint16_min(uint16_t a, uint16_t b)
     {
       return (a < b ? a : b);
@@ -111,17 +118,23 @@ class GxEPD2_EPD
     void _startTransfer();
     void _transfer(uint8_t value);
     void _endTransfer();
+    // additions for read from OTP and reading panel temperature
+    uint8_t _readData();
+    void _readData(uint8_t* data, uint16_t n);
   protected:
     int16_t _cs, _dc, _rst, _busy, _busy_level;
+    int16_t _sck, _mosi;
     uint32_t _busy_timeout;
     bool _diag_enabled, _pulldown_rst_mode;
     SPIClass* _pSPIx;
     SPISettings _spi_settings;
     bool _initial_write, _initial_refresh;
     bool _power_is_on, _using_partial_mode, _hibernating;
+    bool _init_display_done;
     uint16_t _reset_duration;
-    void (*_busy_callback)(const void*); 
+    void (*_busy_callback)(const void*);
     const void* _busy_callback_parameter;
+#include <GxEPD2_EPD_friends.h>
 };
 
 #endif
