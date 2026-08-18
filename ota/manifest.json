@@ -10,7 +10,7 @@
 	},
 	"devices": {
 		"42PRAGUEAPI SCREEN": {
-		"version": "4.39",
+		"version": "4.99",
 		"url": "https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/releases/download/v4.39/firmware_42PRAGUEAPI_SCREEN_v.4.39.bin",
 		"sha256": "954fee97141c146e07bf04ef35b5b6cb80b5ac3d50624727dc8a678b5ff2d4d1",
 		"size": 1668752,
