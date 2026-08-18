@@ -17,8 +17,6 @@
 #include <avr/pgmspace.h>
 #endif
 
-extern void send_telegram_message(const String message);   // NOT NATIVE! Added by roaleksa. Delete!
-
 GxEPD2_EPD::GxEPD2_EPD(int16_t cs, int16_t dc, int16_t rst, int16_t busy, int16_t busy_level, uint32_t busy_timeout,
                        uint16_t w, uint16_t h, GxEPD2::Panel p, bool c, bool pu, bool fpu) :
   WIDTH(w), HEIGHT(h), panel(p), hasColor(c), hasPartialUpdate(pu), hasFastPartialUpdate(fpu),
@@ -168,8 +166,6 @@ void GxEPD2_EPD::_waitWhileBusy(const char* comment, uint16_t busy_time)
         Serial.print(comment);
         Serial.print(" : ");
         Serial.println(elapsed);
-
-        send_telegram_message(String(comment) + " : " + String(elapsed) + " us"); // NOT NATIVE! Added by roaleksa. Delete!
       }
 #endif
     }
