@@ -12,7 +12,7 @@
 
 #include "globals.h"
 
-GxEPD2_3C<GxEPD2_750c_Z08, GxEPD2_750c_Z08::HEIGHT> display(GxEPD2_750c_Z08(SPI_SS_PIN, DC_PIN, RST_PIN, BUSY_PIN));
+GxEPD2_3C<GxEPD2_750c_GDEY075Z08, GxEPD2_750c_GDEY075Z08::HEIGHT / 4> display(GxEPD2_750c_GDEY075Z08(SPI_SS_PIN, DC_PIN, RST_PIN, BUSY_PIN));
 WiFiClientSecure Telegram_client;
 WiFiClientSecure Intra_client;
 UniversalTelegramBot bot(BOT_TOKEN, Telegram_client);

@@ -47,7 +47,7 @@
 
 /* Display driver */
 # define GxEPD2_DISPLAY_CLASS    GxEPD2_3C
-# define GxEPD2_DRIVER_CLASS     GxEPD2_750c_Z08
+# define GxEPD2_DRIVER_CLASS     GxEPD2_750c_GDEY075Z08
 # define GxEPD2_3C_IS_GxEPD2_3C  true
 # define IS_GxEPD2_3C(x)         IS_GxEPD(GxEPD2_3C_IS_, x)
 # define MAX_DISPLAY_BUFFER_SIZE 96124ul

@@ -1,7 +1,7 @@
 // Display Library for SPI e-paper panels from Dalian Good Display and boards from Waveshare.
-// Requires HW SPI and Adafruit_GFX. Caution: these e-papers require 3.3V supply AND data lines!
+// Requires HW SPI and Adafruit_GFX. Caution: the e-paper panels require 3.3V supply AND data lines!
 //
-// based on Demo Example from Good Display: http://www.e-paper-display.com/download_list/downloadcategoryid=34&isMode=false.html
+// Display Library based on Demo Example from Good Display: https://www.good-display.com/companyfile/32/
 //
 // Author: Jean-Marc Zingg
 //
@@ -28,9 +28,12 @@ GxEPD2_EPD::GxEPD2_EPD(int16_t cs, int16_t dc, int16_t rst, int16_t busy, int16_
   _power_is_on = false;
   _using_partial_mode = false;
   _hibernating = false;
+  _init_display_done = false;
   _reset_duration = 10;
   _busy_callback = 0;
   _busy_callback_parameter = 0;
+  _sck = -1;
+  _mosi = -1;
 }
 
 void GxEPD2_EPD::init(uint32_t serial_diag_bitrate)
@@ -46,6 +49,7 @@ void GxEPD2_EPD::init(uint32_t serial_diag_bitrate, bool initial, uint16_t reset
   _power_is_on = false;
   _using_partial_mode = false;
   _hibernating = false;
+  _init_display_done = false;
   _reset_duration = reset_duration;
   if (serial_diag_bitrate > 0)
   {
@@ -54,31 +58,33 @@ void GxEPD2_EPD::init(uint32_t serial_diag_bitrate, bool initial, uint16_t reset
   }
   if (_cs >= 0)
   {
-    digitalWrite(_cs, HIGH);
+    digitalWrite(_cs, HIGH); // preset (less glitch for any analyzer)
     pinMode(_cs, OUTPUT);
+    digitalWrite(_cs, HIGH); // set (needed e.g. for RP2040)
+  }
+  _reset();
+  _pSPIx->begin(); // may steal _rst pin (Waveshare Pico-ePaper-2.9)
+  if (_rst >= 0)
+  {
+    digitalWrite(_rst, HIGH); // preset (less glitch for any analyzer)
+    pinMode(_rst, OUTPUT);
+    digitalWrite(_rst, HIGH); // set (needed e.g. for RP2040)
+  }
+  if (_cs >= 0)
+  {
+    digitalWrite(_cs, HIGH); // preset (less glitch for any analyzer)
+    pinMode(_cs, OUTPUT);
+    digitalWrite(_cs, HIGH); // set (needed e.g. for RP2040)
   }
   if (_dc >= 0)
   {
-    digitalWrite(_dc, HIGH);
+    digitalWrite(_dc, HIGH); // preset (less glitch for any analyzer)
     pinMode(_dc, OUTPUT);
+    digitalWrite(_dc, HIGH); // set (needed e.g. for RP2040)
   }
-  _reset();
   if (_busy >= 0)
   {
     pinMode(_busy, INPUT);
-  }
-  _pSPIx->begin();
-  if (_busy == MISO) // may be overridden
-  {
-    pinMode(_busy, INPUT);
-  }
-  if (_dc == MISO) // may be overridden, TTGO T5 V2.66
-  {
-    pinMode(_dc, OUTPUT);
-  }
-  if (_cs == MISO) // may be overridden
-  {
-    pinMode(_cs, INPUT);
   }
 }
 
@@ -110,14 +116,16 @@ void GxEPD2_EPD::_reset()
     {
       digitalWrite(_rst, LOW);
       pinMode(_rst, OUTPUT);
+      digitalWrite(_rst, LOW);
       delay(_reset_duration);
       pinMode(_rst, INPUT_PULLUP);
       delay(_reset_duration > 10 ? _reset_duration : 10);
     }
     else
     {
-      digitalWrite(_rst, HIGH); // NEEDED for Waveshare "clever" reset circuit, power controller before reset pulse
+      digitalWrite(_rst, HIGH); // NEEDED for Waveshare "clever" reset circuit, power controller before reset pulse, preset (less glitch for any analyzer)
       pinMode(_rst, OUTPUT);
+      digitalWrite(_rst, HIGH); // NEEDED for Waveshare "clever" reset circuit, power controller before reset pulse, set (needed e.g. for RP2040)
       delay(10); // NEEDED for Waveshare "clever" reset circuit, at least delay(2);
       digitalWrite(_rst, LOW);
       delay(_reset_duration);
@@ -279,4 +287,61 @@ void GxEPD2_EPD::_endTransfer()
 {
   if (_cs >= 0) digitalWrite(_cs, HIGH);
   _pSPIx->endTransaction();
+}
+
+void GxEPD2_EPD::enableRead(int16_t sck, int16_t mosi)
+{
+  _sck = sck;
+  _mosi = mosi;
+}
+
+uint8_t GxEPD2_EPD::_readData()
+{
+  uint8_t data = 0;
+  if ((_sck >= 0) && (_mosi >= 0))
+  {
+    _pSPIx->end();
+    digitalWrite(_sck, HIGH);
+    pinMode(_sck, OUTPUT);
+    digitalWrite(_sck, HIGH);
+    pinMode(_mosi, INPUT);
+    if (_cs >= 0) digitalWrite(_cs, LOW);
+    for (int i = 0; i < 8; i++)
+    {
+      data <<= 1;
+      digitalWrite(_sck, LOW);
+      data |= digitalRead(_mosi);
+      digitalWrite(_sck, HIGH);
+    }
+    if (_cs >= 0) digitalWrite(_cs, HIGH);
+    _pSPIx->begin();
+  }
+  return data;
+}
+
+void GxEPD2_EPD::_readData(uint8_t* data, uint16_t n)
+{
+  if ((_sck >= 0) && (_mosi >= 0))
+  {
+    _pSPIx->end();
+    digitalWrite(_sck, LOW);
+    pinMode(_sck, OUTPUT);
+    digitalWrite(_sck, LOW);
+    pinMode(_mosi, INPUT);
+    if (_cs >= 0) digitalWrite(_cs, LOW);
+    for (uint8_t i = 0; i < n; i++)
+    {
+      *data = 0;
+      for (int i = 0; i < 8; i++)
+      {
+        *data <<= 1;
+        digitalWrite(_sck, HIGH);
+        *data |= digitalRead(_mosi);
+        digitalWrite(_sck, LOW);
+      }
+      data++;
+    }
+    if (_cs >= 0) digitalWrite(_cs, HIGH);
+    _pSPIx->begin();
+  }
 }

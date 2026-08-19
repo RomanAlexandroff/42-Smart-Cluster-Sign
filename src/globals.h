@@ -23,7 +23,7 @@
 # include <UniversalTelegramBot.h>
 # include "credentials.h"
 
-extern GxEPD2_3C<GxEPD2_750c_Z08, GxEPD2_750c_Z08::HEIGHT> display;
+extern GxEPD2_3C<GxEPD2_750c_GDEY075Z08, GxEPD2_750c_GDEY075Z08::HEIGHT / 4> display;
 extern WiFiClientSecure Telegram_client;
 extern WiFiClientSecure Intra_client;
 extern UniversalTelegramBot bot;

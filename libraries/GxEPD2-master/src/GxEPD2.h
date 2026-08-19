@@ -1,7 +1,7 @@
 // Display Library for SPI e-paper panels from Dalian Good Display and boards from Waveshare.
-// Requires HW SPI and Adafruit_GFX. Caution: these e-papers require 3.3V supply AND data lines!
+// Requires HW SPI and Adafruit_GFX. Caution: the e-paper panels require 3.3V supply AND data lines!
 //
-// based on Demo Example from Good Display: http://www.e-paper-display.com/download_list/downloadcategoryid=34&isMode=false.html
+// Display Library based on Demo Example from Good Display: https://www.good-display.com/companyfile/32/
 //
 // Author: Jean-Marc Zingg
 //
@@ -64,21 +64,33 @@ class GxEPD2
       GDEM029T94,
       GDEY029T94,
       DEPG0290BS,
+      GDEY029T71H,
       GDEW027W3,  Waveshare_2_7_bw = GDEW027W3,
       GDEY027T91,
+      GDEQ031T10,
       ED037TC1,
+      GDEY037T03,
       GDEW0371W7, Waveshare_3_7_bw = GDEW0371W7,
+      GDEM0397T81,
       GDEW042T2,  Waveshare_4_2_bw = GDEW042T2,
       GDEW042M01,
-      GDEY042T91,
+      GDEY042T81,
+      GYE042A87,
+      SE0420NQ04,
+      GDEQ0426T82,
+      GDEH0576T81,
+      GDEY0579T93,
       GDEW0583T7, Waveshare_5_83_bw = GDEW0583T7,
       GDEW0583T8,
       GDEQ0583T31,
       GDEW075T8,  Waveshare_7_5_bw = GDEW075T8,
       GDEW075T7,  Waveshare_7_5_bw_T7 = GDEW075T7,
       GDEY075T7,
+      GDEM102T91,
+      GDEM1085T51,
       GDEH116T91,
       GDEW1248T3, Waveshare_12_24_bw = GDEW1248T3,
+      GDEM133T91,
       ED060SCT, // on Waveshare IT8951 Driver HAT
       ED060KC1, // on Waveshare IT8951 Driver HAT 1448x1072
       ED078KC2, // on Waveshare IT8951 Driver HAT 1872x1404
@@ -96,15 +108,37 @@ class GxEPD2
       GDEW027C44,  Waveshare_2_7_bwr = GDEW027C44,
       GDEW042Z15,  Waveshare_4_2_bwr = GDEW042Z15,
       GDEQ042Z21,  Waveshare_4_2_V2_bwr = GDEQ042Z21,
+      GDEY042Z98,
+      GDEY0579Z93,
+      GDEQ0583Z31,
       GDEW0583Z21, Waveshare_5_83_bwr = GDEW0583Z21,
       GDEW0583Z83,
-      Waveshare437inch4color,
-      ACeP565,     Waveshare_5_65_7c = ACeP565,
-      GDEY073D46,
       GDEW075Z09,  Waveshare_7_5_bwr = GDEW075Z09,
       GDEW075Z08,  Waveshare_7_5_bwr_Z08 = GDEW075Z08,
+      GDEY075Z08,
       GDEH075Z90,  Waveshare_7_5_bwr_Z90 = GDEH075Z90,
-      GDEY1248Z51
+      GDEY116Z91,
+      GDEY1248Z51,
+      GDEM133Z91,
+      // 4-color
+      GDEM0154F51H,
+      GDEY0213F51,
+      GDEY0266F51H,
+      GDEY029F51H,
+      Waveshare3inch4color,
+      GDEM035F51,
+      GDEM0397F81,
+      GDEY0420F51,
+      Waveshare437inch4color,
+      GDEY0579F51,
+      GDEM075F52,
+      GDEY116F51,
+      // 7-color
+      ACeP565,     Waveshare_5_65_7c = ACeP565,
+      GDEP0565D90,
+      GDEY073D46,
+      ACeP730,     Waveshare_7_30_7c = ACeP730,
+      GDEP073E01,
     };
 };
 
