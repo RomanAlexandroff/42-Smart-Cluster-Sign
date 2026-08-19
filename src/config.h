@@ -17,7 +17,7 @@
 #ifndef CONFIG_H
 # define CONFIG_H
 
-# define SOFTWARE_VERSION       4.39
+# define SOFTWARE_VERSION       4.38
 # define DEVICE_NAME            "42PRAGUEAPI SCREEN"
 
 # define DEBUG                                               // comment out this line to turn off Serial output
@@ -38,7 +38,7 @@
                                                                 // Make sure to use only the Winter-time time zone; 
                                                                 // Include "-" sign if applies. Do not include "+" sign.
 /* Time limits */
-# define CONNECT_TIMEOUT_S      5                            // wi-fi
+# define CONNECT_TIMEOUT_S      10                           // wi-fi
 # define DEBOUNCE_DELAY_MS      1000ul                       // buttons
 # define WD_TIMEOUT_MS          8000                         // watchdog
 # define SERVER_WAIT_MS         1000                         // Intra

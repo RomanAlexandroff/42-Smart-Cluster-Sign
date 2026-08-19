@@ -93,8 +93,14 @@ void  ft_delay(uint64_t time_in_millis)
 */
 bool ensure_wifi_connection(void)
 {
+    uint32_t  start_ms;
+
     if (WiFi.status() == WL_CONNECTED)
         return (true);
+    WiFi.mode(WIFI_OFF);
+    start_ms = millis();
+    while (WiFi.getMode() != WIFI_OFF && (millis() - start_ms) < 200)
+        delay(10);
     wifi_connect();
     watchdog_reset();
     if (WiFi.status() != WL_CONNECTED)
