@@ -18,9 +18,7 @@ static unsigned int exam(void)
 
     watchdog_reset();
     exam_remaining_time = time_till_event(com_g.exam_end_hour, com_g.exam_end_minutes);
-    DEBUG_PRINTF("\n[THE DISPLAY] Drawing the Exam sign...\n");
-    draw_colour_bitmap(exam_warning_black, exam_warning_red);                          // execution takes 25 sec
-    DEBUG_PRINTF("[THE DISPLAY] The drawing process is complete\n");
+    draw_on_display(EXAM_ACTIVE);                                                        // execution takes 25 sec
     rtc_g.exam_status = false;
     return (exam_remaining_time);
 }
@@ -38,21 +36,19 @@ static void preexam_warning(unsigned int* p_preexam_time)
     minutes = time_sync(*p_preexam_time);
     if (minutes == 60 || minutes == 50)
     {
-        DEBUG_PRINTF("\n[THE DISPLAY] Drawing the Reservation sign...\n");
-        draw_colour_bitmap(preexam_50mins, preexam_warning_red);                       // execution takes 25 sec
-        DEBUG_PRINTF("[THE DISPLAY] The drawing process is complete\n");
+        draw_on_display(PREEXAM_50);                                                    // execution takes 25 sec
         ft_delay((minutes - 40) * 60000);
         minutes = 40;
     }
     if (minutes == 40 || minutes == 30 || minutes == 20)
     {
-        draw_colour_bitmap(preexam_25mins, preexam_warning_red);                       // execution takes 25 sec
+        draw_on_display(PREEXAM_25);                                                    // execution takes 25 sec
         ft_delay((minutes - 10) * 60000);
         minutes = 10;
     }
     if (minutes == 10)
     {
-        draw_colour_bitmap(preexam_5mins, preexam_warning_red);                        // execution takes 25 sec
+        draw_on_display(PREEXAM_5);                                                     // execution takes 25 sec
         ft_delay(480000);
     }
     *p_preexam_time = 0;

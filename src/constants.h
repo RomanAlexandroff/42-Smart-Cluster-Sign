@@ -55,8 +55,7 @@
 
 /* Images constants */
 typedef enum {
-    CLUSTER = 1000,
-    DEFAULT_IMG,
+    CLUSTER_DEFAULT = 100,
     INTRA_ERROR,
     SECRET_EXPIRED,
     EXAM_DAY,
@@ -67,12 +66,17 @@ typedef enum {
     OTA_FAIL,
     OTA_CANCELED,
     TELEGRAM_ERROR,
-    TELEGRAM_STATUS
+    TELEGRAM_STATUS,
+    PREEXAM_50,
+    PREEXAM_25,
+    PREEXAM_5,
+    EXAM_ACTIVE,
+    BLANK
 } IMAGE_t;
 
 /* Errors constants */
 typedef enum {
-    UNKNOWN = 2000,
+    UNKNOWN = 200,
     TIME_OK,
     TIME_NO_WIFI,
     TIME_NO_SERVER,

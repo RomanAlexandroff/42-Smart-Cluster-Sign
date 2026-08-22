@@ -21,7 +21,7 @@ static bool handle_secret_expiration(void)
     days_left = expiration_counter();
     if (days_left <= 3 && days_left != FAILED_TO_COUNT)
     {
-        display_cluster_number(SECRET_EXPIRED);
+        draw_on_display(SECRET_EXPIRED);
         DEBUG_PRINTF("\n[INTRA] IT IS TIME TO UPDATE THE SECRET!\n");
         send_telegram_message(compose_message(SECRET_EXPIRED, days_left));
         return (true);
@@ -56,7 +56,7 @@ static bool ensure_exams(unsigned int* p_sleep_length)
     {
         send_telegram_message(compose_message(intra_status, 0));
         WiFi.mode(WIFI_OFF);
-        display_cluster_number(INTRA_ERROR);
+        draw_on_display(INTRA_ERROR);
         DEBUG_PRINTF("\n[INTRA] ERROR OBTAINING EXAMS. Turning off\n");
         rtc_g.exam_status = false;
         *p_sleep_length = time_till_wakeup();
@@ -92,7 +92,7 @@ void  cluster_number_mode(unsigned int* p_sleep_length)
             *p_sleep_length = REBOOT;
         else
         {
-            display_cluster_number(EXAM_DAY);
+            draw_on_display(EXAM_DAY);
             *p_sleep_length = time_till_event(rtc_g.exam_start_hour - 1, rtc_g.exam_start_minutes);
         }
         return;
@@ -100,6 +100,6 @@ void  cluster_number_mode(unsigned int* p_sleep_length)
     *p_sleep_length = time_till_wakeup();
     if (handle_secret_expiration())
         return;
-    display_cluster_number(DEFAULT_IMG);
+    draw_on_display(CLUSTER_DEFAULT);
 }
  

@@ -77,7 +77,7 @@ void  data_integrity_check(void)
         }
         else
             DEBUG_PRINTF("\n[FILE SYSTEM] Failed to create the chat_id.txt file!\n");
-        display_cluster_number(TELEGRAM_ERROR);
+        draw_on_display(TELEGRAM_ERROR);
     }
     data_restore("/secret.txt");
     data_restore("/chat_id.txt");

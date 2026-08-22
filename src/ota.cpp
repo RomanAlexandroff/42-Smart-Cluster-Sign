@@ -466,18 +466,17 @@ static OTA_RESULT_t ota_check_and_update(void)
 
 /* PROCEED TO DOWNLOADING THE SOFTWARE AND FLASHING THE DEVICE */
     ota_send_telegram(String(DEVICE_NAME) + " found OTA update. Downloading firmware...");
-    display_cluster_number(OTA_WAITING);
+    draw_on_display(OTA_WAITING);
     watchdog_stop();
     if (!ota_download_and_flash(target))
     {
         watchdog_start();
-        display_cluster_number(OTA_FAIL);
+        draw_on_display(OTA_FAIL);
         ota_send_telegram(String(DEVICE_NAME) + " failed OTA update. Try again later.");
         ft_delay(5000);
-        clear_display();
         return (OTA_RESULT_ERR_FIRMWARE_DOWNLOAD);
     }
-    display_cluster_number(OTA_SUCCESS);
+    draw_on_display(OTA_SUCCESS);
     ota_send_telegram(String(DEVICE_NAME) + " installed OTA update. Rebooting...");
     ft_delay(3000);
     ESP.restart();
