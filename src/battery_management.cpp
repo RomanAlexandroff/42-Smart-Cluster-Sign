@@ -55,7 +55,7 @@ void  battery_monitor(void)
         return ;  
     if (battery < BATTERY_CRITICAL)
     {
-        display_cluster_number(LOW_BATTERY);
+        draw_on_display(LOW_BATTERY);
         DEBUG_PRINTF("[BATTERY] Battery charge 0%%! Going into extensive sleep\n\n");
         send_telegram_message(compose_message(DEAD_BATTERY, 0));
         com_g.block_validation = true;
@@ -63,7 +63,7 @@ void  battery_monitor(void)
     }
     else if (battery < BATTERY_GOOD)
     {
-        display_cluster_number(LOW_BATTERY);
+        draw_on_display(LOW_BATTERY);
         DEBUG_PRINTF("[BATTERY] Low battery. Need charging.\n\n");
         send_telegram_message(compose_message(LOW_BATTERY, 0));
     }
