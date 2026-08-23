@@ -273,11 +273,11 @@ unsigned int  time_till_wakeup(void)
     watchdog_reset();
     i = sizeof(wakeup_hour) / sizeof(wakeup_hour[0]) - 1;
     if (com_g.hour >= wakeup_hour[i])
-        return ((wakeup_hour[0] + 24 - com_g.hour) * HOUR_MS - (com_g.minute * MINUTE_MS) - millis());
+        return ((wakeup_hour[0] + 24 - com_g.hour) * ONE_HOUR_MS - (com_g.minute * ONE_MINUTE_MS) - millis());
     i = 0;
     while ((wakeup_hour[i] - com_g.hour) <= 0)
         i++;
-    return ((wakeup_hour[i] - com_g.hour) * HOUR_MS - (com_g.minute * MINUTE_MS) - millis());
+    return ((wakeup_hour[i] - com_g.hour) * ONE_HOUR_MS - (com_g.minute * ONE_MINUTE_MS) - millis());
 }
 
 
@@ -291,8 +291,8 @@ unsigned int  time_till_event(int8_t hours, uint8_t minutes)
     long    time_left_ms;
 
     watchdog_reset();
-    time_left_ms = (hours - com_g.hour) * HOUR_MS;
-    time_left_ms += (minutes * MINUTE_MS) - (com_g.minute * MINUTE_MS);
+    time_left_ms = (hours - com_g.hour) * ONE_HOUR_MS;
+    time_left_ms += (minutes * ONE_MINUTE_MS) - (com_g.minute * ONE_MINUTE_MS);
     if (time_left_ms < 0)
         time_left_ms = 0;
     return ((unsigned int)time_left_ms);
@@ -311,7 +311,7 @@ int  time_sync(unsigned int preexam_time)
         minutes = ceil(preexam_time / 1000);
         ft_delay(1000);
     }
-    minutes = ceil(preexam_time / MINUTE_MS);
+    minutes = ceil(preexam_time / ONE_MINUTE_MS);
     while (minutes % 10 != 0 || minutes > 60)
     {
         ft_delay(59990);

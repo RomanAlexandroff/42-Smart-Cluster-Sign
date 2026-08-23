@@ -21,8 +21,9 @@
 # define REBOOT                  1000
 # define mS_TO_uS_FACTOR         1000ull                      // milliseconds to microseconds
 # define mS_TO_S_FACTOR          1000ul                       // milliseconds to seconds
-# define MINUTE_MS               60000
-# define HOUR_MS                 3600000
+# define ONE_SECOND_MS           1000
+# define ONE_MINUTE_MS           60000
+# define ONE_HOUR_MS             3600000
 # define MONTHS_DAYS             31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 # define YEAR_DAYS               365
 # define NOT_FOUND               -1

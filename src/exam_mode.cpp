@@ -73,10 +73,12 @@ void  exam_mode(void)
     if (!rtc_g.exam_status)
         return ;
     preexam_time = time_till_event(rtc_g.exam_start_hour, rtc_g.exam_start_minutes);
-    if (preexam_time > 600000)
+    if (preexam_time > 2 * ONE_HOUR_MS)
+        return ;
+    if (preexam_time > 10 * ONE_MINUTE_MS)
         preexam_warning(&preexam_time);
-    if (preexam_time <= 600000 && preexam_time >= 25000)
-        ft_delay(preexam_time - 25000);
+    if (preexam_time <= 10 * ONE_MINUTE_MS && preexam_time >= 25 * ONE_SECOND_MS)
+        ft_delay(preexam_time - 25 * ONE_SECOND_MS);
     fetch_exams();
     if (!rtc_g.exam_status)
         return ;
