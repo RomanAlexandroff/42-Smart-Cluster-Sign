@@ -1,17 +1,12 @@
-# Derived from Arduino IDE 2's default ClangFormat configuration:
-# https://raw.githubusercontent.com/arduino/tooling-project-assets/main/other/clang-format-configuration/.clang-format
-#
+
 # Tailored toward The Norm Version 3 formatting (indent, braces, spacing,
 # line length, etc.) as closely as ClangFormat's option set allows.
 #
-# Important:
-# - A custom .clang-format fully overrides Arduino's default rather than
-#   merging with it. Options below are set explicitly on purpose.
-# - ft_ / FT_ prefix naming rules from The Norm are intentionally excluded;
-#   they do not apply to this project.
-# - Rules ClangFormat cannot express still need manual / Norminette checks
-#   (naming prefixes other than ft_, return parentheses, tab between return
-#   type and function name, function-size limits, forbidden constructs, etc.).
+# ft_ / FT_ prefix naming rules from The Norm are intentionally excluded;
+# they do not apply to this project.
+# Rules ClangFormat cannot express still need manual / Norminette checks
+# (naming prefixes other than ft_, return parentheses, tab between return
+# type and function name, function-size limits, forbidden constructs, etc.).
 ---
 AccessModifierOffset: -2
 AlignAfterOpenBracket: Align
