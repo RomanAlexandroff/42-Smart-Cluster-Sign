@@ -57,6 +57,10 @@ release-info.json
 *.idb
 *.pdb
 
+# Python bytecode
+__pycache__/
+*.pyc
+
 # Kernel Module Compile Results
 *.mod*
 *.cmd
