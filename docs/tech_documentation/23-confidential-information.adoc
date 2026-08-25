@@ -1,0 +1,8 @@
+= Suggestions for Dealing with Confidential Information
+:imagesdir: media
+ifndef::backend-pdf[]
+:toc: auto
+:sectnums:
+endif::[]
+
+NOTE: This chapter is a stub — see issue #71.

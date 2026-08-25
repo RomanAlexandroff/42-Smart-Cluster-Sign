@@ -1,0 +1,162 @@
+= Service Messages Meaning
+:imagesdir: media
+ifndef::backend-pdf[]
+:toc: auto
+:sectnums:
+endif::[]
+
+During its operation, there are some messages that the Sign may output. Some of those messages appear on the display as well as in the Telegram chat, but some appear only in the chat. The messages are designed to be naturally understandable on their own. In this article you may find all such messages, when they occure, and additional explanation to their meaning.
+
+You may notice that for quite a handful of issues the Sign simply says that it could not check the exam time and suggests students to check whether the classroom is reserved themselves. However, it is often possible to find out exactly what happened from the message the Sign sends to the Telegram chat or from the debugging output the Sign transmits into the Serial Monitor (if the DEBUG macro was not deactivated).
+
+[cols="1,1,1",options="header"]
+|===
+|What You See on the Display
+|What You Receive in the Telegram Chat
+|What to Do about It
+
+a|
+image::low-battery-note.jpeg[low battery note]
+|Dear User, I need your assistance! My battery is low. I am currently sitting on 3% and it keeps on draining! Please, charge me as soon as possible.
+a|
+You need to charge the Sign as soon as possible. It may probably run for 3-4 more days, but then it will become non-operational.
+Everything about charging the Sign can be found in the article link:11-hardware-maintenance.adoc[Hardware maintenance]  here in the document.
+
+a|
+image::battery-empty.jpeg[battery empty]
+|Dear User, I need your assistance! My battery is dead, so I am stopping all the processes and turning off. Please, charge me and I will turn back on again.
+a|
+At this moment the Sign is completely off. It will not work again untill you charge its battery.
+Everything about charging the Sign can be found in the article link:11-hardware-maintenance.adoc[Hardware maintenance]  here in the document.
+
+a|
+image::intra-token-expires.png[intra token expires]
+a|
+Dear User, I need your assistance! My SECRET token expires in X days / expires tomorrow! / has already expired!!! And without it I would not be able to do my job. Please, retreive a new SECRET token from the Intra API page and send it to me in this chat. Your message should start with a forward slash (/), so I could recognise it.
+
+Here is an example:
+/s-xxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+After it is done, I will leave you in pease for another month =)
+a|
+The message is pretty descriptive.
+
+If you did not build the Sign yourself, your Bocal IT team may have a special Secret token for the Sign, so it would be a wise first step to go and ask them.
+
+If you did, get a new Secret token the way you did it the first time. Here are the instructions: https://api.intra.42.fr/apidoc/guides/getting_started
+
+a|
+image::could-not-check-exams.png[could not check exams]
+a|
+Dear User, I am writing to report an exceptional situation! Code: GET_TIME 102
+
+After several retries, I was unable to connect to Wi-Fi to get current time. If you see this message, the problem has been probably solved already. Unfortunatelly, because of this issue I am displaying an Intra error and I cannot inform students about exams. So, if there is one today, you probably should notify them yourself.
+
+I will try to restore my work in a few hours. If you do not receive this message again, it means that I was successful.
+a|
+There are some issues with the Wi-Fi connection. If you see the error message on the display, but there is not a single new message from the Sign in the Telegram chat at all, then that’s exactly because of this problem and it is still ongoing. If there IS the message you can see on the left in the Telegram chat, probably the issue has already been solved.
+
+Plausible causes:
+- Internet is not accessible due to issues on the provider’s side or due to the unpaid bills;
+
+- Wi-Fi router issues: power outage, Firewall blockage, poor signal, change of the Wi-Fi network name and/or password;
+
+- the Sign issues: located too far away from the router, the battery is at the end of its lifespan and cannot supply enough power for Wi-Fi connection;
+
+- human factor: the name and/or the password of your Wi-Fi network you entered into the credentials.h file have a typo or some other kind of a mistake.
+
+a|
+image::could-not-check-exams.png[could not check exams]
+a|
+Dear User, I am writing to report an exceptional situation! Code: GET_TIME 103
+
+After several retries, I was unable to connect to the NTP server and I do not know what time it is now. The issue is on the server side.
+
+I understand that you can hardly do anything about it. I just wanted to let you know that now I cannot inform students about exams. So, if there is one today, you probably should notify them yourself.
+
+I will try to connect to the NTP server and to get time in a few hours. If you do not receive this message again, it means that I was successful.
+a|
+The NTP server is probably offline.
+
+An NTP server is where the Sign gets the actual current time and date from. Without this data the Sign cannot operate.
+
+When an NTP server fails, you cannot really do anything about it but to wait. If this happens too often (more than two occasions a year), it might be the time to change the NTP server. It’s in the get_time() function.
+
+Much less likely this was caused by a bug in the program. The chances of that are low, but never zero.
+
+a|
+image::could-not-check-exams.png[could not check exams]
+a|
+Dear User, I am writing to report an exceptional situation! Code: INTRA 503
+
+After several retries, I was unable to connect to the Intra server. Since you see this message, the problem is probably not with the Wi-Fi connection, but on the Intra server's side. Likely, you can hardly do anything but wait. I cannot inform students about exams, so if there is one today, you probably should notify them yourself.
+
+I will try to connect to Intra in a few hours. If you do not get this message again, it means that I was successful.
+a|
+This message indicates issues with Intra server, namely that the server does not respond to the calls of the Sign.
+
+If waiting it out did not help, try and test obtaining exams data manually on your computer as it is described in the link:14-intra-api.adoc[How to get exams info from Intra] article here in the document. If you had no issues doing so on your computer, reboot the Sign by pressing the R button on the back of the device. If nothing happens within 20 minutes, you may need to start debugging. A good place to start is connecting the Sign to a computer and checking what it says in the Serial Monitor. Another place to look at is the intra_connect() function.
+
+a|
+image::could-not-check-exams.png[could not check exams]
+a|
+Dear User, I am writing to report an exceptional situation! Code: INTRA 401
+
+After several tries, I was unable to get the access token from the Intra server. From the experience, it has been probably caused by a faulty or expired SECRET token. Another possible reason is that they changed the Intra server response layout and I cannot see the access token, because now it is located somewhere else.
+
+Anyhow, now I cannot inform students about exams, so if there is one today, you probably should notify them yourself. I will try to get the access token in a few hours. If you do not get this message again, it means that I was successful.
+|
+
+a|
+image::could-not-check-exams.png[could not check exams]
+a|
+Dear User, I am writing to report an exceptional situation! Code: INTRA 404
+
+After several tries, I was unable to get any exam information from the Intra server. Instead of dates and times of exams, I simply receive an empty page. If it is caused by a problem on my side, I am unaware of it.
+
+Anyhow, now I cannot inform students about exams, so if there is one today, you probably should notify them yourself. I will try to get the exam information in a few hours. If you do not get this message again, it means that I was successful.
+|
+
+a|
+image::ota-waiting-update.png[ota waiting update]
+a|
+_While waiting for the updating to start:_
+
+OTA Update is active
+
+_When the updating has just started:_
+
+Updating...
+|
+
+a|
+image::ota-update-canceled.png[OTA update was canceled]
+|OTA Update port closed
+|
+
+a|
+image::ota-update-successful.png[ota update successful]
+|Successfully updated!
+|
+
+a|
+image::ota-update-failed.png[ota update failed]
+|Something went wrong. Updating was not completed. Try again later
+|
+
+a|
+image::telegram-bot-error.png[Telegram bot error]
+a|
+—
+
+_(It’s a Telegram error. You cannot expect to get a message in Telegram when there is a Telegram error)_
+a|
+This service message means that the Sign does not have access to the Telegram chat because it does not have the chat ID.
+
+This issue may have occurred because the memory has got corrupted. In this case, the Secret token has probably been lost too. To fix this, go to the Telegram chat with the Sign that you already have and write any message to it starting with the ”/” character. When the Sign responds, send it the Secret token again just to be safe.
+If you do not have a chat with the Sign, go to credentials.h, copy the Telegram bot name of the Sign from the BOT_NAME definition and search for it on Telegram. When you find the bot, just start a chat with it and the chat ID will get restored automatically.
+
+|
+|
+|
+|===

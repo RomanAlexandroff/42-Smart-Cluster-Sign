@@ -1,0 +1,32 @@
+= Vocabulary of Terms
+:imagesdir: media
+ifndef::backend-pdf[]
+:toc: auto
+:sectnums:
+endif::[]
+
+*42 Smart Cluster Sign* — in the project files may be refered to as „the Sign“, „the device“.
+
+*Campus* — physical premises of a 42 school, mainly consist of clusters.
+
+*Cluster* — an auditorium, a study room, usually full of workspaces with computers. For example, C3 is short for Cluster 3.
+
+*Intra* — a website of the 42 school internal information system, but in this project „Intra“ rather means the school‘s internal information system server, as the Sign never accesses the website as a common user, but only the server via its API.
+
+*Secret* — a credential. Along with a UID, it allows to log into Intra via its API. Usually, good for a month, then it expires. Not to be confused with „a security token“ or just „a token“.
+
+*Security token* — also refered to as „token“, is a unique short-lifespan key given by Intra that allows the device to access data stored on the server. Usually, good for a few hours.
+
+*Seeed Studio XIAO ESP32-C3* — a development board with an ESP32-C3 microcontroller and a battery charging IC under the shield. Has two buttons: „B“ stands for „BOOT“, and „R“ stands for „RESET/REBOOT“. Has a red LED indicating the states of the battery charging process.
+
+*ESP32-C3* — the microcontroller onboard the Seeed Studio XIAO ESP32-C3 development board, located under the shield.
+
+*Deep Sleep* — a functionality of an ESP32-C3 microcontroller allowing it to stay ON while consuming almost no power. The most effective way to save battery charge, but reboots the microcontroller causing all the temporary data in RAM to be lost.
+
+*RTC memory* — a small section of the ESP32-C3 memory that stays powered over Deep Sleep. Data put into this section will survive Deep Sleep, but will not survive resetting the device with the reset button. In this project, only data put into the file system can survive both Deep Sleep and resetting the device with the reset button.
+
+*Light Sleep* — a functionality of an ESP32-C3 microcontroller similar to Deep Sleep. Light Sleep is far less effective in saving battery charge, but does not lose RAM data and allowes to contunue executing the program after sleep.
+
+*OTA* — stands for „Over-The-Air“, functionality that allows updating the software of the microcontroller wirelessly.
+
+*SPIFFS* — stands for Serial Peripheral Interface Flash File System, is one of the ESP32-C3 microcontroller memory partitions dedicated to storing files. In this project (and often on the Internet) the term is used as a synonym to „a file system“. The term also serves as a name to the formerely widly-spread SPIFFS library. Instead of it, this project employs the LittleFS library as more modern and light-weight.

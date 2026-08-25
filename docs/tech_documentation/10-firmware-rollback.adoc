@@ -1,0 +1,544 @@
+= Everything about the Firmware Rollback Functionality
+:imagesdir: media
+ifndef::backend-pdf[]
+:toc: auto
+:sectnums:
+endif::[]
+
+. *Overview*
+The firmware rollback functionality is a safety mechanism designed to protect the device from becoming unusable after a faulty OTA update.
+
+The project already supports Cloud-pull OTA updates. This means the device can download a new firmware binary from GitHub Releases, verify it, write it to the inactive OTA partition, and reboot into it.
+
+However, OTA updates introduce an important risk.
+
+If the newly installed firmware contains a serious bug, the device may crash, stall, or enter a reboot loop before it becomes possible to send another OTA update. If the device is physically inaccessible, this could make recovery impossible.
+
+The firmware rollback functionality reduces this risk.
+
+Its purpose is to detect that a newly installed firmware did not complete a normal execution cycle and automatically switch the device back to the previous OTA partition which contains last stable firmware version.
+
+In simple terms:
+
+The device installs a new firmware.
+
+The new firmware is given one chance to run correctly.
+
+If the new firmware successfully reaches the normal sleep stage, it is considered safe.
+
+If the new firmware crashes or stalls before completing the cycle, the next boot switches back to the previous firmware partition.
+
+This functionality acts as a custom software rollback system.
+
+It was implemented because the native ESP-IDF bootloader rollback mechanism was not active in the Arduino IDE environment used by this project. After OTA updates, the newly installed firmware was observed to boot as ESP_OTA_IMG_VALID instead of ESP_OTA_IMG_PENDING_VERIFY. Because of that, the standard ESP-IDF rollback confirmation mechanism could not be used as expected.
+
+. *Why Firmware Rollback Is Needed*
+OTA updates are powerful, but they are dangerous if there is no recovery mechanism.
+
+A normal OTA update can successfully install a broken firmware. The installation process may be completely correct: the file may download correctly, the SHA-256 hash may match, the firmware may be written to flash correctly, and the device may reboot successfully.
+
+The problem appears after the reboot.
+
+For example, the new firmware may contain a bug that causes:
+
+a CPU panic,
+
+an illegal instruction fault,
+
+a watchdog reset,
+
+an infinite loop,
+
+a crash before Telegram starts,
+
+a crash before Wi-Fi connects,
+
+a crash before the OTA logic can run again.
+
+In such a situation, the device may repeatedly reboot into the same broken firmware.
+
+Without rollback, the device could be permanently stuck until someone physically connects it to a computer and flashes healthy firmware through USB.
+
+This is exactly the situation rollback is meant to prevent.
+
+. *Native ESP32 Rollback Limitation*
+The ESP32 OTA system normally supports bootloader-level rollback.
+
+In the native ESP-IDF rollback model, a newly installed firmware is first booted in a pending verification state. The firmware must then confirm that it works. If it crashes before confirming itself, the bootloader can automatically return to the previous firmware.
+
+This project investigated that mechanism.
+
+The device has a correct OTA partition layout with two OTA application partitions:
+
+app0
+
+app1
+
+It also has the OTA data partition required for switching between OTA slots.
+
+However, in the Arduino IDE environment used by the project, the newly installed firmware booted directly as valid. It did not boot in pending verification mode.
+
+The observed state after OTA was:
+
+ESP_OTA_IMG_VALID
+
+The expected state for native bootloader rollback would have been:
+
+ESP_OTA_IMG_PENDING_VERIFY
+
+Because the firmware was already marked valid before the application code started, functions such as esp_ota_mark_app_valid_cancel_rollback() and esp_ota_mark_app_invalid_rollback_and_reboot() could not provide the expected automatic rollback behaviour.
+
+For this reason, the project implements its own software rollback mechanism.
+
+. *High-Level Rollback Idea*
+The custom rollback system is based on three main ideas:
+
+a persistent rollback flag stored in LittleFS,
+
+reset reason detection,
+
+manual switching between OTA partitions.
+
+The rollback flag is stored in a LittleFS file. It survives resets that erase RTC memory as well as firmware updates. The reset reason is used to decide whether the previous reset looked like a real firmware failure.
+
+The OTA partition switching is done with ESP-IDF partition APIs. If the current firmware appears to be faulty, the device sets the other OTA application partition as the next boot partition and restarts.
+
+The simplified logic is:
+
+If the firmware is marked verified, it is allowed to start a test run.
+
+At the beginning of the run, the firmware marks itself untrustworthy.
+
+If the firmware reaches normal sleep, it marks itself verified again.
+
+If the firmware crashes before normal sleep, it remains marked untrustworthy.
+
+On the next boot, if the firmware is untrustworthy and the reset reason indicates a crash or watchdog reset, the device switches to the other OTA partition.
+
+. *Meaning of the Rollback States*
+The rollback flag uses the FIRMWARE_t enum:
+
+[source,c]
+----
+typedef enum {
+VERIFIED = false,
+UNTRUSTWORTHY = true
+} FIRMWARE_t;
+----
+
+The names describe the current trust state of the firmware.
+
+VERIFIED means that the firmware is allowed to run.
+
+UNTRUSTWORTHY means that the previous run did not complete successfully, or that the rollback state could not be safely read.
+
+The logic intentionally uses a negative state name.
+
+This is important because boolean and RTC-style globals are false by default on the first run after USB flashing. By making false mean VERIFIED, the first wired firmware upload does not immediately trigger rollback.
+
+. *Persistent Rollback Flag in LittleFS*
+The rollback flag is stored in a LittleFS file:
+
+/defective_firmware.txt
+
+The file contains one character:
+
+0 means VERIFIED.
+
+1 means UNTRUSTWORTHY.
+
+LittleFS is used because RTC memory did not survive all relevant reset types on the tested device. Manual reset, core panic, and ESP.restart() were observed to reset RTC globals. Therefore, RTC memory was not reliable enough for rollback state storage.
+
+LittleFS is more suitable because it stores the rollback state in flash memory. Reads do not meaningfully wear flash memory. Writes do wear flash memory, but the rollback flag is written only rarely:
+
+when the firmware starts a verification run,
+
+when the firmware successfully completes the run,
+
+when rollback is about to switch partitions,
+
+before OTA reboot.
+
+This is a very small number of writes compared with the lifetime of the flash memory.
+
+LittleFS also provides wear-leveling behaviour, which reduces the risk of repeatedly wearing the same physical flash sector.
+
+. *Aggressive Fallback on LittleFS Failure*
+The rollback flag reading function is intentionally conservative.
+
+If the flag file cannot be found or opened, the function returns UNTRUSTWORTHY.
+
+This is intentional.
+
+The rollback system treats an unavailable rollback flag as a potentially unsafe state.
+
+The reasoning is:
+
+If the firmware is broken and LittleFS also fails, the rollback mechanism should not silently trust the firmware.
+
+Instead, the reset reason detection is allowed to make the final decision.
+
+This creates a second layer of protection. LittleFS state is the primary rollback state, but reset reason detection acts as an additional safety check.
+
+. *Reset Reason Detection*
+Not every reset means that the firmware is defective.
+
+The device can reset for normal or harmless reasons.
+
+For example:
+
+manual reset,
+
+software restart,
+
+power-on reset,
+
+deep sleep wake-up,
+
+brownout or power instability.
+
+Rollback should not happen for all of these.
+
+The rollback system checks the reset reason using esp_reset_reason().
+
+Only suspicious reset reasons are considered rollback candidates.
+
+The suspicious reset reasons are:
+
+ESP_RST_PANIC
+
+ESP_RST_TASK_WDT
+
+ESP_RST_INT_WDT
+
+ESP_RST_WDT
+
+These reset reasons indicate that the previous firmware run likely crashed, stalled, or failed to feed the watchdog.
+
+Non-suspicious reset reasons do not immediately cause rollback.
+
+This prevents normal behaviour from being mistaken for firmware failure.
+
+. *OTA Partition Switching*
+The ESP32-C3 uses two OTA application partitions:
+
+app0
+
+app1
+
+At any given time, the device is running from one of them.
+
+When a rollback is required, the firmware selects the other OTA partition as the next boot partition.
+
+For example:
+
+If the device is currently running from app0, rollback selects app1.
+
+If the device is currently running from app1, rollback selects app0.
+
+The switching is performed using ESP-IDF APIs:
+
+esp_ota_get_running_partition() is used to find the currently running application partition.
+
+esp_partition_find_first() is used to find the other OTA application partition.
+
+esp_ota_set_boot_partition() is used to tell the bootloader which application partition should boot next.
+
+After the boot partition is changed, the device restarts.
+
+On the next boot, the bootloader starts the selected partition.
+
+. *Rollback Function Behaviour*
+The main rollback function runs early during boot, after LittleFS has been initialized.
+
+This timing is important.
+
+It must run early enough to catch a faulty firmware before the device reaches dangerous or unstable code.
+
+It cannot run before LittleFS is initialized, because the rollback flag is stored in LittleFS.
+
+The function first checks whether the firmware has already been verified during the current run.
+
+If the firmware has already been verified, the function returns immediately.
+
+Then the function reads the rollback flag from LittleFS.
+
+If the flag says VERIFIED, the firmware is allowed to run. The function changes the flag to UNTRUSTWORTHY and returns.
+
+This gives the firmware one full run cycle to prove itself.
+
+If the firmware reaches the end of the normal cycle and enters sleep, it will change the flag back to VERIFIED.
+
+If the firmware crashes before reaching sleep, the flag remains UNTRUSTWORTHY.
+
+On the next boot, the function reads the flag again.
+
+If the flag says UNTRUSTWORTHY, the function checks the reset reason.
+
+If the reset reason is not suspicious, rollback is skipped.
+
+If the reset reason is suspicious, the function switches to the other OTA partition and restarts the device.
+
+. *Successful Firmware Run*
+A firmware run is considered successful only when the device reaches the end of its normal execution cycle.
+
+For this project, that means the firmware reaches the final stage before deep sleep.
+
+At that point, the device has already completed the important parts of its runtime logic.
+
+The firmware has booted.
+
+The filesystem has initialized.
+
+The device state has been restored.
+
+The battery logic has run.
+
+The main program logic has run.
+
+The display logic has had a chance to run.
+
+The device has reached the point where it is ready to sleep normally.
+
+Only then is the firmware marked VERIFIED again.
+
+This is done near the end of the sleep function, before the device enters deep sleep.
+
+This placement is important.
+
+If the firmware were marked verified too early, a later crash in the same cycle would not trigger rollback. The whole purpose of the rollback mechanism is to make sure the firmware proves that the entire execution cycle can complete.
+
+. *Failed Firmware Run*
+A firmware run is considered failed if it does not reach the normal sleep stage.
+
+For example, the firmware may:
+
+crash with a CPU panic,
+
+execute an illegal instruction,
+
+stall until the watchdog resets it,
+
+enter a reboot loop,
+
+fail before reaching the end of the cycle.
+
+If the firmware fails before normal sleep, the rollback flag remains UNTRUSTWORTHY.
+
+After reboot, the rollback function runs again.
+
+If the previous reset reason was suspicious, the function assumes that the current firmware is defective.
+
+Then it switches the boot partition to the other OTA application partition and restarts the device.
+
+This restores the previous firmware version, assuming the previous partition still contains a working firmware.
+
+. Interaction with OTA Updates
+The rollback system works together with the Cloud-pull OTA update system.
+
+When a new firmware is installed through OTA, it is written to the inactive OTA partition.
+
+For example:
+
+If the device is running from app0, the new firmware is written to app1.
+
+If the device is running from app1, the new firmware is written to app0.
+
+After the OTA update completes successfully, the device reboots into the new firmware.
+
+The rollback flag is prepared so that the new firmware gets one chance to run.
+
+If the new firmware completes the full cycle, it is marked verified.
+
+If the new firmware crashes or stalls, the next boot switches back to the previous partition.
+
+After rollback, the broken firmware remains in the inactive partition.
+
+A later OTA update can overwrite that broken partition with a corrected firmware version.
+
+. What Rollback Protects Against
+The rollback system protects against bugs that happen after the rollback check is able to run.
+
+It can protect against:
+
+crashes in the main firmware logic,
+
+watchdog resets,
+
+illegal instruction crashes after startup,
+
+logic bugs that prevent reaching sleep,
+
+firmware versions that stall before completing the run,
+
+broken OTA versions that cannot reach the next update check.
+
+This is the main risk the system is designed to reduce.
+
+. What Rollback Does Not Protect Against
+This is a software rollback mechanism, not true bootloader-level rollback.
+
+It cannot protect against every possible failure.
+
+It does not protect against failures that happen before the rollback logic can run.
+
+For example, it may not protect against:
+
+a crash before setup starts,
+
+a crash in global/static object initialization,
+
+a crash before LittleFS initialization,
+
+a bootloader problem,
+
+a corrupted partition table,
+
+both OTA partitions containing broken firmware,
+
+physical flash failure,
+
+power loss during critical flash operations.
+
+Native bootloader rollback would provide stronger protection, but it was not active in the Arduino IDE environment used by this project.
+
+The implemented rollback system is therefore a practical Arduino-compatible fallback.
+
+. Why the Other Partition Is Used
+The ESP32 OTA layout stores two firmware images.
+
+Only one is currently running.
+
+The other one usually contains the previous firmware or the next firmware being written.
+
+When the device updates successfully, the new firmware becomes the running firmware, and the old firmware remains in the other partition.
+
+This makes rollback possible.
+
+If the new firmware fails, the device can switch back to the other partition.
+
+The bootloader then starts the previous firmware again.
+
+This is why the project does not erase the previous firmware immediately after an OTA update.
+
+. Behaviour After Rollback
+After rollback, the device restarts into the other OTA partition.
+
+This should normally be the previous stable firmware.
+
+The rollback state is cleared so that the device does not bounce endlessly between app0 and app1.
+
+The recovered firmware can then continue normal operation.
+
+If a corrected firmware version is later uploaded to GitHub Releases and written into the manifest, the device can update again.
+
+The next OTA update will normally overwrite the inactive partition, which may currently contain the broken firmware.
+
+. Difference Between Verification and SHA-256
+The project uses two different safety checks:
+
+SHA-256 verification,
+
+firmware rollback verification.
+
+These checks solve different problems.
+
+SHA-256 verification checks that the downloaded firmware file is exactly the expected file.
+
+It protects against corrupted downloads, wrong files, or mismatched release assets.
+
+Rollback verification checks that the firmware actually works after it has been installed.
+
+A firmware file can pass SHA-256 verification and still contain a serious bug.
+
+Therefore, SHA-256 verification is not enough by itself.
+
+SHA-256 proves that the file is correct.
+
+Rollback proves that the firmware can run successfully.
+
+. Difference Between Version Checking and Rollback
+Version checking prevents unnecessary or incorrect updates.
+
+The device compares the currently running firmware version with the version listed in the manifest.
+
+If the manifest version is not newer, the device does not update.
+
+Rollback solves a different problem.
+
+Rollback deals with what happens after a newer firmware was successfully installed but turned out to be defective.
+
+Version checking decides whether to install.
+
+Rollback decides whether the installed firmware is safe to keep.
+
+. Testing Performed
+The rollback system was tested using intentionally defective firmware.
+
+A healthy firmware version containing the rollback functionality was installed on the device.
+
+Then a new firmware version was built with an intentional critical bug.
+
+The defective firmware was uploaded to GitHub Releases and installed through the Cloud-pull OTA system.
+
+After the OTA update, the device booted into the defective firmware.
+
+The defective firmware crashed.
+
+The rollback mechanism detected that the previous run did not complete successfully.
+
+The rollback mechanism switched the boot partition to the other OTA application partition.
+
+The device restarted.
+
+The previous healthy firmware booted successfully.
+
+This confirmed that the custom rollback system works as intended.
+
+. Safety Notes
+The rollback code is safety-critical.
+
+A bug in this code could prevent future OTA updates or cause the device to boot the wrong partition.
+
+For this reason, the rollback implementation should not be modified casually.
+
+Any change to this file should be tested with physical USB access to the device.
+
+The most important rules are:
+
+Do not mark firmware verified too early.
+
+Do not switch partitions unless the reset reason is suspicious.
+
+Do not erase the other OTA partition during normal operation.
+
+Do not assume RTC memory survives all reset types.
+
+Do not rely on native ESP-IDF rollback unless the bootloader actually boots new OTA images as pending verification.
+
+Do not test rollback only with successful firmware.
+
+Always test rollback with intentionally defective firmware before trusting changes.
+
+. Summary
+The firmware rollback functionality provides an additional safety layer for the Cloud-pull OTA update system.
+
+It prevents a faulty OTA firmware update from permanently trapping the device in a crash loop.
+
+Because native ESP-IDF bootloader rollback was not active in the Arduino IDE environment, the project implements its own software rollback system.
+
+The custom rollback system uses:
+
+a LittleFS rollback flag,
+
+reset reason detection,
+
+manual OTA partition switching,
+
+full-cycle firmware verification.
+
+A new firmware is trusted only after it completes a normal execution cycle and reaches the final sleep stage.
+
+If it crashes or stalls before that, the next boot switches back to the previous OTA partition.
+
+This makes the OTA update system significantly safer and reduces the risk of remotely bricking the device.

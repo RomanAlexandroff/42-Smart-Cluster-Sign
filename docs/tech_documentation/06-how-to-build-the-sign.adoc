@@ -1,0 +1,110 @@
+= How to Build the Sign Yourself
+:imagesdir: media
+ifndef::backend-pdf[]
+:toc: auto
+:sectnums:
+endif::[]
+
+YOU WANT TO MAKE YOUR OWN SIGN FOR A 42 CAMPUS BUT THIS INSTRUCTION IS NOT COMPLETE YET?
+
+CONTACT THE AUTHOR FOR PERSONAL FREE-OF-CHARGE ONLINE CONSULTATIONS!
+
+LINKEDIN: link:https://www.linkedin.com/in/roman-alexandrov-a75b89195/[https://www.linkedin.com/in/roman-alexandrov-a75b89195/]
+
+Building the 42 Smart Cluster Sign involves assembling the hardware components, setting up the software, and configuring the device. Follow these instructions to build your own 42 Smart Cluster Sign.
+
+== Hardware Components
+
+The detailed information about the hardware components can be found in the Bill_of_Materials.xlsx file, located in the docs folder of the project, but here is a simple list:
+
+. Seeed Studio XIAO ESP32C3 Wi-Fi module
+. External WiFi antenna 2.4G with IPEX1 connector
+. Good Display GDEY075Z08 7.5" 800x480 ePaper black/red/white SPI display
+. Good Display DESPI-C02 universal SPI e-Paper adapter
+. Dupont male-to-female wires for internal wiring
+. Push buttons
+. 4000mAh Li-ion battery with overcharge and undercharge protection
+. custom 3D-printed board
+. IKEA RÖDALM photo frame, 13x18 cm
+. furniture ball catches
+. transparent plexiglass pannel, 2.5mm or thiker, 13x18 cm
+. transparent double-sided sticky tape
+
+== Tools Required
+
+* soldering iron and solder
+* screwdrivers
+* 3D printer
+* computer with any OS
+* USB to USB-C data cable compatible with your computer
+* 5V power adapter
+
+== Needed software
+
+* Arduino IDE with installed ESP-IDF plug-in,
+* Telegram (smartphone app or its desktop version).
+
+== Display Pins
+
+[cols="1,1,1",options="header"]
+|===
+|XIAO ESP32C3 Pins
+|Display adapter Pins
+|Pin Description
+
+|D4
+|*BUSY*
+|busy / free status line
+
+|D5
+|*RES*
+|reset line
+
+|D6
+|*D/C*
+|Data mode / Command mode select
+
+|D7
+|*CS* (also called *SS*)
+|Chip Select
+
+|D8
+|*SCK*
+|common clock
+
+|D10
+|*SDI*
+|data line
+
+|GND
+|*GND*
+|ground line
+
+|3.3V
+|*3.3V*
+|power line
+|===
+
+== Building Steps
+
+. Order the hardware components
+. Print the custom 3D-printed board
+. Create an Intra API app for your Sign
+. Create a Telegram bot for your Sign
+. Install Arduino IDE and flash XIAO ESP32C3 with the program
+. {empty}
+
+== Alternatives For The Hardware Components
+
+Compatibility with any alternatives to the hardware stated in the hardware list above was not tested. Using alternative hardware components may complicate building the Sign in an unexpected way. Still, here are some advices if you decide to seek alternative hardware:
+
+* if you want to replace the Seeed Studio XIAO ESP32C3 Wi-Fi module with any other Seeed Studio ESP32 module, make sure that it has at least the same ammount of RAM, since the project software is RAM intensive. Replacing it with other ESP32 modules may also require to adjust the custom 3D-printed board;
+* you may use any Wi-Fi antenna as long as it fits the module;
+* the project software uses Jean-Marc Zingg's GxEPD2 library for e-paper displays. The library has its list of supported e-paper displays and your alternative display should be on the list. Using any alternative dislay will always require adjusting the project software. Using an alternative display with different resolution will also require to remake all the GUI images used in the project. Using an alternative display with different physical size and/or different physical proportions will also require to adjust the custom 3D-printed board. Using an alternative display adapter would probably require to adjust the custom 3D-printed board, too;
+* if you do not need modularity in your version of the Sign, it would be easier to solder ordinary wires instead of using Dupont wires. If needed, Dupont male connectors may be soldered, too;
+* you may use any push-buttons as long as you are willing to adjust the custom 3D-printed board to fit them;
+* you may use any battery as long as it is rated 3.7V and is capable of constantly outputting at least 250mA. Smaller alternative batteries may be simply fixed on the 3D-printed board with a double-sided sticky tape. Bigger alternative batteries may require to adjust the custom 3D-printed board to fit them;
+* you may avoid printing the custom 3D-printed board and simply glue all the electronic components inside of the frame. In that case, be adviced that e-paper displays do not like ANY heat and an ESP32 can get very warm during work and even hotter when the battery is being charged, so make sure to have some good insulation between the two;
+* any frame would work as long as it is deep enough to accomodate all the electronics. It does not even has to be a frame, but any enclosure you can produce;
+* as the furniture ball catches can be quite pricy, you may want to 3D-print the catches yourself. Luckily, there is plenty of ready-to-print models on the Internet.
+* if you do not need your Sign to be detachable from the wall, you will not need the furniture ball catches and the transparent plexiglass pannel.

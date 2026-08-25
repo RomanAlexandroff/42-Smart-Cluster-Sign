@@ -1,0 +1,318 @@
+= Updating the Program Using Cloud-Pull OTA
+:imagesdir: media
+ifndef::backend-pdf[]
+:toc: auto
+:sectnums:
+endif::[]
+
+This instruction explains how to update the program running on the device using the cloud-pull OTA update system.
+
+First of all, just so you know, if you have physical access to the device, updating the Sign using Arduino IDE and a USB-C data cable (as described in link:07-development-environment.adoc[Getting ready to maintain and develop the project]) would be much faster than via OTA!
+
+Second of all, to use the cloud-pull OTA update described here, you have to be registered as a Collaborator in this GitHub repository: link:https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign[https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign]
+
+Ask your Bocal to contact the GitHub repository owner and request to register you. Add your GitHub public profile name to the request. Requests other than via your campus Bocal will be ignored due to the security reasons.
+
+OTA means “Over-The-Air”, in other words, that the device can update its own firmware without being connected to the computer with a USB cable. In this project we are using cloud-pull OTA system that works like that: with your computer you upload the new firmware file to the cloud (in our case the cloud is GitHub Releases), and the device downloads it by itself from the cloud. It is pretty much just like your phone or computer does it when it gets a software update.
+
+Before it downloads anything, the device receives update information from the manifest file stored in the GitHub repository. The manifest is a simple JSON file that tells the device which firmware version is available, where the firmware file is located, how large the file is and what SHA-256 hash the file must have. The firmware binary itself is stored in GitHub Releases.
+
+The device can start the OTA update check in three different ways:
+
+* by sending the OTA command through Telegram.
+* by pressing the physical OTA button on the device.
+* automatically, once a week, on predefined days of the month.
+== Step-by-step update workflow — Ultra-short instructions version
+
+. Finish developing the new feature or bug fix.
+. Increase the *SOFTWARE_VERSION* number in the *config.h* file.
+. Compile the project in Arduino IDE into a firmware binary file.
+. Open the OTA manifest file and find the correct device entry.
+. Update the firmware version in the manifest.
+. Find the firmware binary file in the *src* folder. Give it a clear name, including board name and version. Get the its exact size in bytes from the file Properties or *ls -la* command.
+. Update the firmware file size in the manifest.
+. Create a new GitHub Release with the matching version tag.
+. Copy the firmware binary SHA-256 hash and update it in the manifest
+. Copy the firmware binary download URL and update the manifest.
+. Make sure „enabled“ is set to „true“.
+. Commit and push the manifest changes.
+. Trigger the OTA check through Telegram, the physical OTA button, or wait for the automatic scheduled check.
+. Wait for the device to download the manifest and verify the data.
+. Wait for the device to download the firmware from GitHub Releases.
+. Wait for the device to install the firmware and reboot.
+. Confirm that the device is running the new firmware version.
+*Detailed update workflow – Full instructions version*
+
+The update process starts when you have just finished developing a new feature or fixing a bug and now want to upload those changes to the device.
+
+IMPORTANT: First thing first. Before compiling the project, go to the *config.h* file and make sure the program version number in the *SOFTWARE_VERSION* macro has been increased. Do not change the X.XX format of the version number!
+
+For example, if the device is currently running version 4.34, the new firmware should be version 4.35. The version number is important because the device uses it to decide whether it should update or not. If the version in the OTA manifest is the same as the version already running on the device, the device will not download the firmware again. If the version in the manifest is older than the version already running on the device, the device will also refuse to update. This protects the device from reinstalling the same firmware or accidentally downgrading itself.
+
+After increasing the version number, compile the project in Arduino IDE -- go to „Project“ and click on „Export compiled binary“.
+
+When the project compiles successfully, export the compiled binary file. This binary file is the actual firmware image that the device will download and install.
+
+Most likely you will find it in the *src* folder of the project on your computer. It will have a name something like *_src.ino.XIAO_ESP32C3.bin_*.
+
+The firmware file should have a clear name that includes the board and the version number. So, rename the firmware file into something nicer like firmware-xiao-esp32c3-v4.35.bin. This makes it easier to understand later which file belongs to which release.
+
+After exporting the binary file, check and write down its file size. It will be used in the manifest.
+
+WARNING: Do not use the project size that Arduino IDE says after the compilation is finished!!! Arduino IDE rounds up that number!
+
+Instead, go the the file properties of the compiled firmware binary file and get the exact size in bytes from there. OR use classic *ls -la* in the Terminal and you will see the file size will be in the middle column.
+
+The file size is needed because the device checks the size before downloading and flashing the firmware. If the firmware file is larger than the available OTA partition, the device refuses to update. This is done before downloading the whole file, so the device does not waste time, battery power, or network traffic on an update that cannot fit into flash memory.
+
+Create a new GitHub Release. Go to *https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/releases* and click on „Draft a new release“.
+
+The release tag should match the firmware version. For example: v4.35.
+
+Describe the release by writing what is new in this version.
+
+Drag and drop the firmware file to the „Attach binary“ field.
+
+Click „Publish release“.
+
+Get the SHA-256 hash of the firmware file from GitHub Release. You will see it in GitHub Release next to the firmware binary file name. Copy it.
+
+The SHA-256 hash is a long hexadecimal value that uniquely identifies the exact content of the file. The device calculates the SHA-256 hash while downloading the firmware. After the download is complete, it compares the calculated hash with the hash you put in the manifest. If the hashes do not match, the device refuses to install the update. This protects the device from corrupted downloads and from accidentally installing a wrong firmware file.
+
+Get firmware binary file download link from GitHub Release. This link will be used in the manifest.
+
+Hover over the firmware binary file name with your mouse and click the Right mouse button. In the poped-up menu click on „Copy the link“.
+
+Edit the OTA manifest. Open the OTA manifest file in the repository.
+
+The manifest contains the update information used by the device. The manifest has a default section and a devices section. The default section is used when there is no special update entry for a specific device. The devices section is used to target individual devices. Each device can have its own firmware version, URL, size, SHA-256 hash, and enabled flag. The device checks its own device name or device ID and searches for a matching entry in the devices section. If it finds one, it uses that device-specific entry. If it does not find one, it uses the default entry.
+
+To update a specific device, change the entry for that device in the devices section.
+
+The device entry should contain the new version number, the GitHub Releases download URL, the SHA-256 hash, the firmware file size, and the enabled flag.
+
+The enabled flag must be set to true if the device is allowed to install this firmware.
+
+If enabled is false, the device will read the manifest but refuse to install that firmware.
+
+Before committing the manifest change, carefully check the following things.
+
+The version in the manifest must be higher than the version currently running on the device.
+
+The URL must point to the correct firmware binary in GitHub Releases.
+
+The SHA-256 hash must belong to that exact firmware binary.
+
+The size must match the exact size in bytes of that firmware binary.
+
+The enabled flag must be true for the device that should update.
+
+The device name or device ID in the manifest must match the device name or device ID used by the firmware.
+
+After checking the manifest, commit and push the manifest change to GitHub.
+
+At this point, the update is prepared.
+
+The new firmware file is available in GitHub Releases.
+
+The manifest points to the new firmware file.
+
+The device can now discover and install the update.
+
+Triggering the update with Telegram
+
+The first way to trigger the OTA update is through Telegram. This is the manual remote update method. Use this method when you want the device to check for updates immediately and you are not physically near the device.
+
+Send the */ota* command  to the device in the Telegram chat. After receiving the command, the device sets the com_g.ota flag. The com_g.ota flag tells the main program that an OTA update check has been requested. The device then enters the normal OTA handling logic. The important detail is that Telegram itself does not directly download or install the firmware. Telegram only tells the device to start the update check.
+
+*_(OTA program logic description)_*
+
+Once the update check starts, the device connects to Wi-Fi if needed. Then it downloads the manifest from GitHub. After downloading the manifest, the device searches for its own device entry. If a device-specific entry exists, the device uses that entry. If no device-specific entry exists, the device uses the default entry.
+
+Then the device checks whether the selected entry is enabled. If enabled is false, the device stops the update process. If enabled is true, the device compares the version from the manifest with the version currently running on the device. If the manifest version is the same as the current version, the device does not download the firmware. If the manifest version is older than the current version, the device also does not download the firmware. If the manifest version is newer than the current version, the device continues.
+
+Next, the device checks the firmware size from the manifest. If the firmware is too large for the OTA partition, the device stops the update. If the firmware fits, the device starts downloading the binary file from GitHub Releases.
+
+While downloading the firmware, the device also calculates the SHA-256 hash. After the download is finished, the device compares the calculated SHA-256 hash with the SHA-256 hash from the manifest. If the hashes do not match, the device refuses to install the update. If the hashes match, the device finalizes the OTA update and prepares the new firmware for boot.
+
+Then the device reboots. After rebooting, the device should be running the new firmware version.
+
+To confirm the update, you may send /status command in Telegram or find the firmware version in the Serial output. If the device reports the new version number, the OTA update was successful.
+
+Triggering the update with the physical OTA button
+
+The second way to trigger the OTA update is by pressing the physical OTA button on the device.
+
+Use this method when you are physically near the device and want to force an update check without using Telegram.
+
+The physical OTA button does not contain a separate update system. Pressing the button simply changes the state of the com_g.ota flag. This is the same flag that is used when the OTA update is requested through Telegram. When the program later reaches the OTA handling logic, it sees that com_g.ota is active. Then it starts the same cloud-pull OTA update check. From this point onward, the process is identical to the Telegram-triggered update.
+
+The device connects to Wi-Fi if needed, downloads the manifest from GitHub, selects the correct manifest entry, checks whether the update is enabled, compares the manifest version with the current firmware version, checks whether the new firmware file fits into the OTA partition, downloads the firmware file from GitHub Releases, calculates and verifies the SHA-256 hash, installs the firmware, reboots.
+
+After the reboot, the device should be running the new firmware version.
+
+The physical OTA button is useful as a local manual fallback. If Telegram is unavailable, blocked, unstable, or temporarily not working, the update can still be triggered directly on the device.
+
+Triggering the update automatically once a week
+
+The third way to trigger the OTA update is automatic. The device checks for updates on specific predefined days of the month. The current logic is based on fixed days rather than storing the date of the last update check. In its current configuration, the device checks for updates automatically on the 3rd, 11th, 19th, and 27th day of each month. The exact days can be changed directly in the ota_handling() function in the ota.cpp file.
+
+The purpose of the automatic update check is to make sure the device can still update even if Telegram is not working and nobody presses the physical OTA button. This makes the update system more reliable.
+
+The automatic update check does not mean that the device will always download firmware on those days. It only means that the device will check the manifest. If there is no newer firmware version, the device does nothing. If the manifest points to the same version already running on the device, the device does nothing. If the manifest points to an older version, the device does nothing.
+
+Only if the manifest contains a newer enabled firmware entry for that device will the device continue with the update. When the automatic update condition is true, the device starts the same OTA handling logic used by Telegram and by the physical OTA button.
+
+The automatic update check may include a short random delay before connecting to GitHub. This prevents multiple devices from all checking the server at exactly the same moment. The delay should be short, for example less than one minute, because the device is battery-powered and should not waste energy.
+
+NOTE: The original document marked this section `// TO-DO: FIX THE TEXT FORMATTING`.
+
+What happens inside the device during the update
+
+When the update process starts, the first important file is the manifest.
+
+The manifest is a small text file in JSON format.
+
+The device downloads it from GitHub and reads it.
+
+The manifest does not contain the firmware itself.
+
+It only contains information about the firmware.
+
+The most important fields are the firmware version, the firmware download URL, the file size, the SHA-256 hash, and the enabled flag.
+
+The device uses the manifest to decide whether it should update.
+
+This is safer and more flexible than hardcoding the firmware URL directly into the device.
+
+If the firmware URL was hardcoded, the already-installed firmware would need to know the future firmware URL in advance. That would be inconvenient and fragile.
+
+With the manifest, the device only needs to know the manifest URL. The manifest can then be changed whenever a new release is created.
+
+After selecting the correct manifest entry, the device compares versions.
+
+The current firmware version is stored in the program itself.
+
+The target firmware version comes from the manifest.
+
+If the target version is not newer, the update stops.
+
+If the target version is newer, the device checks the firmware size.
+
+The ESP32-C3 uses two OTA application partitions. The currently running firmware is in one partition. The new firmware is written into the other partition. After the update is completed, the device reboots into the new firmware.
+
+This is why the firmware file must fit into the available OTA partition.
+
+If the size check passes, the device downloads the firmware binary from GitHub Releases.
+
+During the download, the device writes the firmware into the inactive OTA partition.
+
+At the same time, the device calculates the SHA-256 hash of the downloaded data.
+
+After the download is complete, the device compares the calculated hash with the hash from the manifest.
+
+If the hash is wrong, the update is aborted.
+
+If the hash is correct, the update is finalized.
+
+Then the device reboots.
+
+After rebooting, the ESP32 bootloader starts the newly installed firmware.
+
+How to confirm that the update worked
+
+After the device reboots, check the firmware version.
+
+The exact confirmation method depends on the current program features.
+
+If the device reports its version through Telegram, send the appropriate status or version command.
+
+If the device prints the version to the serial monitor during boot, open the serial monitor and check the boot message.
+
+If the device shows the version on the display, check the display.
+
+If the new firmware has a visible behavior change, confirm that the new behavior is present.
+
+A successful update means that the version reported by the device matches the version uploaded to GitHub Releases and written in the manifest.
+
+For example, if the device was running version 4.34, and the manifest pointed it to version 4.35, then after reboot the device should report version 4.35.
+
+If the device still reports version 4.34, the update did not complete or the manifest did not actually point to a newer firmware.
+
+Recommended release procedure
+
+First, finish the new feature or bug fix.
+
+Second, increase the firmware version number in the source code.
+
+Third, compile the project.
+
+Fourth, export the compiled binary.
+
+Fifth, check the binary file size.
+
+Sixth, calculate the SHA-256 hash of the binary.
+
+Seventh, create a new GitHub Release with the matching version tag.
+
+Eighth, upload the binary file to the GitHub Release.
+
+Ninth, copy the firmware download URL.
+
+Tenth, update the manifest with the new version, URL, file size, SHA-256 hash, and enabled flag.
+
+Eleventh, commit and push the manifest change.
+
+Twelfth, trigger the update using Telegram, the physical OTA button, or wait for the automatic weekly check.
+
+Thirteenth, wait for the device to download, verify, install, and reboot.
+
+Fourteenth, confirm that the device reports the new firmware version.
+
+Common reasons why the device may refuse to update
+
+The manifest version is the same as the current firmware version.
+
+The manifest version is older than the current firmware version.
+
+The enabled flag is false.
+
+The device name or device ID does not match the entry in the manifest.
+
+The firmware URL is wrong.
+
+The firmware file was not uploaded to GitHub Releases.
+
+The firmware size in the manifest is wrong.
+
+The firmware is too large for the OTA partition.
+
+The SHA-256 hash in the manifest does not match the downloaded file.
+
+The device has no Wi-Fi connection.
+
+The device has unstable power or low battery.
+
+GitHub is temporarily unreachable.
+
+The Telegram command was received, but the OTA check found no newer firmware.
+
+Important notes
+
+The device does not update just because a file exists in GitHub Releases.
+
+The device updates only when the manifest tells it to update.
+
+The manifest is the control point of the OTA system.
+
+GitHub Releases is only the storage location for firmware binaries.
+
+Telegram is only one of the ways to request an update check.
+
+The physical OTA button is another way to request the same update check.
+
+The automatic weekly update is a fallback way to request the same update check.
+
+All three methods use the same cloud-pull OTA logic.
+
+A successful OTA update is confirmed only after the device reboots and reports that it is running the new firmware version.

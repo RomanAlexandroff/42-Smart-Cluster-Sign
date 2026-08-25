@@ -1,0 +1,50 @@
+= Exam Simulation and How to Use It
+:imagesdir: media
+ifndef::backend-pdf[]
+:toc: auto
+:sectnums:
+endif::[]
+
+The project code contains a so-called Exam Simulation logic, so it is possible to test how the device behaves during exams without the necessity to wait for an actual exam. The Exam Simulation injects fictitious information about an exam (by default, scheduled for today from 18:00 till 21:00, 4 students attending) into the message from the Intra server, which causes the Sign to believe that there is an actual exam that day. Here is how to do it.
+
+. In the project files go to config.h and uncomment the following line
++
+[source,c]
+----
+# define EXAM_SIMULATION
+----
+
+. Now, go to the utils.cpp file and scroll all the way down. There you will find the exam_simulation() function.
+
+. In the function, manually change the fictitious exam beginning and ending time the way you want it.
+
+When changing time, mind the time zone difference between your campus location and the Intra server location. The exam beginning and ending time must be stated in the time of the Intra server location. Let’s demonstrate it on an example:
+
+- Your are testing a Sign for the 42 SEOUL campus, located in Seoul, South Korea;
+
+- By googling, you discover that Seoul, South Korea has a time zone UTC+9. Also, South Korea does not switch between summer and winter time;
+
+- By this moment, you already know that the Intra server is located in France. France DOES switch between summer and winter time and you should account for that. In winter, France uses UTC+1 time zone, and in summer France uses UTC+2 time zone. When exactly this change happens may be looked up online. Let’s assume that at the time of this example the summer time applies. So, we will use UTC+2 for the Intra server;
+
+- Simple math operation shows that the time difference between the 42 SEOUL campus and the Intra server location is (9 – 2 =) 7 hours. It means, that at the time of this example, the Intra server clock is 7 hours behind the 42 SEOUL campus clock;
+
+- Let’s assume that you decided to test the Sign for a simulated exam starting at 14:00 (Seoul time) and ending at 15:30 (again, Seoul time). Since we already know that the Intra server time is 7 hours behind the Seoul time, we need to deduct these 7 hours from the time of our simulated exam:
+
+14:00 - 7 = 7:00 and 15:30 - 7 = 8:30
+
+- So, now you know that to simulate an exam starting at 14:00 and ending at 15:30 Seoul time, in the exam_simulation() function you need to state 07:00 as the exam begin time and to state 08:30 as the exam end time.
+
+Of course, you need to go through this kind of analysis only for the first time you decide to use the Exam Simulation — next time you will already know how many hours to adjust for. For the Seoul campus it is slightly more complicated, since South Korea does not switch between summer and winter time but France does, the time difference will be constanty shifting there and back, and the Sign developer from the South Korea will always have to keep track of that. But if you are from a country that, like France, switches between summer and winter time, you do not even have to worry about that, as the switch happens roughly at the same time worldwide.
+
+. Compile the project and flash the device. Observe the device behaviour. If you need to do more tests, repeat the process.
+
+The flashing process is well described in the article link:07-development-environment.adoc[Getting ready to maintain and develop the project] earlier in this document, under “Uploading the changes”.
+
+. After you are finished testing, go to config.h and comment out the following line
++
+[source,c]
+----
+//# define EXAM_SIMULATION
+----
+
+. Compile the project and flash the device one last time — now the Exam Simulation is off. Do not skip this step, as without it the device will keep showing your fictitious exam every single day.

@@ -1,0 +1,96 @@
+= Program Run Step-by-Step
+:imagesdir: media
+ifndef::backend-pdf[]
+:toc: auto
+:sectnums:
+endif::[]
+
+== Starting the Program
+
+1. Turning on
+
+2. Initializing the Serial Port
+
+• Outputting a dash to the serial port gives time to synchronize data transfer with the computer and avoid losing important data
+
+3. Initializing the file system
+
+• If the file system initialization fails, the following functions will not be available: restoring the last used Telegram chat, the Secret value, and the OTA flag value after reinstalling the program, after a power outage, or after a software reset (i.e. after all cases when RTC memory data is lost); record the value of the last used Telegram chat, the Secret value and the OTA flag value
+
+4. initialize the buttons (disabled due to bugs)
+
+5. initialize ADC for battery measurements
+
+6. initialize the SPI port of the display
+
+7. check the reboot reason
+
+• also restores the value of the last used Telegram chat, the Secret value and the OTA flag value after reinstalling the program, after a power outage or after a software reset (i.e. after all cases when RTC memory data is lost)
+
+• also puts the device to sleep for 24 hours if the BROWN OUT detector is triggered. It is triggered if the battery charge is insufficient to continue operation. In this case, [DEVICE OPERATION ENDS HERE] until the battery is charged.
+
+8. battery check
+
+• due to the technical features of the device, we can determine the battery charge level only when it is almost discharged. Accurate battery measurements can be taken approximately between 3% and 0% of the battery charge. In ADC readings, this corresponds to 800 and 400.
+
+• take 5 measurements of the charge level and calculate their average value
+
+• all readings above 800 mean that the battery is sufficiently charged and there is no need to report a low battery - exit the function
+
+• connect to Wi-Fi to report the battery status to Telegram
+
+• all readings below 400 mean a completely discharged battery. Despite the fact that the BROWN OUT detector did not work in the previous step, you cannot continue working with such a low charge. We report a low battery in Telegram, display the message "Low battery" on the display and put the device to sleep for 24 hours. In this case, [DEVICE OPERATION ENDS HERE] until the battery is charged.
+
+• indicators between 700 and 600 may mean that the device is charging
+
+• if we still haven't exited the function, but the indicators are below 800, then the battery is already discharged, but we can still continue working. We report the discharged battery in Telegram, display the message "Low battery" on the display and continue executing the program.
+
+9. initializing the OTA function (disabled due to blocking by the firewall)
+
+10. switching to OTA mode (disabled due to blocking by the firewall)
+
+11. choosing which mode to continue working in: in cluster number mode (default mode) or in exam mode
+
+• Cluster number mode displays the cluster number + icons (on a normal day) or a warning message about the exam (on the day of the exam) or error messages (inability to receive exam data, expired Secret, low battery). This mode is active 99% of the time.
+
+• The exam mode is activated 1 hour before the exam, shows a warning about the exam starting soon, then switches to a warning about the exam in progress and after the exam is over, switches back to the Cluster Number Mode. This mode is active only on the exam day, 1 hour before the exam + the entire exam time.
+
+WARNING: Double checking the exam status flag in this function is necessary to switch from one mode to another. Do not change!
+
+== In Cluster Number Mode
+
+1. connecting to a Wi-Fi network
+
+2. checking incoming messages in the Telegram chat
+
+• A new Secret may arrive via Telegram chat, which will be useful later when requesting exam data
+
+3. synchronizing time, date and summer/winter time with the NTP server
+
+• Without time data, reliable operation of the device cannot be ensured. If after several attempts to receive time data it was not possible, an error is displayed on the display and the device itself is put to sleep until the next scheduled awakening. In this case, [DEVICE OPERATION ENDS HERE], until we manage to get the time data during one of the future scheduled awakenings.
+
+4. get exam data for the current day from Intra
+
+• Without exam data, it is impossible to ensure reliable operation of the device. If after several attempts to get exam data it was not possible, an error is displayed on the display and the device itself is put to sleep until the next scheduled awakening. In this case, [DEVICE OPERATION ENDS HERE], until we manage to get exam data during one of the future scheduled awakenings.
+
+• go to the Intra website
+
+• log in to the Intra website
+
+• go to the schedule page for today
+
+• read the received HTML code until we find exam data
+
+• clear the data from unnecessary garbage
+
+• compare the received data with the existing data
+
+If the data differs, we change it on the display;
+
+If not, we leave it as it is.
+
+Setting the time for the next activation.
+
+Turning off the display power.
+
+Power off.

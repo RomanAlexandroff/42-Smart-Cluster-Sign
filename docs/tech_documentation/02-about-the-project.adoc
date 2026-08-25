@@ -1,0 +1,8 @@
+= About the Project
+:imagesdir: media
+ifndef::backend-pdf[]
+:toc: auto
+:sectnums:
+endif::[]
+
+This project is designed to manage and display information on a smart sign for a 42 campus cluster. The sign displays various messages and images, including exam schedules, battery status, and OTA updates. It communicates with the 42 Intra API and a Telegram bot to fetch and display relevant information.

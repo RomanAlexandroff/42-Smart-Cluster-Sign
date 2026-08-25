@@ -1,0 +1,291 @@
+= Functions Reference
+:imagesdir: media
+ifndef::backend-pdf[]
+:toc: auto
+:sectnums:
+endif::[]
+
+[#program-files-description]
+
+== Program Files Description
+
+[cols="1,2"]
+|===
+|src.ino
+|Main file. Despite being written in C, it has to have the .ino extention as it is the Arduino IDE file format. Other source files may have other extentions. The file name has to be the same as the folder name it is contained in – as you may see in this project.
+
+|42-Smart-Cluster-Sign.h
+a|
+Main header file that includes all necessary libraries and declares functions used across the project.
+
+IMPORTANT: Including ota.h at the bottom of the file is not coinsidential – it has to be kept below the OTA functions declarations for the OTA update to work.
+
+|battery_management.cpp
+|Initialize inner ADC module, measure battery voltage level, assign the results to a battery state, act upon the battery state.
+
+|bitmap_library.h
+|Contains all the images to be displayed on the device screen in bit-map form. The complete images list can be found in the file.
+
+|buttons_handling.cpp
+|Buttons initialisation and interrupt service routines.
+
+|cluster_number_mode.cpp
+|Everything that the Sign does outside of the exam time: gets exact time, checks exams, displays system warnings if there are any, displays cluster number.
+
+|config.h
+|Constants to adjust and tune the program behaviour. E.g. software version number, device name, DEBUG macro, Serial port baud rate, the Sign’s wake-up hours, Wi-Fi connection time limit, etc. More about it in the *link:12-functions-reference.adoc#the-config-file[The config file] *chapter.
+
+|constants.h
+|Constants that are not expected to be ever changed. General constants, buttons and display SPI port configurations, display driver coniguration, images and errors enumerators.
+
+|credentials.h
+|Contains project confidential information, such as Intra API authorisation data, Telegram bot token, Wi-Fi access point SSID and password. If instead of credentials.h there is only credentials-example.h, then in the *link:07-development-environment.adoc[Getting ready to maintain and develop the project]* chapter, please, navigate to „Opening the project“, point 3.
+
+|display_handling.cpp
+|Functions for outputting images and text onto the display, cluster number drawing logic, display initialization. Using display.powerOff() in the drawing functions may trigger the watchdog with high probability.
+
+|exam_mode.cpp
+|Everything to handle informing students about an exam and the pre-exam time.
+
+|file_system.cpp
+|Manages file system operations, including reading from and writing to files.
+
+|globals.h
+|Declares global variables and includes necessary libraries.
+
+|globals.cpp
+|Defines global variables used across the project.
+
+|intra_interaction.cpp
+|Handles interactions with the 42 Intra API, including fetching exam schedules.
+
+|ota.h
+|Manages OTA updates, including initializing and handling OTA update processes.
+
+|utils.cpp
+|Contains functions like sleep, delay, Wi-Fi connection, serial initialisation and exam simulation.
+
+|power_down_recovery.cpp
+|Handles power-down recovery, including reporting reboot reasons and calling for viable variables check.
+
+|telegram_bot.cpp
+|Manages interactions with the Telegram bot, including checking and responding to messages.
+
+|telegram_compose_message.cpp
+|Composes messages to be sent via the Telegram bot.
+
+|time_utilities.cpp
+|Contains time-related utilities, including fetching and calculating time.
+
+|watchdog.cpp
+|Manages the watchdog timer, including starting, stopping, and resetting the watchdog.
+|===
+
+[#the-config-file]
+
+== The Config File
+
+The config.h file contains configurable parameters for tuning the software behavior of the 42 Smart Cluster Sign project. This file allows you to adjust various settings, including software version, device name, debugging options, and time-related configurations. To customize the behavior of the 42 Smart Cluster Sign project, modify the values in the config.h file according to your requirements. Ensure that the changes you make are consistent with the overall project requirements and do not conflict with other configurations.
+
+*SOFTWARE_VERSION*: Defines the current version of the software. The software version number can be seen in the debugging output in the Serial monitor as well as in the Telegram chat message when the Sign receives the „/status“ command. The software version number is an essential tool for tracking bugs and the program installed on the physical device.
+
+[source,c]
+----
+#define SOFTWARE_VERSION 4.32
+----
+
+*DEVICE_NAME*: Specifies the name of the device, that can be seen in the Ports list when updating via OTA.
+
+[source,c]
+----
+#define DEVICE_NAME "42 Prague C3 Smart Sign"
+----
+
+*DEBUG* macro: Enables or disables serial output for debugging. Comment out the „#define DEBUG“ line to turn off serial output or uncomment it to turn it on again. The macro does not affect the Core Debug Level, which you set in the Arduino IDE Tools. Changing the DEBUG macro and/or the Core Debug Level will change the dynamic of the whole program execution which might introduce new bugs or solve existing ones.
+
+[source,c]
+----
+#define DEBUG
+#ifdef DEBUG
+#define DEBUG_PRINTF(...) Serial.printf(__VA_ARGS__)
+#define WD_RESET_INFO true
+#else
+#define DEBUG_PRINTF(...)
+#define WD_RESET_INFO false
+#endif
+----
+
+*EXAM_SIMULATION* macro: Uncomment this line to simulate an exam starting at specified time. Useful for testing exam mode execution when there are no actual exams. The macro injects fictitious information about an exam (by default, scheduled for today from 18:00 till 21:00, 4 students attending) into the message from Intra, which causes the Sign to believe that there is an actual exam that day. If needed, the fictitious exam information may be changed in the exam_simulation() function, located in the utils.cpp file.
+
+CAUTION: *_When you are finished with the tests, do not forget to comment out this line and flash the software onto the Sign again to turn off the simulation. Otherwise the Sign will be showing the fictional exam every day._*
+
+[source,c]
+----
+#define EXAM_SIMULATION
+----
+
+*GCC Optimization* macro: Lets you expicitly tell the compiler how to optimise the program code. Be adviced that different levels of optimisation may influence the dynamic of the whole program execution in different ways. In practice, it means that one level of optimisation may introduce new bugs to the project; another level of optimisation may solve those bugs, but introduce completely new ones. Settle on one level of optimisation before starting debugging the project.
+
+* O0    —  no optimization (default for the project);
+* O1    —  basic optimization;
+* O2    —  moderate optimization: slight program performance increase;
+* Os    —  optimize for size: O2 level + optimizations to reduce program size;
+* O3    —  high-level optimization: better performance, but bigger program size;
+* Ofast — optimize for speed: highest possible performance but may break standards compliance;
+* Og    —  optimize for debugging.
+[source,c]
+----
+#pragma GCC optimize ("O0")
+----
+
+*BAUD_RATE*: Sets the speed of the serial communication.
+
+[source,c]
+----
+#define BAUD_RATE 115200
+----
+
+*WAKE_UP_HOURS*: Defines the hours at which the Sign should wake up and check if there are any new exams. The format is a comma-separated list of hours (24-hour format), e.g. 9 means „at 9:00“ (9AM), 18 means „at 18:00“ (6PM), and so on. Note, that every hour is separated by a comma, but there is no comma after the last wake-up hour. Adhere to this format when removing or adding wake-up hours. You may change the existing wake-up hours, delete them or add new wake-up hours. There always should be at least one wake-up hour. Maximum number of wake-up hours is 24. Please, keep in mind that there is no such time as 24:00, instead use 0 (for 0:00) if you want the Sign to wake up at midnights.
+
+[source,c]
+----
+#define WAKE_UP_HOURS   6, 9, 12, 15, 18, 21
+----
+
+*RETRIES_LIMIT*: Sets the maximum number of retries for getting time and exam information. Be adviced, that every next retry is 5 minutes longer than the previous one. E.g. the 1st retry will occur 5 minutes after the default try, the 2nd retry will occur 10 minutes after the 1st retry, the 3rd retry will occur 15 minutes after the 2nd retry, the 4th retry will occur 20 minutes after the 3rd retry, the 5th retry will occur 25 minutes after the 4th retry, and so forth. It is recomended not to exceed the number of 5 retries.
+
+[source,c]
+----
+#define RETRIES_LIMIT 3
+----
+
+*TIME_ZONE*: Specifies the campus time zone according to the GMT / UTC standard. *_IMPORTANT:_* If in the country of the campus location it is common to switch between winter time and summer time, use the WINTER TIME time zone only! Include "-" sign if it applies to the time zone of your cluster. Do not include "+" sign.
+
+[source,c]
+----
+#define TIME_ZONE 1
+----
+
+*CONNECT_TIMEOUT_S*: Sets the timeout for Wi-Fi connection attempts (in seconds).
+
+[source,c]
+----
+#define CONNECT_TIMEOUT_S 5
+----
+
+*DEBOUNCE_DELAY_MS*: Defines the debounce delay for button presses (in milliseconds). The lower the number, the faster the button responds, but the probability of errors to occur grows.
+
+[source,c]
+----
+#define DEBOUNCE_DELAY_MS 1000ul
+----
+
+*WD_TIMEOUT_MS*: Sets the timeout for the watchdog timer (in milliseconds). Limited to a maximum timeout of 8 seconds (8000 milliseconds).
+
+[source,c]
+----
+#define WD_TIMEOUT_MS 8000
+----
+
+*OTA_WAIT_LIMIT_S*: Defines the maximum wait time for OTA updates (in seconds).
+
+[source,c]
+----
+#define OTA_WAIT_LIMIT_S 600
+----
+
+[#functions-description]
+
+== Functions Description
+
+== main file functions
+
+setup(): initializes various components, including the watchdog timer, display, file system, buttons, battery, power-down recovery, battery check, Telegram bot, and OTA updates.
+
+loop(): handles the OTA update waiting loop and calls the pathfinder() function to determine the next action based on the current status.
+
+pathfinder(): the function determines the next action based on the current status, including handling exam mode and cluster number mode, and then puts the device to sleep for the calculated time. The function deliberately uses two if-statements since the exam_status may change its value inside the first if-statement.
+
+== Display Handling
+
+draw_text(String output, uint16_t x, uint16_t y): Draws text on the display at the specified coordinates.
+
+draw_exam_start_time(): Draws the exam start time on the display.
+
+draw_bitmap_partial_update(const unsigned char* image, uint16_t width, uint16_t height): Draws a partial bitmap image on the display.
+
+draw_colour_bitmap(const unsigned char* black_image, const unsigned char* red_image): Draws a full-color bitmap image on the display.
+
+draw_bitmap_full_update(const unsigned char* image, uint16_t width, uint16_t height): Draws a full bitmap image on the display.
+
+display_cluster_number(IMAGE_t mode): makes decisions of whether to draw something on the display or not to draw; calls drawing functions when necessary. REFACTORING RECOMENDED. If you refactor the function, please, do not forget to change the documentation accordingly.
+
+clear_display(): Clears the display.
+
+display_init(): Initializes the display.
+
+== Exam Mode
+
+exam_mode(): Handles the exam mode, including displaying exam-related messages and images.
+
+== File System
+
+secret_verification(String input): Verifies the secret token.
+
+data_restore(const char* file_name): Restores data from the specified file.
+
+data_integrity_check(): Checks the integrity of the file system and restores necessary data.
+
+write_to_file(const char* file_name, char* input): Writes data to the specified file in the FS.
+
+read_from_file(const char* file_name, char* output): Reads data from the specified file in the FS.
+
+file_sys_init(): Initializes the File System.
+
+== Intra Interaction
+
+fetch_exams(): Fetches exam schedules from the 42 Intra API.
+
+== Telegram Bot
+
+telegram_check(): Checks for new messages from the Telegram bot and handles them.
+
+compose_message(int32_t subject, int16_t days_left): Composes messages to be sent via the Telegram bot.
+
+== Time Utilities
+
+expiration_counter(): Calculates the number of days left until the secret token expires.
+
+unix_timestamp_decoder(uint8_t* p_day, uint8_t* p_month, uint16_t* p_year): Decodes a UNIX timestamp into day, month, and year.
+
+get_time(): Fetches the current time from an NTP server.
+
+time_till_wakeup(): Calculates the time until the next wake-up.
+
+time_till_event(int8_t hours, uint8_t minutes): Calculates the time until a specified event.
+
+time_sync(unsigned int preexam_time): Synchronizes time before an exam.
+
+== Watchdog
+
+watchdog_start(): Starts the watchdog timer.
+
+watchdog_reset(): Resets the watchdog timer.
+
+watchdog_stop(): Stops the watchdog timer.
+
+watchdog_init(): Initializes the watchdog timer.
+
+== Other Functions
+
+go_to_sleep(uint64_t time_in_millis): Puts the device to sleep for the specified time.
+
+ft_delay(uint64_t time_in_millis): Delays execution and puts the device into light sleep. This function helps saving battery power by turning off the Wi-Fi and the Bluetooth modules of the device. Do not use it there where you need to maintain wireless connection.
+
+wifi_connect(): Connects to Wi-Fi.
+
+serial_init(): Initializes the serial communication.
+
+power_down_recovery(): Handles power-down recovery, including reporting reboot reasons.
+
+exam_simulation(): Creates a fictitious exam information for the EXAM_SIMULATION macro.

@@ -1,0 +1,56 @@
+= How to Draw on the Display
+:imagesdir: media
+ifndef::backend-pdf[]
+:toc: auto
+:sectnums:
+endif::[]
+
+COORDINATES, SIZES IN PIXELS AND ROTATION
+
+In the *setRotation(uint8)* function you may set how the window you want to output on the display will be turned compared to the display physical orientation. All the displays have their default physical orientation, but it may vary from display to display, so finding out the display's default physical orientation is the starting point for any work with display graphics. It is easy to do: take a look at the display's physical appearence, note the side where a ribbon of wires sticks out of it — that's the bottom side of this display's default physical orientation. Knowing that, we now can set the rotation:
+
+setRotation(0) — for the default rotation, it is equal to the display default physical orientation
+
+setRotation(1) — will rotate the window 90 degrees clockwise comparing to the display default physical orientation
+
+setRotation(2) — will rotate the window 180 degrees (or simply flips it up-side-down) comparing to the display default physical orientation
+
+setRotation(3) — will rotate the window 270 degrees clockwise comparing to the display default physical orientation
+
+Keep in mind that however you rotate the window, its system of coordinates always rotates with it. So, the 0,0 coordinates are always in the TOP LEFT corner of your window, but not necessarily in the top left corner of your display.
+
+When dealing with the Partial Update windows, it is important to remember about one unobvious limitation of the e-paper controller: partial update window size and position are on byte boundary with physical x direction. Meaning that the controller may set the horisontal window boundaries only on every 8th pixel comparing to its default physical orientation. Let's summ it up with a simple rule that is easy to follow:
+
+The value of x and the value of width should be multiple of 8, for rotation 0 or 2,
+
+the value of y and the value of hight should be multiple of 8, for rotation 1 or 3.
+
+The function *setPartialWindow(x, y, width, height)* allows us to create a window of any size and, instead of the whole display, update only the content of this window. It is very useful feature since it is much faster than the conventional full display update with the setFullWindow() function. Moreover, this type of an update does not flicker. So, if you need to get rid off of the flickers between the slides, with setPartialWindow(x, y, width, height) you may set the whole display as a Partial Update window. But be careful as THE FIRST UPDATE AFTER TURNING ON OR RESET SHALL ALWAYS BE THE FULL DISPLAY UPDATE with the setFullWindow() function. Otherwise the display may be irrevertably stuck on the last image for ever.
+
+It may be useful to note the relationship between the setPartialWindow(x, y, width, height) and the setRotation(uint8) functions. Some may think that setRotation(uint8) may turn a Partial Update window created with the setPartialWindow(x, y, width, height) function. And it is true, but only to some extent. setRotation(uint8) does not turn Partial Update windows, but it actually turns the whole display window orientation with Partial Update windows inside of it. That is why when we change the display orientation with the setRotation(uint8) function, we also need to remember that the system of coordinates for x and y in the setPartialWindow(x, y, width, height) also changes. And when the system of coordinates changes, the understanding of width and height changes with it. E.g. if while setRotation(0) the window's width is 800 and the window's height is 480, then while setRotation(1) the window's width becomes 480 and the window's height becomes 800.
+
+For some unexplainable reason when it comes to the text body coordinates, their logic is very different from windows and images. The x and y coordinates point to the bottom left corner of the first line of text even if there are multiple lines of text. In comparison, the common logic for the windows and bitmaps coordinates are that their x and y point to the top left corner of the image. So, if you used display.setCursor(x, y) command to output the word HELLO onto the display, the x and the y there would point to the very bottom left pixel of the letter H.
+
+The coordinates logic is also tricky when it comes to the command
+
+*display.getTextBounds(output, 0, 0, &text_box_x, &text_box_y, &text_width, &text_height)*
+
+This command can view any text as the smallest box that can accomodate the given text and give you all the needed information to create such a box on the screen. It is very useful when you want to update a piece of text or a single character on your display instead of the whole display. The function takes a few parameters: the text in the form of a String varible (here it is "output"), x and y coordinates of the area you want to place the text (here they are "0, 0" - the top left corner of the display), pointers to x and y coordinates (this is how you will get x and y coordinates for the top left corner of the box for the text), pointers to the width and height (this is how you will get width and height values of the box for the text). It is not required to change the "0, 0" coordinates because this function does not place anything anywhere - it uses this values only for calculations. Though, it is important to remember, that when you use the default "0, 0" coordinates, the value in the text_box_y variable will be NEGATIVE. Why does this happen? Exactly because of the difference in the coordinates logic between texts and windows/bitmaps/boxes. If you remember, x and y for texts point to the BOTTOM left pixel of the text; but x and y for windows/bitmaps/boxes point to their TOP left pixel. The display.getTextBounds tries to compensate this logic difference. E.g. if you were to place the word HELLO with the 10 size font into the top left corner (0, 0) of the display, you would need to call setCursor(0, 10); but if you were to creare a partial update window in the the top left corner (0, 0) of the display to update that text, you would need to call setPartialWindow(0, 0, text_width, 10).
+
+But noone has time to deal with different coordinates logic! We want to give the function the text and just one set of x,y coordinates and the text shall simply aline with my partial update window automatically! That's where the getTextBounds may help. In our example our target display coordinates are x = 0, y = 0 (the top left corner), so let's place HELLO in there with a partial display update:
+
+display.setTextSize(10);
+
+display.getTextBounds("HELLO", 0, 0, &text_box_x, &text_box_y, &text_width, &text_height);
+
+// now text_box_x has value 0, text_box_y == -10, text_width == HELLO-width value (I don't know it), text_height == 10
+
+display.setPartialWindow(x, y, text_width, text_height);
+
+// that creates a window in the top left corner of the display, HELLO-width pixels wide and 10 pixels high
+
+display.setCursor(x - text_box_x, y - text_box_y);
+
+// this is how we compensate for the text coordinates logic: for x (0 - 0 = 0) and for y (0 - (-10) = 10) coordinates
+
+display.print("HELLO");

@@ -1,0 +1,40 @@
+= Contractor's Requirements and How the Sign Matches Them
+:imagesdir: media
+ifndef::backend-pdf[]
+:toc: auto
+:sectnums:
+endif::[]
+
+The finished device must fulfill the following requirements:
+
+. *Auditorium status display*: the device must always display the current status of the auditorium, indicating whether it is free or if an exam is in progress.
++
+The Sign displays the number of the auditorium in calm black and white colours to indicate that the room is available for everyone or it displays the „exam in progress“ sign in bright red and black colours to show that the room shall not be entered by those who do not participate in the exam. The Sign is never blank.
+
+. *Advance notification*: the device should notify students in advance on exam days about the need to vacate the auditorium.
++
+The Sign displays a note with the exact time of the upcoming exam right from the morning of that day. 1 hour before the exam, the black-white-and-red „reserve for exam“ sign with time left starts being displayed.
+
+. *Autonomy*: the device must operate independently, performing its tasks and solving problems that arise without requiring the time or intervention of the educational institution's staff.
++
+The Sign can connect to the Internet, access the institution server API and pull exams date and time. This is how it knows when to display the apropriate state of the auditorium. The Sign software is designed with all the common negative situations in mind which ensures the Sign does not bother anyone unless it absolutely needs to.
+
+. *Problem reporting*: the device must be capable of reporting issues that cannot be resolved without assistance from the educational institution's staff.
++
+When the Sign fails to resolve an unordinary situation itself and requires assistance, it displays an apropriate error message on its display as well as sends a detailed error report to its Telegram chat.
+
+. *Support and expandability*: the device should be designed for support and expansion, allowing any student of the educational institution to contribute to the project, develop new functionality, and upload new software onto the device.
++
+The Sign project was chosen to be made using Arduino IDE as the most beginners-friendly developing platform. The software was developed using a straightforward bare-metal approach to maintain easy-to-follow program logic. The Sign has a standart USB-C port for flashing its software, monitoring its Serial port and charging its battery. The microcontroller used in the project has inner USB controller which eliminates the need of using a UART-TTL adapter. The microcontroller pins are equipped with standart Dupont sockets which allows anyone to change used pins and add new hardware by simply connecting it to the microcontroller with Dupont cables. The Sign is securelly fixed on the wall with 4 furniture double ball catches, which at the same time allow to take the Sign off the wall for maintanance.
+
+. *Safety*: the device must ensure safety by incorporating protective elements for potentially dangerous electronic components.
++
+The battery used in the project has an embedded protection against shortcuts, overcharging and ungercharging, which has the ability of completely disconnecting the battery from the rest of the circuit. The battery charging IC is capable of adapting its charging power, applying lower voltages when the battery is low on charge or close to being fully charged. The charging IC generally uses slightly lower charging rate than the standart charging rate for this particular battery, which will result in the battery longer life.
+
+. *Rechargeable operation*: the device must operate on a rechargeable battery, include a common charging connector, and provide indications for the charging process and its completion.
++
+The Sign employs an internal high-capacity rechargeable battery, which insures a long lasting operation without the need of changing batteries. The battery can be recharged by plugging the Sign into any 5V power adapter. The Sign has a USB-C connector for recharging the battery as well as for flashing the software. The Sign employs a red LED to indicate an ongoing charging process.
+
+. *Design compatibility*: both the graphical user interface (GUI) and the physical appearance of the device must align with the established style of the educational institution's interior design.
++
+The body of the Sign is made of black wooden frame with mate finish, which perfectly matches the mate-black profile of the auditorium glass door. The GUI was designed inspired by the painings on the walls of the institution as well as the „42“ logo, thus nicely matching the overal style of the interiors.

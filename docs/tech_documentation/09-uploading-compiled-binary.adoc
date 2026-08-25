@@ -1,0 +1,45 @@
+= Uploading the Program as Compiled Binary
+:imagesdir: media
+ifndef::backend-pdf[]
+:toc: auto
+:sectnums:
+endif::[]
+
+There is a third way of how you can upload your program into the memory of the device — compile the program into a .bin file and then upload it manually in the Terminal. This method is overly complicated, so do not use it unless necessary. In 99,9% of cases the first method – described above in the *Uploading the changes* topic of link:07-development-environment.adoc[Getting ready to maintain and develop the project] – is the best way to go. This third method is good in two cases: for some reason you cannot compile the project on this computer but it compiled on another computer; you want to show off your cool skill of flashing microcontrollers with a bare command line in your Terminal.
+
+== The Uploading Process
+
+So, you have got your .bin file. Let’s flash it into the Sign’s memory. Read all the steps first, before working on them.
+
+. For this process you will need a CLI software tool called *esptool.py*. If you have already installed Arduino IDE and its ESP-IDF extension, you probably already have esptool.py as well. To confirm that, let’s find esptool.py on your computer. On macOS, esptool.py is usually located here:
+*~/Library/Arduino15/packages/esp32/tools/esptool_py/  > Version-numbered folder > esptool*
+In my case the full path looked like this:
+*MacintoshHD/Users/romanalexandrov/Library/Arduino15/packages/esp32/tools/esptool_py/4.6/esptool*
+
+If you see esptool on your computer, that’s great. Note down the path to the esptool executable and go from here straight to the step 2.
+
+If you cannot find esptool, Install Arduino IDE and add the ESP-IDF extension. This way esptool will get installed as well. User-friendly instructions on how to do it may be found here if you scroll down to the topic „*Installing Arduino IDE*“:
+link:https://randomnerdtutorials.com/getting-started-with-esp32/[https://randomnerdtutorials.com/getting-started-with-esp32/#esp32-arduino-ide]
+
+The online instruction suggests to download and install the latest version, but the project was built using Arduino IDE version *1.8.19* and the „esp32“ board version *3.0.7*. Compatibility with the later versions was not tested, this is why it is recomended to use these, even though outdated, versions of the tools.
+
+Once you are done installing Arduino IDE and its ESP-IDF extension, go and find esptool on your computer.
+
+. Connect the Sign to your computer if you have not done so by this time.
+. Activate the software update mode. To do that, on the back of the Sign locate button *B* and button *R*. First, press and hold button B. While holding button B, press and release button R once. Then release button B. Software update mode is now active.
+. Open your Terminal and run the command *ls /dev/cu.** to find wich port the Sign is connected to. In the results, look for somethig like /dev/cu.usbmodemXXXX or /dev/cu.usbserial-XXXX or /dev/cu.esp32c3. Once you found the port name, note it down as we will need it later.
+. In the Terminal, navigate your way into the folder where your .bin file is located. To start uploading the .bin file into the Sign, you will need the following command:
+
+~/Library/Arduino15/packages/esp32/tools/esptool_py/*/esptool \\
+--chip esp32c3 \\
+--port YOUR_PORT_NAME \\
+--baud 115200 \\
+write_flash 0x10000 YOUR_BIN_FILE_NAME.bin
+
+In the command you should change YOUR_PORT_NAME to the port name you acquired from the step 4. For example:
+--port /dev/cu.usbmodem1101
+You should change YOUR_BIN_FILE_NAME.bin to the name of the .bin file. For example:
+write_flash 0x10000 42-Smart-Cluster-Sign.ino.XIAO_ESP32C3.bin
+. Once you hit „Enter“, the upload will begin. Do not worry if you encounter errors. esptool usually gives very discriptive explanations to errors. In the worst case scenario, ChatGPT may help you.
+. When the upload is finished, press the *R* button on the back of the Sign once — that will reboot the Sign and start the execution of the uploaded program.
+ Done. You are amazing.

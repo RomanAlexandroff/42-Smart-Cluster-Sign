@@ -1,0 +1,115 @@
+= Libraries and Their Use
+:imagesdir: media
+ifndef::backend-pdf[]
+:toc: auto
+:sectnums:
+endif::[]
+
+The project was built in Arduino IDE 1.8.19.
+
+It uses board 'esp32' version 3.0.7
+
+The libraries in bold are explicitly included in the project.
+
+[cols="1,1,2",options="header"]
+|===
+|Library
+|Version
+|Purpose
+
+|*Arduino.h*
+|
+|String variables manipulations
+
+|*LittleFS*
+|2.0.0
+|stores data even without electricity (Telegram chat number, Secret, OTA flag value)
+
+|FS
+|2.0.0
+|dependency for the LittleFS library
+
+|*ArduinoOTA*
+|2.0.0
+|for the Over The Air update functionality
+
+|*WiFiUdp*
+|2.0.0
+|dependency for the ArduinoOTA library
+
+|*ESPmDNS*
+|2.0.0
+|dependency for the ArduinoOTA library
+
+|Update
+|2.0.0
+|dependency for the ArduinoOTA library
+
+|*stdio.h*
+|
+|provides printf() function for the DEBUG macro
+
+|*stdint.h*
+|
+|provides fixed-width integer types
+
+|*esp_system.h*
+|
+|allows to use ESP-IDF native functions
+
+|*esp_sleep.h*
+|
+|allows to use the Deep Sleep power-saving functionality
+
+|*driver/adc.h*
+|
+|for battery charge measurements
+
+|*esp_task_wdt.h*
+|
+|program execution watchdog
+
+|*Wire*
+|2.0.0
+|for SPI reconfiguration in the ft_display_init function
+
+|SPI
+|2.0.0
+|dependency for the Wire library
+
+|*GxEPD2_3C*
+|1.5.2
+|3-coloured version of the GxEPD2 library for e-paper displays
+
+|*GxEPD2_BW*
+|1.5.2
+|dependency for the GxEPD2_3C library
+
+|Adafruit_GFX_Library
+|1.11.8
+|dependency for the GxEPD2_3C library
+
+|Adafruit_BusIO
+|1.14.4
+|dependency for the GxEPD2_3C library
+
+|*Fonts/FreeSansBold24pt7b.h*
+|
+|the fonts come from the Adafruit GFX library which gets called by the GxEPD2 library
+
+|*WiFi*
+|2.0.0
+|for Wi-Fi functionality
+
+|*WiFiClientSecure*
+|2.0.0
+|for secure HTTPS requests
+
+|*UniversalTelegramBot*
+|1.3.0
+|Telegram bot; for wireless SECRET update and low battery notifications
+
+|ArduinoJson
+|6.21.3
+|dependency for the UniversalTelegramBot library
+|===

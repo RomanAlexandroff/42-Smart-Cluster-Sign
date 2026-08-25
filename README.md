@@ -1,5 +1,8 @@
 ![Repository Banner](docs/graphic_materials/github_repo_animation.gif)
 # 42 Smart Cluster Sign
+
+**[Full technical documentation](docs/tech_documentation/README.md) — architecture, build guide, function reference.**
+
 ## Table of Contents
 
 - [Introduction](#introduction)
@@ -17,7 +20,7 @@
 
 Welcome to the README for the 42 Smart Cluster Sign — a self-sufficient information display designed to be installed on a cluster door. Its purpose is to notify students when the cluster is reserved for an exam and prevent them from accidental entering. The device automatically retrieves exam dates from Intra and displays appropriate warnings and information on its e-paper screen. In the spare time it simply displays the cluster number.
 
-For more information, please, refer to the technical documentation in the docs folder of this repository.
+For more information, please refer to the [full technical documentation](docs/tech_documentation/README.md).
 
 
 ## Usage
@@ -94,4 +97,4 @@ Please note that while the project strives to provide accurate information, it i
 
 ## Conclusion
 
-Thank you for your interest in the 42 Smart Cluster Sign project! We hope this README provides you with the necessary information to understand the project's purpose, features, installation process, usage, and maintenance. If you did not find the information you need, please, refer to the technical documentation in this repository. If you have any further questions or need assistance, please don't hesitate to reach out. Happy coding!
+Thank you for your interest in the 42 Smart Cluster Sign project! We hope this README provides you with the necessary information to understand the project's purpose, features, installation process, usage, and maintenance. If you did not find the information you need, please refer to the [full technical documentation](docs/tech_documentation/README.md). If you have any further questions or need assistance, please don't hesitate to reach out. Happy coding!

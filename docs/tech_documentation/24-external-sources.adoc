@@ -1,0 +1,56 @@
+= External Information Sources
+:imagesdir: media
+ifndef::backend-pdf[]
+:toc: auto
+:sectnums:
+endif::[]
+
+NTP (time) server API documentation
+
+link:https://cplusplus.com/reference/ctime/tm/[https://cplusplus.com/reference/ctime/tm/]
+
+How to Get Date and Time with the Time.h library — article
+
+link:https://randomnerdtutorials.com/esp32-date-time-ntp-client-server-arduino/[https://randomnerdtutorials.com/esp32-date-time-ntp-client-server-arduino/]
+
+GDEY075Z08 display data sheet
+
+link:https://www.laskakit.cz/user/related_files/gdey075z08.pdf[https://www.laskakit.cz/user/related_files/gdey075z08.pdf]
+
+GDEY075Z08 display code example
+
+link:https://github.com/LaskaKit/Testcode_examples/blob/main/Displays/E-Paper/7-50/GDEY075Z08_GxEPD2/GDEY075Z08_GxEPD2.ino[https://github.com/LaskaKit/Testcode_examples/blob/main/Displays/E-Paper/7-50/GDEY075Z08_GxEPD2/GDEY075Z08_GxEPD2.ino]
+
+UC8179 - the display hardware driver - data sheet link:https://www.laskakit.cz/user/related_files/uc8179.pdf[https://www.laskakit.cz/user/related_files/uc8179.pdf]
+
+GxEPD2 library - the display software driver - online page
+
+link:https://github.com/ZinggJM/GxEPD2[https://github.com/ZinggJM/GxEPD2]
+
+Online forum for GxEPD2 library troubleshooting discussions
+
+link:https://forum.arduino.cc/t/good-display-epaper-for-arduino/419657[https://forum.arduino.cc/t/good-display-epaper-for-arduino/419657]
+
+ESP32 RAM issue discussion page
+
+link:https://github.com/espressif/arduino-esp32/issues/1163[https://github.com/espressif/arduino-esp32/issues/1163]
+
+XIAO ESP32C3 development board instruction page
+
+link:https://wiki.seeedstudio.com/XIAO_ESP32C3_Getting_Started/[https://wiki.seeedstudio.com/XIAO_ESP32C3_Getting_Started/]
+
+Getting started with 42 API guide
+
+link:https://api.intra.42.fr/apidoc/guides/getting_started[https://api.intra.42.fr/apidoc/guides/getting_started]
+
+42 API Documentation
+
+link:https://api.intra.42.fr/apidoc[https://api.intra.42.fr/apidoc]
+
+Video tutorial about troubleshooting the ArduinoOTA library
+
+link:https://www.youtube.com/watch?v=z_btZfxrS48[https://www.youtube.com/watch?v=z_btZfxrS48]
+
+The best instruction ever on the buttons implementation with ESP32
+
+link:https://esp32io.com/tutorials/esp32-button[https://esp32io.com/tutorials/esp32-button]
