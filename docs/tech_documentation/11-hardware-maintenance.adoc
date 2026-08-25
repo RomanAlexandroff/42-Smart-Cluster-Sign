@@ -1,0 +1,26 @@
+= Hardware Maintenance
+:imagesdir: media
+ifndef::backend-pdf[]
+:toc: auto
+:sectnums:
+endif::[]
+
+The Sign generally does not require any assistance, but it needs to be charged once every so often. If you have not ever charged the Sign before, it is OK, since its high-capacity inner battery allows the Sign to operate up to half a year on a single charge.
+
+If the Sign needs to be recharged, it will indicate it by displaying the „LOW BATTERY“ note next to the cluster number as well as sending a notification into its Telegram chat.
+
+Needed hardware:
+
+* *5V* power adapter,
+* USB-C cable, compatible with the power adapter.
+To charge the Sign:
+
+. locate a round opening on the side of the wooden frame;
+. look inside the opening - there you should see a USB-C female connector;
+. find a cable with a USB-C male connector that fits the round opening;
+. if the cable is too short to reach the power socket, carefully take the Sign off the wall.
+To do that use both of your hands! Grab the wooden frame from its top and its bottom – that will prevent it from falling. Do not pull the Sign from the wall with your arms. Instead start pushing your fingers deeper between the frame and the wall – at some point the Sign will simply detach from the wall and stay in your hands;
+. connect the Sign to the 5V power adapter with the cable;
+. plug the 5V power adapter into a power socket;
+. look at the opening in the frame again - you should see red light comming out of it, which means that the Sign is now charging. If after a few seconds there is no red light, that may indicate a poor connection or lack of electricity.
+. wait for the red light to turn off – typically about 10 hours – that indicates that the Sign is fully charged.

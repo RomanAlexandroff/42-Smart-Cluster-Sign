@@ -1,0 +1,81 @@
+= Bugs and Suggestions How to Fix Them
+:imagesdir: media
+ifndef::backend-pdf[]
+:toc: auto
+:sectnums:
+endif::[]
+
+*_Display does not work / does not draw an image._*
+
+* you may have miscalculated the image coordinates and the image gets drawn outside of the display field of coordinates. Remember that setRotation also rotates the display field of coordinates. Remember that coordinates always point to the top left corner of an image, but for a text it is the bottom left pixel of the first character in the first line.
+* you may have misaligned the image with the partial update window if you are using one. Remember that even when you draw an image in a partial update window, you use the whole display field of coordinates to place it; a partial update window does not have its own field of coordinates.
+* the display driver memory may be full. Run your program and open the Serial monitor. When an image gets drawn on the display, in the Serial monitor it says “Updating xxxxxxxxxx” where xxxxxxxxxxxx is a very long number that can be different each program run. Among all the outputted messages find the “Updating” message that corresponds to your image being drawn. Now look higher and find the “Power on” message. Keep looking higher and find the “Power off” message, it should not be separated from your “Updating” message by other “Updating” messages. If you cannot find it, it means that this is a bug. To fix it, in your code use the function to force the display to power off before drawing the image. The display will power back on automatically.
+*_Flash memory became too small to accomodate the software._*
+
+* ESP32C3 comes with 4MB of onboard memory. This project‘s default memory partition scheme "Minimal SPIFFS (1.9MB APP with OTA/190KB SPIFFS)" provides exactly 1 966 080 Bytes for the software program, another 1 966 080 Bytes as an OTA buffer and 194 560 Bytes for the file system files storage space.
+* Commenting out the *#pragma GCC optimize ("O3")* line in config.h will make the compiler optimize the code for lower software image size instead of faster program performance. That may win over about 2-3 KB of memory space.
+* Before compiling the software image, in the „Tools“ menu of Arduino IDE, go to the Core Debug Level and switch it from „Verbose“ to „None“ — this simple step can free up to 3% of the memory space.
+* Downgrade the project from the esp32 board version 3.0.7 to the esp32 board version 2.0.16. This step may require to refactor the watchdog and the battery management functionalities, but it may free up to 10% of the memory space.
+* In the „Tools“ menu of Arduino IDE, go to the Partition Scheme and choose the option „Huge APP (3MB No OTA/1MB SPIFFS)“. Doing so will free up a whopping 30% of the memory space. Unfortunatelly, the Over-The-Air update functionality will not have a buffer for its work and so will no longer be available. At this point the OTA functionality code may well be removed from the project.
+*_Some RTC variables loose thier values over the Deep Sleep._*
+
+* There could be more than one reason to it, but most likely it is caused by the RTC memory overflow. Try removing some less important variables from the RTC domain. The String Object type variables (or simply String variables) are known to have a big overhead and thus to take a lot of memory space. It is encouraged not to use them in the RTC domain at all and to use C-style char arrays instead.
+*_DEBUG_PRINTF does not output a message._*
+
+* the DEBUG_PRINTF macro cannot output String type variables natively. To do that, you need to explicitly cast the String variable into the C-style string with c_str() command. Look for examples in the program code.
+*_Serial monitor is empty / outputs gibberish._*
+
+* check the DEBUG macro in the config.h file. The DEBUG definition should not be commented out for the Serial output to work. Additionally, you can set the Core Debug Level to "Verbose" in the Arduino IDE Tools to get detailed information about the firmware processes.
+* make sure that the baud rate in the Serial monitor is set to the same baud rate as in the config.h file.
+* you may encounter such behaviour right after the software update. It is normal. Try closing and opening again the Serial monitor window. If that does not help, push the Reset ("R") button on the module.
+*_Serial monitor skips some messages / does not show some messages._*
+
+* it is a common situation at the beginning of the program. Serial communication between the computer and the microcontroller needs time to stabilise and synchronise itself. ESP32-C3 USB Serial is especially prone to this issue. To overcome it, increase the delay inside of ft_serial_init() or add a few empty messages to be outputted after the Serial.begin() command. You may well try to implement both of the suggested solutions at the same time.
+*_Wi-Fi does not connect / reconnect without apparent reason._*
+
+* thoroughly check your network SSID and password spelling. Surprisingly, it is a very widely spread cause. A single character written small instead of capital may easily prevent you from connecting.
+* make sure not to use ft_delay() in any of your functions responsible for connecting or reconnecting to Wi-Fi. The ft_delay() function not only delays the program execution but also puts the microcontroller's inner Wi-Fi module to sleep. Using ft_delay() in functions responsible for retrieving information from the Internet may result in unexpected behaviour. If you are not sure that using ft_delay() is safe in your particular function, use delay() instead.
+*_OTA does not work. Cannot see the device in the ports list._*
+
+* make sure that the Sign and your computer are connected to the same Wi-Fi network and to the same Wi-Fi modem within that network. In the Telegram chat prompt the Sign with the „/status“ command to see the MAC address of the Wi-Fi modem it is currently connected to.
+* try closing and reopening Arduino IDE.
+* the school firewall may be blocking OTA connection. Ask your campus system administrator if it could be overcome.
+*_Adding multiple Strings together with the “+” command causes compilation error._*
+
+* strangely, sometimes the compiler may not like it in one part of the code and be completely fine with it in another. The solution is to explicitly cast the variable after the first “+” command into String with the String(your_variable_or_text) command. Understandably, it is strange to cast a String variable into String, but it works.
+*_WARNING: Skipping SSL Verification. INSECURE!_*
+
+* not a bug.
+* this message appears when connecting to the Intra server and is caused by the following line in the intra_interaction.cpp file: „client1.setInsecure();“.
+* on one hand, it can be solved by getting and setting up a certificate for this connection. On the other hand, it does not affect the program run at all and can be ignored.
+*_setSocketOption(): fail on 0, errno: 9, "Bad file number"_*
+
+* a minor issue and does not necessarily indicate a problem with the program.
+* this message may appear when the Smart Sign fails the first attempt to get a server response from the Intra server and goes for the second or third attempt.
+
+* this error can occur when you try to set a socket option on a socket that has already been closed or is in the process of being closed. This can happen during the transition between closing the previous connection and opening a new one. As long as the SSL/TLS communication with the Intra server is functioning correctly after the reconnection, this error can generally be ignored.
+*_spiAttachMISO(): SPI Does not have default pins on ESP32C3!_*
+
+* not a bug.
+* This message appears when the microcontroller assigns pins for the display SPI port. In this project we do not use the MISO pin (thus the „-1“ value defined for the SPI_MISO_PIN in the constants.h file).
+*_401 Unauthorized. Error! Server response came without the Access Token._*
+
+* often happens when something is wrong with the Secret token authentication, commonly with the Secret token itself. Most likely, an extra character was added to your Secret token somewhere along the way. The character may even not to be visible in the Serial monitor. It may happen when you write to or read from the filesystem files. Try using trim() on the variable (e.g. your_string_variable.trim();), it will remove spaces and/or new line signs at the beginning and at the end of the string.
+* rarely may happen due to the Intra server maintenance. There is no solution to it but to wait.
+*_Compilation error: “Section .dram0.bs 'Will Not Fit In Region Dram0_0_seg' Region.`Dram0_0_seg 'Overflowed by 9648 Bytes. Collect2: Error: LD Returned 1 Exit Status”_*
+
+* it means that the program takes more RAM space than it is available. DRAM stands for Data Random Access Memory and is used for data.
+* This error may be caused for example by excessive use of global variables, large arrays, big buffers, etc.
+* The most likely reason for this error in this project is the display buffer being too big. The ESP32 and the ESP32-S2 are especially prone to this issue. To overcome this problem the display buffer size should be reduced. It can be done in the display instantiation.
+Here is the default display buffer instantiation:
+GxEPD2_3C<GxEPD2_750c_Z08, GxEPD2_750c_Z08::HEIGHT> display(GxEPD2_750c_Z08(SPI_SS_PIN, DC_PIN, RST_PIN, BUSY_PIN));
+And here is a reduced display buffer instantiation: GxEPD2_3C<GxEPD2_750c_Z08, GxEPD2_750c_Z08::HEIGHT/2> display(GxEPD2_750c_Z08(SPI_SS_PIN, DC_PIN, RST_PIN, BUSY_PIN));
+* Less likely reason for this error is an excessive use of the global scope for data. To solve it reduce the number of global variables, use the file system to store the data instead of arrays.
+*_Software update fails while trying to connect to the microcontroller board_*
+
+* Go into the "Tools" menu of the Arduino IDE and change the Upload Speed to 115200. Sometimes the IDE automatically sets the Upload Speed to the highest value and your board may happen not to support it.
+*_[INTRA] Error! Server response to the Access Token request was not received._*
+
+*_[INTRA] Error! Server response to the Exam Time request was not received._*
+
+* If any of these error messages keep appearing in the Serial monitor, it is likely that it is not enough time for the Intra server to proceed the request from the Sign. Try going into the config.h file and incrementally increasing the value of the SERVER_WAIT_MS macro by 500 milliseconds each time.

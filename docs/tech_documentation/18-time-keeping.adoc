@@ -1,0 +1,28 @@
+= The Intricacies of Time Keeping
+:imagesdir: media
+ifndef::backend-pdf[]
+:toc: auto
+:sectnums:
+endif::[]
+
+The project has one source of time-related data – the Intra server. It provides both the actual time for the system and the exam time.
+
+Actual time data gets updated every time the device checks the exam by calling the fetch_exams() function. The actual time data gets stored in 5 global variables: com_g.hour, com_g.minute, com_g.day, com_g.month, com_g.year. The values in those global variables are already adjusted to the time zone of the Sign and to the summer/winter time.
+
+Exam time from the Intra server gets updated when the fetch_exams() function is called. The exam time is then stored in the following 4 global variables: rtc_g.exam_start_hour, rtc_g.exam_start_minutes, com_g.exam_end_hour, com_g.exam_end_minutes. There is no exam date variable, because the exam time is searched only for the current day. The values in those global variables are already adjusted to the time zone of the Sign and to the summer/winter time.
+
+It is worth noting that all of the time-related data does not simply come nicely adjusted for this particular device to use. All the adjustments happen on the device. To understand how it works, it is important to have information about the sources of the raw data.
+
+The Intra server provides only standart UTC time. It never adjusts for Summer or Winter time. It does not care about time zones. All of that – both summer/winter time change and time zone adjustment – is handled on the device by the get_and_ensure_current_time() function and its helper functions: winter_summer_time_offset(), last_sunday() and is_weekday().
+
+It is important to mention that the winter_summer_time_offset() function calculates when to switch between summer and winter time based on the pattern of the European Union DST system. *_It may not be suitable for the countries outside of the EU!_* The pattern that the function obeys is the following:
+
+* last Sunday of March — switch to summer time,
+* last Sunday of October — switch back to winter time.
+Located in the config.h file, there is a very important time-related macro TIME_ZONE. This macro is the place where you have to manually write the time zone of the campus where you use the Sign.
+
+Be aware, that if your country switches between winter/summer time (DST system), it means that your country basically has two different time zones – one in winter and a different one in summer. Winter time zone is universally considered as the default one. This is why the winter time zone is what you need to write in the TIME_ZONE macro.
+
+E.g.: in winter, France uses Central European Time and has the UTC+1 time zone; but in summer France uses Central European Summer Time and has the UTC+2 time zone. Winter time zone is the default one, this is why for any French campus TIME_ZONE is 1.
+
+Include "-" sign if it applies to the time zone of your campus. Do not include "+" sign at all.

@@ -19,7 +19,7 @@ ifeq ($(firstword $(MAKECMDGOALS)),format)
   endif
 endif
 
-.PHONY: help release publish-manifest format
+.PHONY: help release publish-manifest format docs
 
 help:
 	@printf '%s\n' \
@@ -27,7 +27,8 @@ help:
 		'  make release           Run the Firmware Release Manager.' \
 		'  make publish-manifest  Update ota/manifest.json from release-info.json.' \
 		'  make format all        Format all .ino/.c/.cpp/.h files under src/.' \
-		'  make format <file>     Format one file under src/ (basename or src/<file>).'
+		'  make format <file>     Format one file under src/ (basename or src/<file>).' \
+		'  make docs              Build the technical documentation PDF.'
 
 release:
 	@$(MAKE) -C "$(FRM_DIR)" ROOT_DIR="$(CURDIR)" release
@@ -62,3 +63,10 @@ format:
 	fi; \
 	printf '[format] Formatting %s file(s) with clang-format\n' "$${#files[@]}"; \
 	clang-format -i -style=file -- "$${files[@]}"
+
+docs:
+	@set -euo pipefail; \
+	command -v asciidoctor-pdf >/dev/null || { echo 'ERROR: asciidoctor-pdf is required.'; echo 'Install with: gem install asciidoctor-pdf'; exit 1; }; \
+	mkdir -p build; \
+	asciidoctor-pdf docs/tech_documentation/book.adoc -o build/Technical_Documentation.pdf; \
+	echo "[docs] Wrote build/Technical_Documentation.pdf"

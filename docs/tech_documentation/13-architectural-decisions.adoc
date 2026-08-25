@@ -1,0 +1,143 @@
+= Architectural Decisions Explained
+:imagesdir: media
+ifndef::backend-pdf[]
+:toc: auto
+:sectnums:
+endif::[]
+
+Even though the program code of the Sign is pretty straight forward, there are some architectural solutions that are not that clearly obvious. Here we will try to address these uncertainties and make sure the program code is fully understandable. Be adviced, that the article assumes that you have already seen the source code as well as read some previous articles here, namely link:04-program-run-overview.adoc[General description of the program run], link:05-program-run-step-by-step.adoc[Program run step-by-step], link:12-functions-reference.adoc#program-files-description[Program files description], link:12-functions-reference.adoc#the-config-file[The config file], link:12-functions-reference.adoc#functions-description[Functions description], link:14-intra-api.adoc[How to get exams info from Intra].
+
+== src.ino file
+
+If you are new to Arduino IDE, setup() and loop() functions are standart for this workframe. Treat them as you would treat main() in a .c file, it’s just here there are 2 functions instead of 1. Do not swap these two functions places, do not place anything between them, do not rename them.
+
+WARNING: First, *setup()*. I have been told that the order of functions inside setup() seems somewhat random, that you can change the order and nothig would happen. It was just one opinion, but I must address it, since this misconception may cause big problems. The placement of every single function inside setup() was achieved through hours of testing and debugging, so the order is in fact very much intentional and strict. Misplacing them may cause a whole variety of bugs.
+
+* watchdog_init() shall be the first as it makes sure the whole program runs or resets after fail;
+* display_init() has to be called before serial_init(). Otherwise the SPI initialisation inside display_init() will interfere with the start of the serial communication and some debugging messages in the beginning of the program run will not be shown correctly in the Serial monitor;
+* generally, in projects, the serial communication shall be established as soon in the runtime as possible, to show even the earliest runtime bugs. This is why some people would expect serial_init() to be called as the very first. Yet, watchdog_init() has a priority because not only watchdog detects problems, but also can solve them by restarting the device. The serial_init() function itself is not imune to problems at all. Then there is display_init() which is explained in the previous bullet;
+* file_sys_init() does not have to be exactly in this place, but it surely should be called after serial_init() since it may output some Serial debugging messages. Also, file_sys_init() shall be called before power_down_recovery() since this function may initiate the process of lost variables recovery from the file system – and for that, as you may imagine, it needs the file system to be already initialised;
+* buttons_init() placing is not strictly dependant on other functions, but still has some logic to it. From one side, it is nice to give the user control over the device as soon as possible, hence the function gets called relatively early in the runtime. From the other side, this function initialises Interrupt Service Routines (meaning that pushing the buttons interrupts the normal program execution), that is why it was decided to allow all the communication ports and the file system to initialise before ISRs do – without interrupts. I am not saying that an interrupt happening during e.g. the file system initialisation may necessarily cause fails, but there is a chance. And since ISR bugs are also tricky to debug, it is better to simply avoid this risks no matter how small they are.
+* battery_init() has a somewhat similar logic to it: it has to be called before battery_check() for obvious reasons, but other than that it could be moved around. Inside of it, battery_init() calls for ADC initialization. It has been rumoured that in certain cases the actual ADC hardware initialization, which happens behind the scenes, may take longer than the initialization function execution, which in turn may ruine ADC measurements made exactly after ADC initialization call. This claim was not tested in this particular project. But, just to be safe, it was decided to separate battery_init() (which makes the ADC initialization call) and battery_check() (which makes ADC measurements) with another function – in this case power_down_recovery() – in order to create an artificial time delay;
+* power_down_recovery() can detect and handle brown-outs. Since brown-outs limit the program runtime to a split of a second, power_down_recovery() has to be called as early as possible. On the other hand, in reality, a brown-out would be an extremely rare occurance. In the software, there are other mechanics implemented to prevent the battery from discharging down to the level where brown-outs may start happening.
+In any case, power_down_recovery() shall be called before battery_check(), because if there is a brown-out, it is way too late to measure the battery charge. Also, since power_down_recovery() triggers recovery of lost variables from the file system after device hard reset, it shall be called after file_sys_init();
+* battery_check() can put the device into extensive sleep if the battery charge is too low. This is why this function should be called before any serious work, like connecting to Wi-Fi and checking the Telegram chat, starts being executed. On the other hand, it should not be put before power_down_recovery() – explained in the previous bullet;
+* telegram_check() uses Wi-Fi connection, which is power-demanding – this is why the function shall be called after battery_check(), so we already know that the device has enough battery charge for a wireless connection. telegram_check() works with the file system, so it shall be called after file_sys_init(), too. telegram_check() can change the state of the OTA flag (essentially, activation or deactivating OTA), so the function shall be called before ota_init();
+* ota_init() has to be as close to ota_waiting_loop() as possible and it has to be inside setup(). The position of this function is so optimal, that I would not consider moving it under any circumstances.
+Now, about *loop()*.
+
+In a typical Arduino program, execution starts when the device is powered on. First, the code inside setup() runs once, and then the code inside loop() runs repeatedly, over and over, until the device is powered off. In other words, in most Arduino projects, the program cycles endlessly inside loop().
+
+In this project, things work differently. The device uses a power-saving mode called Deep Sleep, which allows it to turn itself off and back on automatically. Each time the device wakes up, it starts fresh: first running setup(), then running loop() once, and finally going back to sleep again. This means the program cycle includes both setup() and loop(), instead of looping only inside loop().
+
+It is important to note that the name loop() is required by the Arduino framework. Even though in this project loop() executes only once per cycle, the function must still be called loop().
+
+Inside loop() you may find ota_waiting_loop() and pathfinder(). ota_waiting_loop() has to be as close to ota_init() as possible while still remaining inside loop(). I do not have a better explanation for this arrangement other than this is how it is required to be by the ArduinoOTA library. Since pathfinder() also puts the device into Deep Sleep, it shall be the last function to be called. Anything put after pathfinder() will not ever be executed.
+
+Finally, *pathfinder()*. It uses rtc_g.exam_status boolian variable as a flag to decide if to run exam mode that program cycle or not. Cluster number mode gets to run always since it is the default mode. Exam mode fully handles all that related to an exam including calculating how long to sleep for to wake up from Deep Sleep exactly after the exam. If the Exam mode runs, it will put the device to sleep itself, meaning that the program cycle would end in the Exam mode. There are a few points in the program where a program cycle ends and the device goes into Deep Sleep – here, in pathfinder() it is one of them.
+
+== 42-smart-cluster-sign.h file
+
+IMPORTANT: One thing in the file that stands out is the "ota.h" inclusion command being at the very bottom. It is not a mistake. It is the result of a workaround that allowed to use the basic Arduino Over-The-Air functionality with Deep Sleep. There might be a separate chapter on this workaround in this documentation. But here and now, it is important to say only that if the inclusion command was moved elsewhere, OTA functionality would not work any more.
+
+== battery_management.cpp file
+
+—
+
+== bitmap_library.h file
+
+Every unsigned char array is an image. In the head of the file you may see the table with the images information. Location represents the number of the row the image array starts from.
+
+== buttons_handling.cpp file
+
+The pins D3 and D9 are the only two pins which are not physically connected to anything, in other words they are floating. Untreated floating pins may cause hardware related bugs. Usually, such pins would be physically connected to the ground with resistors. Luckly, ESP32 has internal resistors that can be programmed to connect the pins to the ground with one line of code per pin. This is why in the buttons_init() function these two particular pins are set to be pulled down to the ground. Like this, these pins are much less likely to cause any troubles. If at some point you decide to use one of the pins, you absolutely can do so, just reprogram them the way you need it.
+
+== cluster_number_mode.cpp
+
+—
+
+== config.h
+
+—
+
+== constants.h
+
+—
+
+== credentials-example.h
+
+—
+
+== display_handling.cpp
+
+The display_cluster_number() is a big and complicated state machine. It is one of the paramount functions in the project. In order to understand how the project works, it is crucial to understand how this function works.
+
+The function manages states of the two parts of the cluster number display: the cluster number image on the left and the side notes area on the right. In order to achieve that, the function not only accepts input with information what to draw on the display, but also always remembers what is currently drawn on the display.
+
+The display_cluster flag is how the function remembers whether the cluster number image is on the display or not. The displaying_now variable is how the function remembers what is currently drawn in the side notes area. Both variables are static and employ the RTC_DATA_ATTR attribute – that allows them to keep their data even over Deep Sleep.
+
+At the very top, the function decides if anything needs to be drawn at all. It is possible that the function is asked to draw something that is already drawn on the display. In such case, drawing will be simply skipped.
+
+Then, for the cluster number image, the function checks if the image is currently on the display. If not, the image gets drawn and the event gets remembered. If the cluster number image was not on the display until now, then nothing is currently drawn on the side notes area either. So, with the next line of code, the function unblocks drawing of all of the side notes.
+
+Finally, the function decides what side note to draw and records what has been drawn into the displaying_now variable.
+
+The clear_display() function does not actually get used, as there always should be something drawn on the display.
+
+== exam_mode.cpp
+
+The exam_mode() function contains three time comparisons, that may be confusing at the first glance. We need them just to be sure that the device displays correct image at correct time even if the Exam mode was accidentally entered at an unusual time, e.g. mere minutes before the exam starts.
+
+Drawing on colored E-ink displays takes substential time (around 25 seconds), so if there is less that 10 minutes (600.000 milliseconds) before an exam, there is no point in showing the pre-exam warning sign just to replace it with the exam sign a couple of minutes later. Because when the people standing around see the display flashing for 25 seconds and then flashing for 25 seconds again after a couple of minutes, they will be thinking the Sign is broken.
+
+This is why we check if there is more than 10 minutes left till an exam. If so, the pre-exam warning sign gets drawn onto the display. If it is less than 10 minutes, the device simply waits till 25 seconds before the exam with whatever is already on the display. If it is even less than 25 seconds, it means that the device is already late and it needs to draw the exam sign as soon as it is physically possible.
+
+The call for an exam to start is in the very last line of the function. The call returns the exact time the device shall sleep for in order to wake up precisely at the end of the exam.
+
+== file_system.cpp
+
+—
+
+== globals.h
+
+The relations between the globals.h and globals.cpp files might not be completely obvious, so here is the description of what is going on there. Global objects and configuration structures are declared as extern in the header (globals.h) file to make them accessible across multiple translation units. Their definitions and initial values are provided in the corresponding globals.cpp file.
+
+== globals.cpp
+
+The relations between the globals.h and globals.cpp files might not be completely obvious, so here is the description of what is going on there. Global objects and configuration structures are declared as extern in the header (globals.h) file to make them accessible across multiple translation units. Their definitions and initial values are provided in the corresponding globals.cpp file.
+
+== intra_interaction.cpp
+
+In the request_exams_info() function, the time section in hours is hardcoded (currently, from 05:00:00 in the morning till 21:00:00 in the evening) in the request message to the server. It should be kept in mind that these hours refer to the Intra server time zone (which is Paris, France – GMT+1 in winter and GMT+2 in summer), not to the time zone the Sign is located in. This is not a problem if the Sign is in an European campus, but it would completely mess everything up for campuses in Asia and Australia. E.g. 05:00 in Paris is 13:00 in Seoul, South Korea and 21:00 in Paris is 4:00 in the morning of the next day for Seoul, South Korea. If you ever decide to refactor that part into an actual logic, do not forget that some countries do not switch between winter and summer time, but France surely does.
+
+== ota.h
+
+Despite containing function bodies instead of what you usually expect to find in a header file, ota.h has to be a header file format. In short, it is made this way, so this file can be included in the project from the main header file 42-Smart-Cluster-Sign.h, and so it is possible to use include guards to prevent the OTA code to be copied into every single cpp file in the project.
+
+In detail, because of the intricacies of how the OTA library works, the functions of the OTA functionality (the ones you may see in the ota.h file) must be placed right above the setup() function. That would have absolutely bloated the src.ino file, so it was decided to alocate the functions of the OTA functionality into a separate file and include it from the src.ino file. Unfortunately, despite multiple tries it did not work this way, probably due to how Arduino IDE works. Through trial and error the solution you see now in the project was found. It is not the most elegant one, but it checks the main boxes: the functions of the OTA functionality are located in a separate file for readability, during compilation those functions get included right above the setup() function, the solution does not cause compilation issues, OTA functionality actually works (when not blocked by a firewall).
+
+== power_down_recovery.cpp
+
+The functionality mostly relies on the ESP-IDF API functions. More on that exact functionality here: link:https://docs.espressif.com/projects/esp-idf/en/latest/esp32c3/api-reference/system/misc_system_api.html[https://docs.espressif.com/projects/esp-idf/en/latest/esp32c3/api-reference/system/misc_system_api.html#_CPPv418esp_reset_reason_t] — under esp_reset_reason() and Enumerations.
+
+== telegram_bot.cpp
+
+You might see the following call _bot.sendMessage(String(rtc_g.chat_id), message, "")_ throughout the file a lot, less elsewhere in the project files. That may make you think why not refactor the _rtc_g.chat_id_ variable into a _String_ type and remove all of those explicit casts into String objects.
+
+WARNING: Do not do that! The _rtc_g.chat_id_ variable is stored in the RTC memory that has got extremely limited space. String objects take simply too much space to be stored there. RTC memory overflow will inevitably cause a wide range of issues throughout the whole project!
+
+== telegram_compose_message.cpp
+
+—
+
+== time_utilities.cpp
+
+—
+
+== utils.cpp
+
+—
+
+== watchdog.cpp
+
+All the functions here are wraps around ESP-IDF watchdog API with added debugging messages and improved readability. More on ESP-IDF watchdog here under “Task Watchdog Timer (TWDT)” and “API Reference”: link:https://docs.espressif.com/projects/esp-idf/en/latest/esp32c3/api-reference/system/wdts.html[https://docs.espressif.com/projects/esp-idf/en/latest/esp32c3/api-reference/system/wdts.html]

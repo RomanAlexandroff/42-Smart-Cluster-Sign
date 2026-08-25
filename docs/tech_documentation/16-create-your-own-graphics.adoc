@@ -1,0 +1,68 @@
+= Create Your Own Graphics
+:imagesdir: media
+ifndef::backend-pdf[]
+:toc: auto
+:sectnums:
+endif::[]
+
+You can create your own graphics to be displayed on the Sign. It may look complicated at first, but once you do it at least once, it will all become easy.
+
+Why is it complicated? Well, you cannot just drop an image into the Sign’s memory and display it. First, you have to convert your image into a C code and then put that C code into the Sign’s memory. The C code that represents an image is nothing else but a simple unsigned char array. In this array, each element represents the colour of each pixel in a bit format. Since there are a lot of pixels in an 800 x 480 image, the array will be very big, yet it will be just a simple array. Usually, they call this arrays bitmaps. If you would like to learn more, „bitmaps“ is the term you should google.
+
+So, here is the simple instruction:
+
+*get an image* > *convert into bitmap* > *put the bitmap into the project code* > *upload to the Sign*.
+
+Here are the steps in details:
+
+. *Create your image*
+
+- it has to be 800 x 480 pixels or smaller,
+
+- JPEG/JPG format only,
+
+- it can be only Black-and-White or Red-Black-and-White.
+
+. *Convert your image into a bitmap*. To do that, you may use the tool located in this repository:
+
+tools > epd_image_converter
+
+- download the tool from GitHub onto your local machine,
+
+- put all the images you want to convert into the epd_image_converter folder,
+
+- open the epd_image_converter folder in the Terminal,
+
+- use the following command to create Black-and-White image bitmap:
+
+`./epd_image --BW --DITHER Your_Image_Name.jpg Any_Name.h`
+
+- use the following command to create Red-Black-and-White image bitmap:
+
+`./epd_image --BWR --DITHER Your_Image_Name.jpg Any_Name.h`
+
+- Your_Image_Name.jpg is the image you want to convert into a bitmap,
+
+- Any_Name.h is the file where the bitmap array will be generated,
+
+- Black-and-White images get converted into 1 bitmap,
+
+- Red-Black-and-White images get converted into 2 bitmaps: Red-White and Black-White.
+
+. *Put your image bitmap into the project code*
+
+- open all the Any_Name.h files that you generated in the previous step,
+
+- give the arrays apropriate names,
+
+- open the project code files and find the bitmap_library.h file,
+
+- copy-paste the arrays from the the Any_Name.h files into the bitmap_library.h file of the project.
+
+. *Use your bitmap to be displayed on the Sign*
+
+- go to the display_handling.cpp file of the project and find the apropriate function to display your image,
+
+- implement when and how your image shall be displayed.
+
+. *Upload the new software to the Sign and watch it run.*

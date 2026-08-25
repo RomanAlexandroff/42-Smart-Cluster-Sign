@@ -1,0 +1,21 @@
+= General Description of the Program Run
+:imagesdir: media
+ifndef::backend-pdf[]
+:toc: auto
+:sectnums:
+endif::[]
+
+Let's take a look at one day of the 42 Smart Cluster Sign‘s life. Let’s say that on this particular day there is an exam scheduled for 13:00 and it will last for 3 hours.
+
+It is still night and the Sign is showing the cluster number with the default pictograms from the day before, while still being asleep. It is normal for the Sign to sleep all the time. It has its scheduled hours to wake up and check if something needs to be done. They are 6, 9, 12, 15, 18 and 21 o’clock (could have been changed in the program). But it is still too early.
+
+Time passes by. Now, it is 6:00 in the morning. The Sign wakes up to check if there are exams today. It goes online, pulls the information from the Intra server and sees that there will be an exam starting at 13:00 and ending at 16:00. The Sign replaces the default pictograms from yesterday with a note “_The cluster will be reserved for an exam today at 13:00_” while still displaying the cluster number. Since there is nothing more for the Sign to do, it sets its alarm clock for 12:00 - an hour before the exam - and goes back to sleep.
+
+It is 12 o'clock and the Sign wakes up again to get ready for the exam. It checks Intra to make sure the exam was not canceled during its sleep and that there is at least 1 person attending. If everything checks, it replaces the cluster number with a big warning sign that says: “_RESERVATION! The cluster is reserved for an exam. Please, vacate it in due time. You have XX minutes left_”. Instead of XX it first says 50 minutes, then 25 minutes and finally 5 minutes left.
+
+Finally, it is 13:00. The exam begins. The Sign changes the previous warning sign for a new one, saying “_DO NOT ENTER! Exam in progress!_”. At this point the Sign has nothing else to do, so again it sets its alarm clock for 16:00 - the end of the exam - and goes to sleep.
+
+At 16 o'clock the Sign wakes up, checks Intra, finds no more exams for today, replaces the warning sign with a cluster number with the default pictograms, sets its alarm clock until the next scheduled wake up - in this case 18:00 - and goes back to sleep.
+
+At 18 o'clock the Sign wakes up, checks Intra and finds no more exams, so it does nothing. Later, at 21 o’clock it wakes up for the last time today, finding nothing more to be done. Its work for today is over. It goes to sleep to wake up again the next morning at 6.
+

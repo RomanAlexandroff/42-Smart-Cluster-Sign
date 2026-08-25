@@ -1,0 +1,10 @@
+= New Bugs and Future Development Suggestions
+:imagesdir: media
+ifndef::backend-pdf[]
+:toc: auto
+:sectnums:
+endif::[]
+
+All newly discovered bugs should be documented in the "Issues" tab of the project's GitHub repository. This helps keep track of problems and facilitates community engagement in resolving them.
+
+Any suggestions for future development or enhancements can be added to the "Suggestions for Contributions" section in the README file of the project's GitHub repository. This allows everyone to see potential improvements and participate in developing them.

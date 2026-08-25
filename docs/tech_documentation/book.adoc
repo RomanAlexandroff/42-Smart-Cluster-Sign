@@ -1,0 +1,65 @@
+// GitHub's web view does not process include:: directives, so this file
+// looks empty-ish on GitHub. That is expected. Browse the documentation
+// from README.md instead. This file exists only for the PDF build
+// (`make docs`).
+= 42 Smart Cluster Sign
+Technical Documentation
+:doctype: book
+:revdate: July 2026
+:toc:
+:toclevels: 2
+:sectnums:
+:imagesdir: media
+:pdf-page-size: A4
+:title-page:
+:icons: font
+
+This document contains detailed information about the project and was created as the go-to place to find answers to all of your HOWs and WHYs, so the software support and further project development are easier.
+
+include::01-vocabulary-of-terms.adoc[leveloffset=+1]
+
+include::02-about-the-project.adoc[leveloffset=+1]
+
+include::03-contractors-requirements.adoc[leveloffset=+1]
+
+include::04-program-run-overview.adoc[leveloffset=+1]
+
+include::05-program-run-step-by-step.adoc[leveloffset=+1]
+
+include::06-how-to-build-the-sign.adoc[leveloffset=+1]
+
+include::07-development-environment.adoc[leveloffset=+1]
+
+include::08-cloud-pull-ota-updates.adoc[leveloffset=+1]
+
+include::09-uploading-compiled-binary.adoc[leveloffset=+1]
+
+include::10-firmware-rollback.adoc[leveloffset=+1]
+
+include::11-hardware-maintenance.adoc[leveloffset=+1]
+
+include::12-functions-reference.adoc[leveloffset=+1]
+
+include::13-architectural-decisions.adoc[leveloffset=+1]
+
+include::14-intra-api.adoc[leveloffset=+1]
+
+include::15-exam-simulation.adoc[leveloffset=+1]
+
+include::16-create-your-own-graphics.adoc[leveloffset=+1]
+
+include::17-how-to-draw-on-the-display.adoc[leveloffset=+1]
+
+include::18-time-keeping.adoc[leveloffset=+1]
+
+include::19-service-messages.adoc[leveloffset=+1]
+
+include::20-libraries.adoc[leveloffset=+1]
+
+include::21-known-bugs-and-fixes.adoc[leveloffset=+1]
+
+include::22-reporting-and-suggestions.adoc[leveloffset=+1]
+
+include::23-confidential-information.adoc[leveloffset=+1]
+
+include::24-external-sources.adoc[leveloffset=+1]

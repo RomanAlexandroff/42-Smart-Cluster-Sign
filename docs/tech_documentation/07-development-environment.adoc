@@ -1,0 +1,71 @@
+= Getting Ready to Maintain and Develop the Project
+:imagesdir: media
+ifndef::backend-pdf[]
+:toc: auto
+:sectnums:
+endif::[]
+
+== Needed hardware:
+
+* Computer with any OS,
+* USB to USB-C data cable compatible with your computer.
+
+== Needed software:
+
+* Arduino IDE with installed ESP-IDF plug-in,
+* Telegram (smartphone app or its desktop version).
+
+== Preparing the software tools
+
+. Install Arduino IDE and add the ESP-IDF extension. User-friendly instructions on how to do it may be found here if you scroll down to the topic „*Installing Arduino IDE*“:
+link:https://randomnerdtutorials.com/getting-started-with-esp32/[https://randomnerdtutorials.com/getting-started-with-esp32/#esp32-arduino-ide]
+
+The online instruction suggests to download and install the latest version, but the project was built using Arduino IDE version *1.8.19* and the „esp32“ board version *3.0.7*. Compatibility with the later versions was not tested, this is why it is recomended to use these, even though outdated, versions of the tools.
+
+. Create a folder for Arduino IDE projects. This folder will contain all the projects ever created in your Arduino IDE as well as all the installed libraries. The folder may be created anywhere on your computer and may be called any name you give to it (do not use spaces in the folder name, it may cause problems with the IDE).
+Now, in your Arduino IDE, go to *Arduino > Settings *and at the top of the opened Settings window add the created folder path.
+. Make sure all the required libraries from the „link:20-libraries.adoc[Libraries and their use]“ list are installed. To do so, in your Arduino IDE, go to *Arduino > Add library > Manage libraries*. In the opened window of the libraries manager you may find all the installed libraries as well as all the available libraries on the Internet.
+It is recommended to install the libraries versions stated in the list even though they might be outdated.
+
+. Set the compilation target. The compiler has to be told what exact model of an ESP32 board to compile for. In case of this project it is „*XIAO_ESP32C3*“. To do so, in your Arduino IDE, go to *Tools > Boards > ESP32 Arduino > XIAO_ESP32C3*.
+
+== Opening the project
+
+. Open the folder for Arduino IDE projects (the one created in step 2 above) in your terminal and use the following command to get yourself a copy of the project:
++
+[source,bash]
+----
+git clone https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign.git
+----
+
+. Open your Arduino IDE and go to *File > Projects > 42-Smart-Cluster-Sign > src*. Your project will open.
+. The project comes without any security-sensitive credentials. They may be found printed on the back of the Sign or obtained from the Bocal team. Rename the „*credentials-example.h*“ file included in the project into „*credentials.h*“ and fill-in the credentials from the Sign.
+WARNING: DO NOT COMPROMISE THE CONFIDENTIALITY OF THE CREDENTIALS !!!
+
+WARNING: REPORT ALL THE OCCURED LEAKS TO THE BOCAL TEAM IMMEDIATELY !!!
+
+== Uploading the changes
+
+There are 3 ways how to update the device:
+
+* using Arduino IDE and a USB-C data cable (described here),
+* wirelessly using OTA update (described in link:08-cloud-pull-ota-updates.adoc[Updating the Program Using Cloud-Pull OTA]),
+* using compiled binary, Terminal and a USB-C data cable (described in link:09-uploading-compiled-binary.adoc[Uploading the Program as Compiled Binary]).
+
+. Connect the Sign to your computer if you have not done so by this time.
+. Activate the software update mode. To do that, on the back of the Sign locate button *B* and button *R*. First, press and hold button B. While holding button B, press and release button R once. Then release button B. Software update mode is now active.
+. In Arduino IDE, go to *Tools* and set the following settings as follows:
+
+* Upload speed:  115200
+* CPU Frequency:  160 Mhz
+* Flash Frequency:  80 Mhz
+* Flash Mode:   "QIO"
+the fastest mode for the flash memory
+* Partition Scheme:  "Minimal SPIFFS"
+do not use partition schemes marked with "No OTA"
+* Core Debug Level:   "Verbose"
+the most detailed debugging output into the Serial monitor
+* Erase All Flash Before Sketch Upload: "Disabled"
+* Port:     choose the development board port.
+
+. In Arduino IDE, click the Upload button to start uploading.
