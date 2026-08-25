@@ -8,7 +8,7 @@
 - [Usage](#usage)
 - [Features](#features)
 - [Components](#components)
-- [The Team behind the Sign](#the-team-behind-the-sign)
+- [Team behind the Sign](#team-behind-the-sign)
 - [Regards](#regards)
 - [Contributing to the Project](#contributing-to-the-project)
 - [License](#license)
@@ -19,7 +19,7 @@
 
 Welcome to the README for the 42 Smart Cluster Sign — a self-sufficient information display designed to be installed on a cluster door. Its purpose is to notify students when the cluster is reserved for an exam and prevent them from accidental entering. The device automatically retrieves exam dates from Intra and displays appropriate warnings and information on its e-paper screen. In the spare time it simply displays the cluster number.
 
-For more information, such as maintenance and development, device build guide, architecture and function reference, please refer to the **[Technical Documentation](docs/tech_documentation/README.md)**.
+For more information, such as maintenance and development, device build guide, architecture and function reference, please refer to the [Technical Documentation](docs/tech_documentation/README.md).
 
 
 ## Usage
@@ -56,19 +56,10 @@ The following components are used in the 42 Smart Cluster Sign:
 5. **IKEA RÖDALM photo frame, black, 13x18 cm**: made a good enclosure.
 6. **Custom 3D-printed board**: to hold all the electronics in place.
 
-For more information, please, refer to the bill of materials in the docs folder of this repository.
+For more information, please, refer to the [Bill of Materials](docs/Bill_of_Materials.xlsx) in the docs folder of this repository (Excel file, not viewable on GitHub -- download to view).
 
 
-## Contributing to the Project
-
-Contributions to the 42 Smart Cluster Sign project are very welcome! Contact the repository admin [HERE](https://www.linkedin.com/in/roman-alexandrov-a75b89195/) to be added as a Collaborator*. The best place to start would be the [**Issues**](https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/issues) tab of this repository. It most likely already contains a list of features we'd appreciate your help with and you can start working on them right away. If you have your own ideas, bug fixes, or improvements, feel free to open an issue or submit a pull request.
-
-When contributing, please adhere to the existing code style and follow the established guidelines. Clearly describe your changes and provide any necessary documentation or tests.
-
-*Since the device is intended for use within the 42 network of schools, its development requires personal access to the internal information system. For this reason, only a student or a member of the Bocal staff at a 42 school can become a Collaborator on this project.
-
-
-## The Team behind the Sign
+## Team behind the Sign
 
 This project is a group effort of various 42 students with support from the 42 Prague Bocal team. Here they are:
 - **roaleksa**, 42 Roma, [linkedin](https://www.linkedin.com/in/roman-alexandrov-a75b89195/) — software and electronic hardware developer. Made the idea reality,
@@ -82,9 +73,17 @@ This project is a group effort of various 42 students with support from the 42 P
 
 ## Regards
 
-The project is based on Jean-Marc Zingg's [GxEPD2](https://github.com/ZinggJM/GxEPD2) library for e-paper displays.
-The project uses the [ArduinoOTA](https://github.com/jandrassy/ArduinoOTA) library by Juraj Andrassy for the Over-The-Air software update functionality.
+The project uses Jean-Marc Zingg's [GxEPD2](https://github.com/ZinggJM/GxEPD2) advanced library of drivers for e-paper displays.
 The Sign's Telegram Bot functionality is provided by Brian Lough's [UniversalTelegramBot](https://github.com/witnessmenow/Universal-Arduino-Telegram-Bot) library.
+
+
+## Contributing to the Project
+
+Contributions to the 42 Smart Cluster Sign project are very welcome! Contact the repository admin [HERE](https://www.linkedin.com/in/roman-alexandrov-a75b89195/) to be added as a Collaborator*. The best place to start would be the [**Issues**](https://github.com/RomanAlexandroff/42-Smart-Cluster-Sign/issues) tab of this repository. It most likely already contains a list of features we'd appreciate your help with and you can start working on them right away. If you have your own ideas, bug fixes, or improvements, feel free to open an issue or submit a pull request.
+
+When contributing, please adhere to the existing code style and follow the established guidelines. Clearly describe your changes and provide any necessary documentation or tests.
+
+*Since the device is intended for use within the 42 network of schools, its development requires personal access to the internal information system. For this reason, only a student or a member of the Bocal staff at a 42 school can become a Collaborator on this project.
 
 
 ## License
@@ -96,4 +95,4 @@ Please note that while the project strives to provide accurate information, it i
 
 ## Conclusion
 
-Thank you for your interest in the 42 Smart Cluster Sign project! We hope this README provides you with the necessary information to understand the project's purpose, features, installation process, usage, and maintenance. If you did not find the information you need, please refer to the [full technical documentation](docs/tech_documentation/README.md). If you have any further questions or need assistance, please don't hesitate to reach out. Happy coding!
+Thank you for your interest in the 42 Smart Cluster Sign project! We hope this README provides you with the necessary information to understand the project's purpose, features, installation process, usage and maintenance. If you did not find the information you need, please refer to the [Technical Documentation](docs/tech_documentation/README.md). If you have any further questions or need assistance, please don't hesitate to reach out to the author on [LinkedIn](https://www.linkedin.com/in/roman-alexandrov-a75b89195/). Happy coding!
