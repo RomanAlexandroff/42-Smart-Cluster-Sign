@@ -80,10 +80,8 @@ report-to: {"endpoints":[{"url":"https:\\/\\/a.nel.cloudflare.com\\/report\\/v4?
 nel: {"success_fraction":0,"report_to":"cf-nel","max_age":604800}
 server: cloudflare
 cf-ray: 8a191610cec6bc03-FRA
-----
 
-[source,json]
-----
+
 {"access_token":"03e4cb9b861dad6c49f2267cf97bd18a942507efa7840dc971008d264596cf89","token_type":"bearer","expires_in":6564,"scope":"public","created_at":1720703340,"secret_valid_until":1722585613}
 ----
 
@@ -121,9 +119,7 @@ cf-cache-status: DYNAMIC
 Server: cloudflare
 CF-RAY: 8e9831883e36b353-PRG
 9fa
-----
 
-[source,json]
-----
+
 [{"id":21213,"ip_range":"10.11.0.0/16,10.12.0.0/16,10.13.0.0/16","begin_at":"2024-11-28T14:00:00.000Z","end_at":"2024-11-28T17:00:00.000Z","location":"C3","max_people":25,"nbr_subscribers":4,"name":"EXAM STUD","created_at":"2024-11-22T08:20:02.386Z","updated_at":"2024-11-27T23:40:57.806Z","campus":{"id":56,"name":"Prague","time_zone":"Europe/Prague","language":{"id":2,"name":"English","identifier":"en","created_at":"2015-04-14T16:07:38.122Z","updated_at":"2024-11-18T11:22:47.733Z"},"users_count":1335,"vogsphere_id":52,"country":"Czech Republic","address":"AFI CITY TOWER Kolbenova 1021/9 Praha 9 - Vysočany","zip":"19000","city":"Prague","website":"https://42prague.com","facebook":"https://www.facebook.com/42Prague","twitter":"","active":true,"public":true,"email_extension":"42prague.com","default_hidden_phone":false},"cursus":[{"id":21,"created_at":"2019-07-29T08:45:17.896Z","name":"42cursus","slug":"42cursus","kind":"main"},{"id":21,"created_at":"2019-07-29T08:45:17.896Z","name":"42cursus","slug":"42cursus","kind":"main"},{"id":21,"created_at":"2019-07-29T08:45:17.896Z","name":"42cursus","slug":"42cursus","kind":"main"},{"id":21,"created_at":"2019-07-29T08:45:17.896Z","name":"42cursus","slug":"42cursus","kind":"main"},{"id":21,"created_at":"2019-07-29T08:45:17.896Z","name":"42cursus","slug":"42cursus","kind":"main"}],"projects":[{"id":1320,"name":"Exam Rank 02","slug":"exam-rank-02","difficulty":0,"parent":null,"children":[],"attachments":[],"created_at":"2019-07-29T09:05:05.890Z","updated_at":"2024-11-25T08:53:45.680Z","exam":true,"git_id":null,"repository":null},{"id":1321,"name":"Exam Rank 03","slug":"exam-rank-03","difficulty":0,"parent":null,"children":[],"attachments":[],"created_at":"2019-07-29T09:05:15.263Z","updated_at":"2024-11-25T08:56:10.466Z","exam":true,"git_id":null,"repository":null},{"id":1322,"name":"Exam Rank 04","slug":"exam-rank-04","difficulty":0,"parent":null,"children":[],"attachments":[],"created_at":"2019-07-29T09:05:24.256Z","updated_at":"2024-11-25T08:56:32.456Z","exam":true,"git_id":null,"repository":null},{"id":1323,"name":"Exam Rank 05","slug":"exam-rank-05","difficulty":0,"parent":null,"children":[],"attachments":[],"created_at":"2019-07-29T09:05:32.360Z","updated_at":"2024-11-25T08:56:53.071Z","exam":true,"git_id":null,"repository":null},{"id":1324,"name":"Exam Rank 06","slug":"exam-rank-06","difficulty":0,"parent":null,"children":[],"attachments":[],"created_at":"2019-07-29T09:05:39.838Z","updated_at":"2024-11-25T08:57:29.269Z","exam":true,"git_id":null,"repository":null}]}]
 ----
