@@ -59,7 +59,7 @@ ERROR_t         secret_verification(String text);
 void            data_restore(const char* file_name);
 void            data_integrity_check(void);
 ERROR_t         write_to_file(const char* file_name, char* input);
-ERROR_t         read_from_file(const char* file_name, char* output);
+ERROR_t         read_from_file(const char* file_name, char* output, size_t output_size);
 ERROR_t         file_sys_init(void);
 
 /* ota.cpp */

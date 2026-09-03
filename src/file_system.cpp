@@ -23,20 +23,20 @@ ERROR_t secret_verification(String input)
         return (FS_NOT_A_SECRET);
     if (input.substring(0, 1) != "s")
         return (FS_NOT_A_SECRET);
-    strcpy(secret_buffer, rtc_g.Secret);
+    snprintf(secret_buffer, sizeof(secret_buffer), "%s", rtc_g.Secret);
     exam_status_buffer = rtc_g.exam_status;
     input.toCharArray(rtc_g.Secret, sizeof(rtc_g.Secret));
     intra_result = fetch_exams();
-    strcpy(rtc_g.Secret, secret_buffer);
+    snprintf(rtc_g.Secret, sizeof(rtc_g.Secret), "%s", secret_buffer);
     rtc_g.exam_status = exam_status_buffer;
     if (intra_result == INTRA_NO_TOKEN || intra_result == INTRA_NO_SERVER)
         return (FS_INVALID_SECRET);
     return (FS_VALID_SECRET);
 }
 
-static void restore_data_value(const char* file_name, char* destination, const char* variable_name)
+static void restore_data_value(const char* file_name, char* destination, size_t destination_size, const char* variable_name)
 {
-    if (read_from_file(file_name, destination) == FS_OK)
+    if (read_from_file(file_name, destination, destination_size) == FS_OK)
         DEBUG_PRINTF("\n[FILE SYSTEM] Successfully restored data from %s.\n", file_name);
     else
         DEBUG_PRINTF("\n[FILE SYSTEM] Failed to restore data from %s!\n", file_name);
@@ -49,9 +49,9 @@ void data_restore(const char* file_name)
         return;
     watchdog_reset();
     if (strcmp(file_name, "/secret.txt") == 0)
-        restore_data_value(file_name, rtc_g.Secret, "rtc_g.Secret");
+        restore_data_value(file_name, rtc_g.Secret, sizeof(rtc_g.Secret), "rtc_g.Secret");
     else if (strcmp(file_name, "/chat_id.txt") == 0)
-        restore_data_value(file_name, rtc_g.chat_id, "rtc_g.chat_id");
+        restore_data_value(file_name, rtc_g.chat_id, sizeof(rtc_g.chat_id), "rtc_g.chat_id");
 }
 
 void  data_integrity_check(void)
@@ -83,7 +83,7 @@ void  data_integrity_check(void)
     data_restore("/chat_id.txt");
     if (!rtc_g.from_name[0])
     {
-        strcpy(rtc_g.from_name, "User");
+        snprintf(rtc_g.from_name, sizeof(rtc_g.from_name), "%s", "User");
         DEBUG_PRINTF("\n[FILE SYSTEM] User name has been set to: %s\n", rtc_g.from_name);
     }
 }
@@ -116,13 +116,13 @@ ERROR_t  write_to_file(const char* file_name, char* input)
     return FS_OK;
 }
 
-ERROR_t  read_from_file(const char* file_name, char* output)
+ERROR_t  read_from_file(const char* file_name, char* output, size_t output_size)
 {
     File    file;
     short   i;
     String  buffer;
 
-    if (!file_name)
+    if (!file_name || !output || output_size == 0)
         return FS_ENTRY_ERROR;
     i = 0;
     watchdog_reset();
@@ -145,7 +145,7 @@ ERROR_t  read_from_file(const char* file_name, char* output)
     buffer.trim();
     if (buffer.length() == 0)
         return FS_EMPTY_FILE;
-    strcpy(output, buffer.c_str());
+    snprintf(output, output_size, "%s", buffer.c_str());
     return FS_OK;
 }
 
